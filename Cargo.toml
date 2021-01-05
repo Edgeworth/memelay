@@ -1,0 +1,20 @@
+[package]
+authors = ["Eliot Courtney <edgeworth.dev@gmail.com>"]
+edition = "2018"
+name = "designer"
+version = "0.1.0"
+
+[dependencies]
+color-eyre = "*"
+colored = "*"
+derive_more = "*"
+eyre = "*"
+lazy_static = "*"
+log = "*"
+pretty_env_logger = "*"
+radiate = "*"
+rand = "*"
+
+[profile.release]
+debug = 1 # line tables only
+lto = true
