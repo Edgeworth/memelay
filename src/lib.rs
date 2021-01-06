@@ -9,7 +9,7 @@
     bool_to_option
 )]
 
-use crate::fitness::Fitness;
+use crate::fitness::{fitness_from_file, Fitness};
 use crate::layout::Layout;
 use crate::prelude::*;
 use radiate::{Config, Envionment, Genocide, ParentalCriteria, Population, SurvivalCriteria};
@@ -17,6 +17,7 @@ use radiate::{Config, Envionment, Genocide, ParentalCriteria, Population, Surviv
 mod fitness;
 mod layout;
 pub mod prelude;
+mod types;
 
 #[derive(Debug, Clone)]
 pub struct Env {}
@@ -35,7 +36,9 @@ impl Default for Env {
 }
 
 pub fn run() -> Result<()> {
+    fitness_from_file("moonlander.cfg")?;
     let (top, _) = Population::<Layout, Env, Fitness>::new()
+        .impose(fitness_from_file("moonlander.cfg")?)
         .size(100)
         .populate_base()
         .dynamic_distance(true)
@@ -50,12 +53,12 @@ pub fn run() -> Result<()> {
             species_target: 5,
         })
         .run(|model, fit, num| {
-            println!("Generation: {} score: {:.3?}\t{:?}", num, fit, model.as_string());
+            println!("Generation: {} score: {:.3?}\t{:?}", num, fit, model.to_string());
             fit == 12.0 || num == 500
         })
         .map_err(|e| eyre!(e))?;
 
-    println!("Solution: {:?}", top.as_string());
+    println!("Solution: {:?}", top.to_string());
 
     Ok(())
 }
