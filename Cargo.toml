@@ -8,12 +8,15 @@ version = "0.1.0"
 color-eyre = "*"
 colored = "*"
 derive_more = "*"
+enumset = "*"
 eyre = "*"
 lazy_static = "*"
 log = "*"
 pretty_env_logger = "*"
 radiate = "*"
 rand = "*"
+strum = "*"
+strum_macros = "*"
 
 [profile.release]
 debug = 1 # line tables only
