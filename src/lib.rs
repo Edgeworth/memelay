@@ -6,16 +6,19 @@
     iterator_fold_self,
     type_alias_impl_trait,
     partition_point,
-    bool_to_option
+    bool_to_option,
+    map_first_last
 )]
 
-use crate::fitness::{fitness_from_file, Fitness};
-use crate::layout::Layout;
+use crate::fitness::Fitness;
+use crate::ingest::fitness_from_file;
+use crate::models::layer::Layout;
 use crate::prelude::*;
 use radiate::{Config, Envionment, Genocide, ParentalCriteria, Population, SurvivalCriteria};
 
 mod fitness;
-mod layout;
+mod ingest;
+mod models;
 pub mod prelude;
 mod types;
 
@@ -36,9 +39,8 @@ impl Default for Env {
 }
 
 pub fn run() -> Result<()> {
-    fitness_from_file("moonlander.cfg")?;
     let (top, _) = Population::<Layout, Env, Fitness>::new()
-        .impose(fitness_from_file("moonlander.cfg")?)
+        .impose(fitness_from_file("moonlander.cfg", "keys_notime.data")?)
         .size(100)
         .populate_base()
         .dynamic_distance(true)
