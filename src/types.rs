@@ -34,12 +34,12 @@ pub fn rand_mod<R: rand::Rng + ?Sized>(r: &mut R) -> EnumSet<Mod> {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct Key {
-    pub kc: KeyCode,
+    pub kc: KC,
     pub md: EnumSet<Mod>,
 }
 
 impl Key {
-    pub const fn new(kc: KeyCode, md: EnumSet<Mod>) -> Self {
+    pub const fn new(kc: KC, md: EnumSet<Mod>) -> Self {
         Self { kc, md }
     }
 
@@ -97,7 +97,7 @@ impl PhysEv {
 
 // Based on QMK keycodes.
 #[derive(Debug, Ord, PartialOrd, EnumSetType, EnumIter, Hash, Display)]
-pub enum KeyCode {
+pub enum KC {
     // Misc:
     None,
     Transparent,
@@ -201,8 +201,8 @@ pub enum KeyCode {
     F12,
 }
 
-impl Distribution<KeyCode> for Standard {
-    fn sample<R: rand::Rng + ?Sized>(&self, r: &mut R) -> KeyCode {
-        KeyCode::iter().choose(r).unwrap()
+impl Distribution<KC> for Standard {
+    fn sample<R: rand::Rng + ?Sized>(&self, r: &mut R) -> KC {
+        KC::iter().choose(r).unwrap()
     }
 }

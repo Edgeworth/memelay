@@ -1,6 +1,6 @@
 use crate::models::keyset::KeySet;
 use crate::models::layer::Layout;
-use crate::models::{Model, Transition};
+use crate::models::Model;
 use crate::prelude::*;
 use crate::types::{Key, KeyEv, PhysEv};
 use crate::Env;
@@ -45,17 +45,12 @@ impl<'a> QmkModel<'a> {
 }
 
 impl<'a> Model for QmkModel<'a> {
-    type M = QmkModel<'a>;
-
     fn valid(&mut self, pev: PhysEv) -> bool {
         let kev = KeyEv::new(self.get_key(pev.phys), pev.count);
         self.ks.valid(kev)
     }
 
-    fn event(&mut self, pev: PhysEv) -> Transition<QmkModel<'a>> {
-        let mut ns = self.clone();
-        let kev = KeyEv::new(self.get_key(pev.phys), pev.count);
-        let events = ns.ks.key_event(kev);
-        Transition::new(ns, &events)
+    fn event(&mut self, pev: PhysEv) -> Vec<KeyEv> {
+        self.ks.key_event(KeyEv::new(self.get_key(pev.phys), pev.count))
     }
 }
