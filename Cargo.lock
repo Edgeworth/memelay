@@ -224,6 +224,7 @@ dependencies = [
  "eyre",
  "lazy_static",
  "log",
+ "ordered-float",
  "pretty_env_logger",
  "radiate",
  "rand",
@@ -468,6 +469,15 @@ name = "once_cell"
 version = "1.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13bd41f508810a131401606d54ac32a467c97172d74ba7662562ebba5ad07fa0"
+
+[[package]]
+name = "ordered-float"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dacdec97876ef3ede8c50efc429220641a0b11ba0048b4b0c357bccbc47c5204"
+dependencies = [
+ "num-traits",
+]
 
 [[package]]
 name = "owo-colors"
