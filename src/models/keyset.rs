@@ -1,10 +1,10 @@
 use crate::prelude::*;
-use crate::types::{Key, KeyCode, KeyEv, Mod};
+use crate::types::{Key, KeyEv, Mod, KC};
 use enumset::{enum_set, EnumSet};
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct KeySet {
-    pub kc: Vec<(KeyCode, i32)>,
+    pub kc: Vec<(KC, i32)>,
     pub md: Vec<(Mod, i32)>,
 }
 
@@ -74,16 +74,43 @@ mod tests {
     use super::*;
     use enumset::enum_set;
 
-    const SUPER: Key = Key::new(KeyCode::None, enum_set!(Mod::Super));
+    const SUPER: Key = Key::new(KC::None, enum_set!(Mod::Super));
+    const CTRL: Key = Key::new(KC::None, enum_set!(Mod::Ctrl));
+    const C: Key = Key::new(KC::C, enum_set!());
+    const CTRL_C: Key = Key::new(KC::C, enum_set!(Mod::Ctrl));
+
+    #[test]
+    fn regular_letter() {
+        let mut ks = KeySet::new();
+        assert_eq!(ks.key_event(KeyEv::press(C)), [KeyEv::press(C)]);
+        assert_eq!(ks.key_event(KeyEv::release(C)), [KeyEv::release(C)]);
+    }
+
+    #[test]
+    fn ctrl_c_split() {
+        let mut ks = KeySet::new();
+        assert!(ks.key_event(KeyEv::press(CTRL)).is_empty());
+        assert_eq!(ks.key_event(KeyEv::press(C)), [KeyEv::press(CTRL_C)]);
+        assert_eq!(ks.key_event(KeyEv::release(C)), [KeyEv::release(C)]);
+        assert_eq!(ks.key_event(KeyEv::release(CTRL)), [KeyEv::release(CTRL)]);
+    }
+
+    #[test]
+    fn ctrl_c_coalesced() {
+        let mut ks = KeySet::new();
+        assert_eq!(ks.key_event(KeyEv::press(CTRL_C)), [KeyEv::press(CTRL_C)]);
+        assert_eq!(ks.key_event(KeyEv::release(CTRL_C)), [KeyEv::release(CTRL_C)]);
+    }
 
     // Super only is used for e.g opening search bar.
     #[test]
     fn super_only() {
         let mut ks = KeySet::new();
-        let kev = ks.key_event(KeyEv::press(SUPER));
-        assert!(kev.is_empty());
-        let kev = ks.key_event(KeyEv::release(SUPER));
-        assert_eq!(kev, [KeyEv::press(SUPER), KeyEv::release(SUPER)]);
+        assert!(ks.key_event(KeyEv::press(SUPER)).is_empty());
+        assert_eq!(
+            ks.key_event(KeyEv::release(SUPER)),
+            [KeyEv::press(SUPER), KeyEv::release(SUPER)]
+        );
     }
 
     #[test]
