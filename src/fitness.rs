@@ -1,21 +1,23 @@
 use crate::models::layer::Layout;
 use crate::models::qmk::QmkModel;
+use crate::models::us::USModel;
 use crate::models::Model;
 use crate::prelude::*;
-use crate::types::{Finger, Key, KeyEv, PhysEv};
+use crate::types::{Finger, PhysEv};
 use ordered_float::OrderedFloat;
 use radiate::Problem;
 use std::collections::{BTreeSet, HashMap, HashSet};
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct Node<'a> {
-    pub s: QmkModel<'a>,   // Currently have this keyboard state.
+    pub qmk: QmkModel<'a>, // Currently have this keyboard state.
+    pub us: USModel,
     pub corpus_idx: usize, // Processed this much of the corpus.
 }
 
 impl<'a> Node<'a> {
     pub fn new(layout: &'a Layout) -> Self {
-        Self { s: QmkModel::new(layout), corpus_idx: 0 }
+        Self { qmk: QmkModel::new(layout), us: USModel::new(), corpus_idx: 0 }
     }
 }
 
@@ -23,21 +25,33 @@ impl<'a> Node<'a> {
 pub struct Fitness {
     cost: Vec<f64>,
     fing: Vec<Finger>,
-    corpus: Vec<KeyEv>,
+    corpus: Vec<PhysEv>,
 }
 
 impl Fitness {
-    pub fn new(cost: Vec<f64>, fing: Vec<Finger>, corpus: Vec<KeyEv>) -> Self {
+    pub fn new(cost: Vec<f64>, fing: Vec<Finger>, corpus: Vec<PhysEv>) -> Self {
         Self { cost, fing, corpus }
     }
 
     // Check that |ev| could be produced from Node by consuming corpus operations.
-    fn unify(&self, n: Node<'_>, ev: &[KeyEv]) {
-        // let mut v = Vec::new();
-        // while v.len() != ev.len() && n.corpus_idx < self.corpus.len() {
-        //     v.extend(n.s.event(self.corpus[n.corpus_idx]))
-        // }
-        // Some(n)
+    fn unify<'a>(&self, mut n: Node<'a>, pev: PhysEv) -> Option<Node<'a>> {
+        let mut events_qmk = n.qmk.event(pev);
+        while !events_qmk.is_empty() && n.corpus_idx < self.corpus.len() {
+            let mut events_us = n.us.event(self.corpus[n.corpus_idx]);
+            while !events_us.is_empty() && !events_qmk.is_empty() {
+                if events_us[0] != events_qmk[0] {
+                    return None;
+                }
+                events_us.remove(0);
+                events_qmk.remove(0);
+            }
+            n.corpus_idx += 1;
+        }
+        if events_qmk.is_empty() {
+            Some(n)
+        } else {
+            None
+        }
     }
 }
 
@@ -49,7 +63,7 @@ impl Problem<Layout> for Fitness {
     fn solve(&self, l: &mut Layout) -> f32 {
         const MIN: f32 = -1000000000.0;
         let mut q: BTreeSet<(OrderedFloat<f64>, Node<'_>)> = BTreeSet::new();
-        let mut dist: HashMap<Node<'_>, f64> = HashMap::new();
+        let mut dist: HashMap<Node<'_>, OrderedFloat<f64>> = HashMap::new();
         let mut seen: HashSet<Node<'_>> = HashSet::new();
         q.insert((0.0.into(), Node::new(l)));
         while let Some(v) = q.first().cloned() {
@@ -58,23 +72,31 @@ impl Problem<Layout> for Fitness {
             seen.insert(n.clone());
 
             if n.corpus_idx == self.corpus.len() - 1 {
-                return dist[&n] as f32;
+                return dist[&n].into_inner() as f32;
             }
-            // Try pressing keys.
-            // TODO: Need to have 'unification' function between prefix of corpus and returned key
-            // events.
+            // Try pressing and releasing physical keys.
             for &count in &[-1, 1] {
                 for i in 0..l.num_physical() {
+                    let mut next = n.clone();
                     let pev = PhysEv::new(i as u32, count);
-                    if !n.s.valid(pev) {
+                    if !next.qmk.valid(pev) {
                         continue;
                     }
-                    let t = n.s.event(pev);
-                    // if let Some(next) = self.unify(n.clone(), t.ev) {}
+
+                    if let Some(next) = self.unify(next, pev) {
+                        if seen.contains(&next) {
+                            continue;
+                        }
+
+                        let cost = v.0 + 1.0.into(); // TODO: Cost function.
+                        let d = dist.entry(next.clone()).or_insert(cost);
+                        if cost <= *d {
+                            *d = cost;
+                            q.insert((cost, next));
+                        }
+                    }
                 }
             }
-
-            // Try releasing keys.
         }
         MIN
     }
