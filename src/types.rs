@@ -1,7 +1,5 @@
 use crate::prelude::*;
 use enumset::{enum_set, EnumSet, EnumSetType};
-use rand::distributions::Standard;
-use rand::prelude::Distribution;
 use rand::seq::IteratorRandom;
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, EnumString};
@@ -20,88 +18,72 @@ pub enum Finger {
     RT,
 }
 
-#[derive(Debug, Ord, PartialOrd, EnumSetType, EnumIter, Hash, Display)]
-pub enum Mod {
-    Ctrl,
-    Shift,
-    Alt,
-    Super,
+pub trait KCSetExt {
+    fn regular(&self) -> KCSet;
+    fn mods(&self) -> KCSet;
 }
 
-pub fn rand_mod<R: rand::Rng + ?Sized>(r: &mut R) -> EnumSet<Mod> {
-    Mod::iter().filter(|_| r.gen_bool(0.5)).fold(EnumSet::new(), |a, b| a | b)
-}
+pub type KCSet = EnumSet<KC>;
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct Key {
-    pub kc: KC,
-    pub md: EnumSet<Mod>,
-}
-
-impl Key {
-    pub const fn new(kc: KC, md: EnumSet<Mod>) -> Self {
-        Self { kc, md }
+impl KCSetExt for KCSet {
+    fn regular(&self) -> KCSet {
+        self.iter().filter(|x| !x.is_mod()).collect()
     }
 
-    pub fn with_mods(mut self, md: EnumSet<Mod>) -> Self {
-        self.md |= md;
-        self
+    fn mods(&self) -> KCSet {
+        self.iter().filter(|x| x.is_mod()).collect()
     }
 }
 
-impl Distribution<Key> for Standard {
-    fn sample<R: rand::Rng + ?Sized>(&self, r: &mut R) -> Key {
-        Key { kc: r.gen(), md: rand_mod(r) }
-    }
+pub fn rand_kcset<R: rand::Rng + ?Sized>(r: &mut R) -> KCSet {
+    let mods = KC::iter().filter(|v| v.is_mod() && r.gen_bool(0.2)).fold(enum_set!(), |a, b| a | b);
+    let key = KC::iter().filter(|v| !v.is_mod()).choose(r).unwrap();
+    enum_set!(key) | mods
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct KeyEv {
-    pub key: Key,
-    pub count: i32,
+    pub key: KCSet,
+    pub press: bool,
 }
 
 impl KeyEv {
-    pub fn new(key: Key, count: i32) -> Self {
-        Self { key, count }
+    pub fn new(key: KCSet, press: bool) -> Self {
+        Self { key, press }
     }
 
-    pub fn press(key: Key) -> Self {
-        Self::new(key, 1)
+    pub fn press(key: KCSet) -> Self {
+        Self::new(key, true)
     }
 
-    pub fn release(key: Key) -> Self {
-        Self::new(key, -1)
+    pub fn release(key: KCSet) -> Self {
+        Self::new(key, false)
     }
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct PhysEv {
     pub phys: u32,
-    pub count: i32,
+    pub press: bool,
 }
 
 impl PhysEv {
-    pub fn new(phys: u32, count: i32) -> Self {
-        Self { phys, count }
+    pub fn new(phys: u32, press: bool) -> Self {
+        Self { phys, press }
     }
 
     pub fn press(phys: u32) -> Self {
-        Self::new(phys, 1)
+        Self::new(phys, true)
     }
 
     pub fn release(phys: u32) -> Self {
-        Self::new(phys, -1)
+        Self::new(phys, false)
     }
 }
 
 // Based on QMK keycodes.
 #[derive(Debug, Ord, PartialOrd, EnumSetType, EnumIter, Hash, Display)]
 pub enum KC {
-    // Misc:
-    None,
-    Transparent,
-
     // Numbers:
     Num0,
     Num1,
@@ -199,10 +181,16 @@ pub enum KC {
     F10,
     F11,
     F12,
+
+    // Mod:
+    Ctrl,
+    Shift,
+    Alt,
+    Super,
 }
 
-impl Distribution<KC> for Standard {
-    fn sample<R: rand::Rng + ?Sized>(&self, r: &mut R) -> KC {
-        KC::iter().choose(r).unwrap()
+impl KC {
+    pub fn is_mod(&self) -> bool {
+        [KC::Ctrl, KC::Shift, KC::Alt, KC::Super].contains(self)
     }
 }
