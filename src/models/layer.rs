@@ -1,22 +1,22 @@
 use crate::prelude::*;
-use crate::types::Key;
+use crate::types::{rand_kcset, KCSet};
 use derive_more::Display;
 use rand::Rng;
 
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Display)]
 #[display(fmt = "{:?}", keys)]
 pub struct Layer {
-    pub keys: Vec<Key>,
+    pub keys: Vec<KCSet>,
 }
 
 impl Layer {
-    pub fn new(keys: &[Key]) -> Self {
+    pub fn new(keys: &[KCSet]) -> Self {
         Self { keys: keys.to_vec() }
     }
 
     pub fn rand_with_size(len: usize) -> Self {
         let mut r = rand::thread_rng();
-        Self { keys: (0..len).map(|_| r.gen()).collect() }
+        Self { keys: (0..len).map(|_| rand_kcset(&mut r)).collect() }
     }
 
     pub fn num_physical(&self) -> usize {

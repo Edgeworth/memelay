@@ -75,10 +75,10 @@ impl Problem<Layout> for Fitness {
                 return dist[&n].into_inner() as f32;
             }
             // Try pressing and releasing physical keys.
-            for &count in &[-1, 1] {
+            for &press in &[true, false] {
                 for i in 0..l.num_physical() {
                     let mut next = n.clone();
-                    let pev = PhysEv::new(i as u32, count);
+                    let pev = PhysEv::new(i as u32, press);
                     if !next.qmk.valid(pev) {
                         continue;
                     }
