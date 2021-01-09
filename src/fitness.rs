@@ -55,6 +55,18 @@ impl Fitness {
             None
         }
     }
+
+    fn inherent_cost(&self, l: &Layout) -> f64 {
+        // Penalise more layers.
+        let mut cost = l.layers.len() as f64;
+        for layer in l.layers.iter() {
+            for kcset in layer.keys.iter() {
+                // Penalise more keys.
+                cost += kcset.len() as f64;
+            }
+        }
+        cost
+    }
 }
 
 impl Problem<Layout> for Fitness {
@@ -106,7 +118,9 @@ impl Problem<Layout> for Fitness {
                 }
             }
         }
-        let fitness = best.0 as f64 * 10000.0 - best.1.into_inner();
+        let mut fitness = best.0 as f64; // Typing all corpus is top priority.
+        fitness = fitness * 10000.0 - best.1.into_inner(); // Next is minimising cost.
+        fitness = fitness * 1000.0 - self.inherent_cost(l);
         fitness as f32
     }
 }

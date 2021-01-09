@@ -35,9 +35,17 @@ impl KCSetExt for KCSet {
 }
 
 pub fn rand_kcset<R: rand::Rng + ?Sized>(r: &mut R) -> KCSet {
-    let mods = KC::iter().filter(|v| v.is_mod() && r.gen_bool(0.2)).fold(enum_set!(), |a, b| a | b);
-    let key = KC::iter().filter(|v| !v.is_mod()).choose(r).unwrap();
-    enum_set!(key) | mods
+    let mods = KC::iter().filter(|v| v.is_mod()).collect::<Vec<_>>();
+    let regs = KC::iter().filter(|v| !v.is_mod()).collect::<Vec<_>>();
+    let mods = mods
+        .iter()
+        .filter(|_| r.gen_bool(1.0 / mods.len() as f64))
+        .fold(enum_set!(), |a, &b| a | b);
+    let regs = regs
+        .iter()
+        .filter(|_| r.gen_bool(1.0 / regs.len() as f64))
+        .fold(enum_set!(), |a, &b| a | b);
+    mods | regs
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
