@@ -7,6 +7,7 @@ use crate::types::PhysEv;
 use crate::Env;
 use derive_more::Display;
 use ordered_float::OrderedFloat;
+use priority_queue::PriorityQueue;
 use radiate::Problem;
 use rand::Rng;
 use std::collections::{BTreeSet, HashMap, HashSet};
@@ -79,19 +80,17 @@ impl Fitness {
     }
 
     fn path_fitness(&self, l: &Layout, start_idx: usize, block_size: usize) -> f64 {
-        let mut q: BTreeSet<(OrderedFloat<f64>, Node<'_>)> = BTreeSet::new();
+        let mut q: PriorityQueue<OrderedFloat<f64>, Node<'_>> = PriorityQueue::new();
         let mut dist: HashMap<Node<'_>, OrderedFloat<f64>> = HashMap::new();
         let mut seen: HashSet<Node<'_>> = HashSet::new();
         let mut best = (0, OrderedFloat(0.0));
         let st = Node::new(l, start_idx);
-        q.insert((OrderedFloat(0.0), st.clone()));
+        q.push(OrderedFloat(0.0), st.clone());
         dist.insert(st.clone(), OrderedFloat(0.0));
-        while let Some(v) = q.first().cloned() {
-            q.remove(&v);
-            let n = v.1;
+        while let Some((d, n)) = q.pop() {
             seen.insert(n.clone());
 
-            // println!("cost: {}, dijk: {}, seen: {}", v.0, n, seen.len());
+            // println!("cost: {}, dijk: {}, seen: {}", -d, n, seen.len());
             // Look for getting furthest through corpus, then for lowest cost.
             if n.corpus_idx > best.0 || (n.corpus_idx == best.0 && dist[&n] < best.1) {
                 best = (n.corpus_idx, dist[&n])
@@ -113,11 +112,11 @@ impl Fitness {
                             continue;
                         }
 
-                        let cost = v.0 + OrderedFloat(self.phys_cost(l, pev));
+                        let cost = -d + OrderedFloat(self.phys_cost(l, pev));
                         let d = dist.entry(next.clone()).or_insert(cost);
                         if cost <= *d {
                             *d = cost;
-                            q.insert((cost, next));
+                            q.push(-cost, next);
                         }
                     }
                 }

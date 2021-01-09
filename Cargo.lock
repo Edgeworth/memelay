@@ -256,6 +256,7 @@ dependencies = [
  "log",
  "ordered-float",
  "pretty_env_logger",
+ "priority-queue",
  "radiate",
  "rand 0.8.1",
  "structopt",
@@ -370,6 +371,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f6503fe142514ca4799d4c26297c4248239fe8838d827db6bd6065c6ed29a6ce"
 
 [[package]]
+name = "hashbrown"
+version = "0.9.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d7afe4a420e3fe79967a00898cc1f4db7c8a49a9333a29f8a4bd76a253d5cd04"
+
+[[package]]
 name = "heck"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -407,6 +414,16 @@ name = "indenter"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f4d5eb2e114fec2b7fe0fadc22888ad2658789bb7acac4dbee9cf8389f971ec8"
+
+[[package]]
+name = "indexmap"
+version = "1.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4fb1fa934250de4de8aef298d81c729a7d33d8c239daa3a7575e6b92bfc7313b"
+dependencies = [
+ "autocfg",
+ "hashbrown",
+]
 
 [[package]]
 name = "inventory"
@@ -551,6 +568,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "priority-queue"
+version = "1.0.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a6fffb2a42c53276c40a3dcef02bd8ec18d4b0105f2828a186bd58d64a8054d0"
+dependencies = [
+ "autocfg",
+ "indexmap",
+]
+
+[[package]]
 name = "proc-macro-error"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -601,6 +628,8 @@ dependencies = [
 [[package]]
 name = "radiate"
 version = "1.1.59"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "da4c79bf29fd3dc0b9f64b06bec9c41a771107576f289f97f6a338e9e7c2261e"
 dependencies = [
  "rand 0.7.3",
  "rayon",
