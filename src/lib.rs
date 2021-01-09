@@ -48,7 +48,7 @@ pub fn run() -> Result<()> {
     let (top, _) = Population::<Layout, Env, Fitness>::new()
         .constrain(env.clone())
         .impose(Fitness::new(env))
-        .size(1)
+        .size(100)
         .populate_base()
         .dynamic_distance(true)
         .stagnation(10, vec![Genocide::KillWorst(0.9)])
@@ -63,7 +63,7 @@ pub fn run() -> Result<()> {
         })
         .run(|_, fit, num| {
             println!("Generation: {} score: {:.3?}", num, fit);
-            num == 2
+            num == 500
         })
         .map_err(|e| eyre!(e))?;
 

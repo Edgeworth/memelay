@@ -2,7 +2,7 @@ use crate::models::count_map::CountMap;
 use crate::prelude::*;
 use crate::types::{KCSet, KCSetExt, KeyEv, KC};
 use derive_more::Display;
-use enumset::enum_set;
+
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Display)]
 #[display(fmt = "count: {}, pending: {}", kcm, pending_update)]
@@ -17,7 +17,7 @@ impl KeyAutomata {
     }
 
     pub fn valid(&mut self, kev: KeyEv) -> bool {
-        kev.key.iter().all(|x| self.kcm.peek_adjust(x, kev.press) > 0)
+        kev.key.iter().all(|x| self.kcm.peek_adjust(x, kev.press) >= 0)
     }
 
     pub fn key_event(&mut self, kev: KeyEv) -> Vec<CountMap<KC>> {

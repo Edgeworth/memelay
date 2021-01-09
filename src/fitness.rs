@@ -38,7 +38,6 @@ impl Fitness {
         let corpus = &self.env.corpus;
 
         let mut events_qmk = n.qmk.event(pev);
-        let asdf = events_qmk.clone();
         while !events_qmk.is_empty() && n.corpus_idx < corpus.len() {
             let mut events_us = n.us.event(corpus[n.corpus_idx]);
             while !events_us.is_empty() && !events_qmk.is_empty() {
@@ -51,10 +50,6 @@ impl Fitness {
             n.corpus_idx += 1;
         }
         if events_qmk.is_empty() {
-            println!(
-                "unified: qmk evs: {:?} key: {:?} press: {:?} phys: {}",
-                asdf, n.qmk.layout.layers[0].keys[pev.phys as usize], pev.press, pev.phys
-            );
             Some(n)
         } else {
             None
@@ -68,20 +63,24 @@ impl Problem<Layout> for Fitness {
     }
 
     fn solve(&self, l: &mut Layout) -> f32 {
-        const MIN: f32 = -1000000000.0;
         let mut q: BTreeSet<(OrderedFloat<f64>, Node<'_>)> = BTreeSet::new();
         let mut dist: HashMap<Node<'_>, OrderedFloat<f64>> = HashMap::new();
         let mut seen: HashSet<Node<'_>> = HashSet::new();
-        q.insert((0.0.into(), Node::new(l)));
+        let mut best = (0, OrderedFloat(0.0));
+        let st = Node::new(l);
+        q.insert((OrderedFloat(0.0), st.clone()));
+        dist.insert(st, OrderedFloat(0.0));
         while let Some(v) = q.first().cloned() {
             q.remove(&v);
             let n = v.1;
             seen.insert(n.clone());
-            println!("loop dijk: {}", n);
 
+            // Look for getting furthest through corpus, then for lowest cost.
+            if n.corpus_idx > best.0 || (n.corpus_idx == best.0 && dist[&n] < best.1) {
+                best = (n.corpus_idx, dist[&n])
+            }
             if n.corpus_idx == self.env.corpus.len() - 1 {
-                println!("Found end: {:?} {:?}", v.0, n);
-                return dist[&n].into_inner() as f32;
+                break;
             }
             // Try pressing and releasing physical keys.
             for &press in &[true, false] {
@@ -93,7 +92,6 @@ impl Problem<Layout> for Fitness {
                     }
 
                     if let Some(next) = self.unify(next, pev) {
-                        println!("found transition: {:?} {:?}", n.corpus_idx, next.corpus_idx);
                         if seen.contains(&next) {
                             continue;
                         }
@@ -108,7 +106,7 @@ impl Problem<Layout> for Fitness {
                 }
             }
         }
-        println!("could not find path");
-        MIN
+        let fitness = best.0 as f64 * 10000.0 - best.1.into_inner();
+        fitness as f32
     }
 }
