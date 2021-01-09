@@ -16,6 +16,7 @@ use crate::models::layer::Layout;
 use crate::prelude::*;
 use crate::types::{Finger, PhysEv};
 use radiate::{Config, Envionment, Genocide, ParentalCriteria, Population, SurvivalCriteria};
+use structopt::StructOpt;
 
 pub mod constants;
 mod fitness;
@@ -37,7 +38,7 @@ impl Env {
         Self { layout, cost, fing, corpus }
     }
 
-    pub fn format_solution(&self, l: Layout) -> String {
+    pub fn format_solution(&self, l: &Layout) -> String {
         let mut s = String::new();
         for (i, layer) in l.layers.iter().enumerate() {
             s += &format!("Layer {}\n", i);
@@ -57,6 +58,10 @@ impl Env {
         }
         s
     }
+
+    pub fn num_physical(&self) -> usize {
+        self.cost.len()
+    }
 }
 
 impl Envionment for Env {}
@@ -66,12 +71,21 @@ impl Default for Env {
     }
 }
 
+#[derive(Debug, StructOpt)]
+#[structopt(name = "hodlr", about = "Hodlr CLI")]
+struct Args {
+    #[structopt(short, long, default_value = "1000")]
+    pop_size: i32,
+}
+
 pub fn run() -> Result<()> {
-    let env = env_from_file("moonlander.cfg", "keys_notime.data")?;
+    let args = Args::from_args();
+    let species_target = args.pop_size / 10;
+    let env = env_from_file("moonlander.cfg", "keys_notime.data.bak")?;
     let (top, _) = Population::<Layout, Env, Fitness>::new()
+        .size(args.pop_size)
         .constrain(env.clone())
         .impose(Fitness::new(env.clone()))
-        .size(100)
         .populate_base()
         .dynamic_distance(true)
         .stagnation(10, vec![Genocide::KillWorst(0.9)])
@@ -80,17 +94,20 @@ pub fn run() -> Result<()> {
         .parental_criteria(ParentalCriteria::BiasedRandom)
         .configure(Config {
             inbreed_rate: 0.001,
-            crossover_rate: 0.75,
+            crossover_rate: 0.2,
             distance: 0.5,
-            species_target: 5,
+            species_target: species_target as usize,
         })
-        .run(|_, fit, num| {
+        .run(|model, fit, num| {
             println!("Generation: {} score: {:.3?}", num, fit);
-            num == 500
+            if num % 10 == 0 {
+                println!("{}", env.format_solution(model));
+            }
+            num == 20000
         })
         .map_err(|e| eyre!(e))?;
 
-    println!("Solution: {}", env.format_solution(top));
+    println!("Solution: {}", env.format_solution(&top));
 
     Ok(())
 }
