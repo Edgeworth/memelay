@@ -37,21 +37,28 @@ impl KeyAutomata {
         let mut evs = Vec::new();
 
         let prev = self.kcm.clone();
+        let mut mods_released = false;
+        let mut reg_changed = false;
         for kc in kev.key {
             if self.kcm.adjust_count(kc, kev.press) < 0 {
                 panic!("keycode released too many times: {:?}", kev);
+            }
+            if kc.is_mod() && !kev.press {
+                mods_released = true;
+            }
+            if !kc.is_mod() {
+                reg_changed = true;
             }
         }
 
         // Send a state update unless it was only extra modifier keys pressed,
         // in which case we can wait.
-        let mods_released = !self.kcm.mods().is_superset(&prev.mods());
         if mods_released && self.pending_update {
             evs.push(prev.clone());
         }
         self.pending_update = false;
 
-        if mods_released || self.kcm.regular() != prev.regular() {
+        if mods_released || reg_changed {
             evs.push(self.kcm.clone());
         } else if self.kcm != prev {
             self.pending_update = true;

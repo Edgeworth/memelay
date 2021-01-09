@@ -20,4 +20,4 @@ pub const MAX_SAME: usize = 2;
 // Maximum batch size
 pub const BATCH_SIZE: usize = 100;
 // How many batches to run per fitness solve.
-pub const NUM_BATCH: usize = 100;
+pub const NUM_BATCH: usize = 10;
