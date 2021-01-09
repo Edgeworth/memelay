@@ -5,19 +5,45 @@ use std::fs;
 use std::path::Path;
 use std::str::FromStr;
 
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+enum State {
+    Layout,
+    Cost,
+    Finger,
+}
+
 pub fn env_from_file<P: AsRef<Path>>(cfg_path: P, corpus_path: P) -> Result<Env> {
-    const ALLOWED: &str = "RLPMIT-.0123456789";
+    const ALLOWED: &str = "RLPMIT-.0123456789X";
+    let mut state = State::Layout;
+    let mut layout = String::new();
     let mut cost = Vec::new();
     let mut fing = Vec::new();
-    for i in fs::read_to_string(cfg_path)?.split(char::is_whitespace) {
-        let s: String = i.chars().filter(|&c| ALLOWED.contains(c)).collect();
-        if !s.is_empty() {
-            if let Ok(c) = s.parse::<f64>() {
-                cost.push(c);
-            } else if let Ok(f) = Finger::from_str(&s) {
-                fing.push(f);
-            } else {
-                return Err(eyre!("unknown cfg value {}", s));
+    for i in fs::read_to_string(cfg_path)?.lines() {
+        let mut updated = true;
+        match i.trim() {
+            "layout" => state = State::Layout,
+            "cost" => state = State::Cost,
+            "finger" => state = State::Finger,
+            _ => updated = false,
+        }
+        if updated {
+            continue;
+        }
+        if state == State::Layout {
+            layout += i;
+            layout.push('\n');
+        } else {
+            let items = i.split(char::is_whitespace).collect::<Vec<_>>();
+            for item in items.iter() {
+                let filtered: String = item.chars().filter(|&c| ALLOWED.contains(c)).collect();
+                if filtered.is_empty() {
+                    continue;
+                }
+                match state {
+                    State::Cost => cost.push(filtered.parse::<f64>().unwrap()),
+                    State::Finger => fing.push(Finger::from_str(&filtered).unwrap()),
+                    State::Layout => {}
+                };
             }
         }
     }
@@ -123,6 +149,6 @@ pub fn env_from_file<P: AsRef<Path>>(cfg_path: P, corpus_path: P) -> Result<Env>
     if cost.len() != fing.len() {
         Err(eyre!("{} costs does not match {} fingers", cost.len(), fing.len()))
     } else {
-        Ok(Env::new(cost, fing, corpus))
+        Ok(Env::new(layout, cost, fing, corpus))
     }
 }
