@@ -1,11 +1,12 @@
+use crate::models::count_map::CountMap;
 use crate::models::key_automata::KeyAutomata;
 use crate::models::layer::{Layer, Layout};
 use crate::models::Model;
-use crate::types::{rand_kcset, KCSet, KeyEv, PhysEv};
+use crate::types::{rand_kcset, KCSet, KeyEv, PhysEv, KC};
 use crate::Env;
+use derive_more::Display;
 use radiate::Genome;
 use rand::Rng;
-
 use std::sync::{Arc, RwLock};
 
 fn crossover_vec<T: Clone>(a: &[T], b: &[T], crosspoint: usize) -> Vec<T> {
@@ -63,16 +64,18 @@ impl Genome<Layout, Env> for Layout {
 }
 
 // TODO: model multiple active layers.
-#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Display)]
+#[display(fmt = "layer: {}, phys: {}, key state: {}", layer, phys, ks)]
 pub struct QmkModel<'a> {
     pub layout: &'a Layout, // TODO: undo layout
-    layer: usize,           // Current active layer.
+    phys: CountMap<u32>,
+    layer: usize, // Current active layer.
     ks: KeyAutomata,
 }
 
 impl<'a> QmkModel<'a> {
     pub fn new(layout: &'a Layout) -> Self {
-        Self { layout, layer: 0, ks: KeyAutomata::new() }
+        Self { layout, phys: CountMap::new(), layer: 0, ks: KeyAutomata::new() }
     }
 
     fn get_key(&self, phys: u32) -> KCSet {
@@ -82,13 +85,14 @@ impl<'a> QmkModel<'a> {
 
 impl<'a> Model for QmkModel<'a> {
     fn valid(&mut self, pev: PhysEv) -> bool {
-        // TODO: break Vec() in key automata out into holdmap or something class. use herefor phys
-        // keys too. in usmodel as well?
+        let peek = self.phys.peek_adjust(pev.phys, pev.press);
         let kev = KeyEv::new(self.get_key(pev.phys), pev.press);
-        self.ks.valid(kev)
+        // Don't allow pressing the same physical key multiple times.
+        self.ks.valid(kev) && (peek == 0 || peek == 1)
     }
 
-    fn event(&mut self, pev: PhysEv) -> Vec<KCSet> {
+    fn event(&mut self, pev: PhysEv) -> Vec<CountMap<KC>> {
+        self.phys.adjust_count(pev.phys, pev.press);
         self.ks.key_event(KeyEv::new(self.get_key(pev.phys), pev.press))
     }
 }

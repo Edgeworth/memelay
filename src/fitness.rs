@@ -4,11 +4,13 @@ use crate::models::us::USModel;
 use crate::models::Model;
 use crate::types::PhysEv;
 use crate::Env;
+use derive_more::Display;
 use ordered_float::OrderedFloat;
 use radiate::Problem;
 use std::collections::{BTreeSet, HashMap, HashSet};
 
-#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Display)]
+#[display(fmt = "Node, corpus idx {}:\n  qmk: {}\n  us: {}", corpus_idx, qmk, us)]
 pub struct Node<'a> {
     pub qmk: QmkModel<'a>, // Currently have this keyboard state.
     pub us: USModel,
@@ -50,8 +52,8 @@ impl Fitness {
         }
         if events_qmk.is_empty() {
             println!(
-                "unified: {:?} {:?} {:?}",
-                asdf, n.qmk.layout.layers[0].keys[pev.phys as usize], pev.press
+                "unified: qmk evs: {:?} key: {:?} press: {:?} phys: {}",
+                asdf, n.qmk.layout.layers[0].keys[pev.phys as usize], pev.press, pev.phys
             );
             Some(n)
         } else {
@@ -75,7 +77,7 @@ impl Problem<Layout> for Fitness {
             q.remove(&v);
             let n = v.1;
             seen.insert(n.clone());
-            println!("loop dijk");
+            println!("loop dijk: {}", n);
 
             if n.corpus_idx == self.env.corpus.len() - 1 {
                 println!("Found end: {:?} {:?}", v.0, n);

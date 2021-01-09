@@ -61,13 +61,13 @@ pub fn run() -> Result<()> {
             distance: 0.5,
             species_target: 5,
         })
-        .run(|model, fit, num| {
-            println!("Generation: {} score: {:.3?}\t{:?}", num, fit, model.to_string());
+        .run(|_, fit, num| {
+            println!("Generation: {} score: {:.3?}", num, fit);
             num == 2
         })
         .map_err(|e| eyre!(e))?;
 
-    println!("Solution: {:?}", top.to_string());
+    println!("Solution: {}", top);
 
     Ok(())
 }
