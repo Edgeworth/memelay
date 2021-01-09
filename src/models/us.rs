@@ -1,7 +1,9 @@
+use crate::models::count_map::CountMap;
 use crate::models::key_automata::KeyAutomata;
 use crate::models::layer::{Layer, Layout};
 use crate::models::Model;
 use crate::types::{KCSet, KeyEv, PhysEv, KC};
+use derive_more::Display;
 use enumset::enum_set;
 use lazy_static::lazy_static;
 
@@ -97,15 +99,17 @@ lazy_static! {
     pub static ref US_LAYOUT: Layout = Layout::new().with_layer(US_LAYER.clone());
 }
 
-#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Display)]
+#[display(fmt = "phys: {}, key state: {}", phys, ks)]
 pub struct USModel {
     layout: &'static Layout,
+    phys: CountMap<u32>,
     ks: KeyAutomata,
 }
 
 impl USModel {
     pub fn new() -> Self {
-        Self { layout: &US_LAYOUT, ks: KeyAutomata::new() }
+        Self { layout: &US_LAYOUT, phys: CountMap::new(), ks: KeyAutomata::new() }
     }
 
     fn get_key(&self, phys: u32) -> KCSet {
@@ -115,11 +119,14 @@ impl USModel {
 
 impl Model for USModel {
     fn valid(&mut self, pev: PhysEv) -> bool {
+        let peek = self.phys.peek_adjust(pev.phys, pev.press);
         let kev = KeyEv::new(self.get_key(pev.phys), pev.press);
-        self.ks.valid(kev)
+        // Don't allow pressing the same physical key multiple times.
+        self.ks.valid(kev) && (peek == 0 || peek == 1)
     }
 
-    fn event(&mut self, pev: PhysEv) -> Vec<KCSet> {
+    fn event(&mut self, pev: PhysEv) -> Vec<CountMap<KC>> {
+        self.phys.adjust_count(pev.phys, pev.press);
         self.ks.key_event(KeyEv::new(self.get_key(pev.phys), pev.press))
     }
 }
