@@ -15,3 +15,9 @@ pub const MAX_KCSET_MOD: usize = 1;
 pub const MAX_MODS_PER_LAYER: usize = 10;
 // Maximum of two of the same physical keys.
 pub const MAX_SAME: usize = 2;
+
+// Fitness config:
+// Maximum batch size
+pub const BATCH_SIZE: usize = 100;
+// How many batches to run per fitness solve.
+pub const NUM_BATCH: usize = 100;

@@ -24,6 +24,7 @@ impl Genome<Layout, Env> for Layout {
         _: Arc<RwLock<Env>>,
         crossover_rate: f32,
     ) -> Option<Layout> {
+        const MUTATE_KEY_PROB: f32 = 0.95;
         let mut r = rand::thread_rng();
         let layer_idx = r.gen_range(0..p1.layers.len());
         let key_idx = r.gen_range(0..p1.layers[layer_idx].keys.len());
@@ -43,7 +44,7 @@ impl Genome<Layout, Env> for Layout {
             Some(l)
         } else {
             let mut l = p1.clone();
-            if r.gen::<bool>() {
+            if r.gen::<f32>() < MUTATE_KEY_PROB {
                 // Mutate random key.
                 l.layers[layer_idx].keys[key_idx] = rand_kcset(&mut r);
             } else {
@@ -59,13 +60,25 @@ impl Genome<Layout, Env> for Layout {
         l
     }
 
-    fn distance(_one: &Layout, _two: &Layout, _: Arc<RwLock<Env>>) -> f32 {
-        // TODO: implement.
-        1.0
+    fn distance(p1: &Layout, p2: &Layout, env: Arc<RwLock<Env>>) -> f32 {
+        let env = env.read().unwrap();
+        let mut dist = 0.0;
+        let layer_min = p1.layers.len().min(p2.layers.len());
+        let layer_max = p1.layers.len().max(p2.layers.len());
+        dist += ((layer_max - layer_min) * env.num_physical()) as f64; // Different # layers is a big difference.
+        for i in 0..layer_min {
+            for j in 0..p1.layers[i].keys.len() {
+                if p1.layers[i].keys[j] != p2.layers[i].keys[j] {
+                    dist += 1.0;
+                }
+            }
+        }
+        // Radiate adjusts distance in +- 0.1 increments. Divide by 500 here so
+        // it's approximately in that range.
+        dist as f32 / 500.0
     }
-
     fn base(env: &mut Env) -> Layout {
-        let mut l = Layout::new().with_layer(Layer::rand_with_size(env.cost.len()));
+        let mut l = Layout::new().with_layer(Layer::rand_with_size(env.num_physical()));
         l.normalise();
         l
     }
