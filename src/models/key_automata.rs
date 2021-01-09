@@ -1,6 +1,6 @@
 use crate::prelude::*;
 use crate::types::{KCSet, KCSetExt, KeyEv, KC};
-use enumset::{enum_set, EnumSet};
+use enumset::enum_set;
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct KeyAutomata {

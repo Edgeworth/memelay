@@ -18,6 +18,7 @@ radiate = "*"
 rand = "*"
 strum = "*"
 strum_macros = "*"
+syn = "=1.0.57"
 
 [profile.release]
 debug = 1 # line tables only
