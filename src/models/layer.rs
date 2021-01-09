@@ -1,7 +1,5 @@
-use crate::prelude::*;
 use crate::types::{rand_kcset, KCSet};
 use derive_more::Display;
-use rand::Rng;
 
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Display)]
 #[display(fmt = "{:?}", keys)]

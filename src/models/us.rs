@@ -1,7 +1,6 @@
 use crate::models::key_automata::KeyAutomata;
 use crate::models::layer::{Layer, Layout};
 use crate::models::Model;
-use crate::prelude::*;
 use crate::types::{KCSet, KeyEv, PhysEv, KC};
 use enumset::enum_set;
 use lazy_static::lazy_static;

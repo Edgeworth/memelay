@@ -1,4 +1,4 @@
-use crate::types::{KCSet, KeyEv, PhysEv};
+use crate::types::{KCSet, PhysEv};
 
 pub mod key_automata;
 pub mod layer;

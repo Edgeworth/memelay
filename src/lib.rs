@@ -11,9 +11,10 @@
 )]
 
 use crate::fitness::Fitness;
-use crate::ingest::fitness_from_file;
+use crate::ingest::env_from_file;
 use crate::models::layer::Layout;
 use crate::prelude::*;
+use crate::types::{Finger, PhysEv};
 use radiate::{Config, Envionment, Genocide, ParentalCriteria, Population, SurvivalCriteria};
 
 mod fitness;
@@ -22,26 +23,32 @@ mod models;
 pub mod prelude;
 mod types;
 
-#[derive(Debug, Clone)]
-pub struct Env {}
+#[derive(Debug, Clone, PartialEq)]
+pub struct Env {
+    cost: Vec<f64>,
+    fing: Vec<Finger>,
+    corpus: Vec<PhysEv>,
+}
 
 impl Env {
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(cost: Vec<f64>, fing: Vec<Finger>, corpus: Vec<PhysEv>) -> Self {
+        Self { cost, fing, corpus }
     }
 }
 
 impl Envionment for Env {}
 impl Default for Env {
     fn default() -> Self {
-        Self::new()
+        Self::new(vec![], vec![], vec![])
     }
 }
 
 pub fn run() -> Result<()> {
+    let env = env_from_file("moonlander.cfg", "keys_notime.data")?;
     let (top, _) = Population::<Layout, Env, Fitness>::new()
-        .impose(fitness_from_file("moonlander.cfg", "keys_notime.data")?)
-        .size(100)
+        .constrain(env.clone())
+        .impose(Fitness::new(env))
+        .size(1)
         .populate_base()
         .dynamic_distance(true)
         .stagnation(10, vec![Genocide::KillWorst(0.9)])
@@ -56,7 +63,7 @@ pub fn run() -> Result<()> {
         })
         .run(|model, fit, num| {
             println!("Generation: {} score: {:.3?}\t{:?}", num, fit, model.to_string());
-            fit == 12.0 || num == 500
+            num == 2
         })
         .map_err(|e| eyre!(e))?;
 
