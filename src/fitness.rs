@@ -1,3 +1,4 @@
+use crate::constants::{BATCH_SIZE, NUM_BATCH};
 use crate::models::layer::Layout;
 use crate::models::qmk::QmkModel;
 use crate::models::us::USModel;
@@ -7,6 +8,7 @@ use crate::Env;
 use derive_more::Display;
 use ordered_float::OrderedFloat;
 use radiate::Problem;
+use rand::Rng;
 use std::collections::{BTreeSet, HashMap, HashSet};
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Display)]
@@ -14,12 +16,13 @@ use std::collections::{BTreeSet, HashMap, HashSet};
 pub struct Node<'a> {
     pub qmk: QmkModel<'a>, // Currently have this keyboard state.
     pub us: USModel,
+    pub start_idx: usize,
     pub corpus_idx: usize, // Processed this much of the corpus.
 }
 
 impl<'a> Node<'a> {
-    pub fn new(layout: &'a Layout) -> Self {
-        Self { qmk: QmkModel::new(layout), us: USModel::new(), corpus_idx: 0 }
+    pub fn new(layout: &'a Layout, corpus_idx: usize) -> Self {
+        Self { qmk: QmkModel::new(layout), us: USModel::new(), start_idx: corpus_idx, corpus_idx }
     }
 }
 
@@ -39,13 +42,16 @@ impl Fitness {
 
         let mut events_qmk = n.qmk.event(pev);
         while !events_qmk.is_empty() && n.corpus_idx < corpus.len() {
-            let mut events_us = n.us.event(corpus[n.corpus_idx]);
-            while !events_us.is_empty() && !events_qmk.is_empty() {
-                if events_us[0] != events_qmk[0] {
-                    return None;
+            // If we get a stray release, ignore and skip it.
+            if n.us.valid(corpus[n.corpus_idx]) {
+                let mut events_us = n.us.event(corpus[n.corpus_idx]);
+                while !events_us.is_empty() && !events_qmk.is_empty() {
+                    if events_us[0] != events_qmk[0] {
+                        return None;
+                    }
+                    events_us.remove(0);
+                    events_qmk.remove(0);
                 }
-                events_us.remove(0);
-                events_qmk.remove(0);
             }
             n.corpus_idx += 1;
         }
@@ -71,21 +77,15 @@ impl Fitness {
         }
         cost
     }
-}
 
-impl Problem<Layout> for Fitness {
-    fn empty() -> Self {
-        Self::new(Env::default())
-    }
-
-    fn solve(&self, l: &mut Layout) -> f32 {
+    fn path_fitness(&self, l: &Layout, start_idx: usize, block_size: usize) -> f64 {
         let mut q: BTreeSet<(OrderedFloat<f64>, Node<'_>)> = BTreeSet::new();
         let mut dist: HashMap<Node<'_>, OrderedFloat<f64>> = HashMap::new();
         let mut seen: HashSet<Node<'_>> = HashSet::new();
         let mut best = (0, OrderedFloat(0.0));
-        let st = Node::new(l);
+        let st = Node::new(l, start_idx);
         q.insert((OrderedFloat(0.0), st.clone()));
-        dist.insert(st, OrderedFloat(0.0));
+        dist.insert(st.clone(), OrderedFloat(0.0));
         while let Some(v) = q.first().cloned() {
             q.remove(&v);
             let n = v.1;
@@ -96,7 +96,7 @@ impl Problem<Layout> for Fitness {
             if n.corpus_idx > best.0 || (n.corpus_idx == best.0 && dist[&n] < best.1) {
                 best = (n.corpus_idx, dist[&n])
             }
-            if n.corpus_idx == self.env.corpus.len() - 1 {
+            if n.corpus_idx - n.start_idx >= block_size - 1 {
                 break;
             }
             // Try pressing and releasing physical keys.
@@ -123,9 +123,27 @@ impl Problem<Layout> for Fitness {
                 }
             }
         }
-        // println!("DONE");
-        let mut fitness = best.0 as f64; // Typing all corpus is top priority.
+        let mut fitness = (best.0 - st.start_idx) as f64; // Typing all corpus is top priority.
         fitness = fitness * 10000.0 - best.1.into_inner(); // Next is minimising cost.
+        fitness
+    }
+}
+
+impl Problem<Layout> for Fitness {
+    fn empty() -> Self {
+        Self::new(Env::default())
+    }
+
+    fn solve(&self, l: &mut Layout) -> f32 {
+        let block_size = BATCH_SIZE.min(self.env.corpus.len());
+        let mut shortest_path_cost_avg = 0.0;
+        let mut r = rand::thread_rng();
+        for _ in 0..NUM_BATCH {
+            let start_idx = r.gen_range(0..=(self.env.corpus.len() - block_size));
+            shortest_path_cost_avg += self.path_fitness(l, start_idx, block_size);
+        }
+        // println!("DONE: {} {}", best.0, st.start_idx);
+        let mut fitness = shortest_path_cost_avg / NUM_BATCH as f64;
         fitness = fitness * 1000.0 - self.layout_cost(l);
         fitness as f32
     }

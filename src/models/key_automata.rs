@@ -39,7 +39,7 @@ impl KeyAutomata {
         let prev = self.kcm.clone();
         for kc in kev.key {
             if self.kcm.adjust_count(kc, kev.press) < 0 {
-                panic!(eyre!("keycode released too many times"));
+                panic!("keycode released too many times: {:?}", kev);
             }
         }
 

@@ -14,12 +14,13 @@ lazy_static = "*"
 log = "*"
 ordered-float = "*"
 pretty_env_logger = "*"
-radiate = "*"
+radiate = {path = "radiate/radiate"}
 rand = "*"
+structopt = "*"
 strum = "*"
 strum_macros = "*"
 syn = "=1.0.57"
 
 [profile.release]
 debug = 1 # line tables only
-lto = false
+lto = true
