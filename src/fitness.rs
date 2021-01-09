@@ -81,19 +81,17 @@ impl Fitness {
 
     fn path_fitness(&self, l: &Layout, start_idx: usize, block_size: usize) -> f64 {
         let mut q: PriorityQueue<OrderedFloat<f64>, Node<'_>> = PriorityQueue::new();
-        let mut dist: HashMap<Node<'_>, OrderedFloat<f64>> = HashMap::new();
         let mut seen: HashSet<Node<'_>> = HashSet::new();
         let mut best = (0, OrderedFloat(0.0));
         let st = Node::new(l, start_idx);
         q.push(OrderedFloat(0.0), st.clone());
-        dist.insert(st.clone(), OrderedFloat(0.0));
         while let Some((d, n)) = q.pop() {
             seen.insert(n.clone());
 
             // println!("cost: {}, dijk: {}, seen: {}", -d, n, seen.len());
             // Look for getting furthest through corpus, then for lowest cost.
-            if n.corpus_idx > best.0 || (n.corpus_idx == best.0 && dist[&n] < best.1) {
-                best = (n.corpus_idx, dist[&n])
+            if n.corpus_idx > best.0 || (n.corpus_idx == best.0 && d < best.1) {
+                best = (n.corpus_idx, d)
             }
             if n.corpus_idx - n.start_idx >= block_size - 1 {
                 break;
@@ -113,11 +111,7 @@ impl Fitness {
                         }
 
                         let cost = -d + OrderedFloat(self.phys_cost(l, pev));
-                        let d = dist.entry(next.clone()).or_insert(cost);
-                        if cost <= *d {
-                            *d = cost;
-                            q.push(-cost, next);
-                        }
+                        q.push_increase(-cost, next);
                     }
                 }
             }
