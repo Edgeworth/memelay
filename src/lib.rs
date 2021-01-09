@@ -17,6 +17,7 @@ use crate::prelude::*;
 use crate::types::{Finger, PhysEv};
 use radiate::{Config, Envionment, Genocide, ParentalCriteria, Population, SurvivalCriteria};
 
+pub mod constants;
 mod fitness;
 mod ingest;
 mod models;
