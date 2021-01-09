@@ -1,3 +1,4 @@
+use crate::constants::{MAX_KEY_MOD_ASSIGN, MAX_KEY_REG_ASSIGN};
 use enumset::{enum_set, EnumSet, EnumSetType};
 use rand::seq::IteratorRandom;
 use strum::IntoEnumIterator;
@@ -35,16 +36,12 @@ impl KCSetExt for KCSet {
 }
 
 pub fn rand_kcset<R: rand::Rng + ?Sized>(r: &mut R) -> KCSet {
-    let mods = KC::iter().filter(|v| v.is_mod()).collect::<Vec<_>>();
-    let regs = KC::iter().filter(|v| !v.is_mod()).collect::<Vec<_>>();
-    let mods = mods
-        .iter()
-        .filter(|_| r.gen_bool(1.0 / mods.len() as f64))
-        .fold(enum_set!(), |a, &b| a | b);
-    let regs = regs
-        .iter()
-        .filter(|_| r.gen_bool(1.0 / regs.len() as f64))
-        .fold(enum_set!(), |a, &b| a | b);
+    let num_mod = r.gen_range(0..=MAX_KEY_MOD_ASSIGN);
+    let num_reg = r.gen_range(0..=MAX_KEY_REG_ASSIGN);
+    let mods = KC::iter().filter(|k| k.is_mod()).collect::<Vec<_>>();
+    let regs = KC::iter().filter(|k| !k.is_mod()).collect::<Vec<_>>();
+    let mods = mods.iter().choose_multiple(r, num_mod).iter().fold(enum_set!(), |a, &&b| a | b);
+    let regs = regs.iter().choose_multiple(r, num_reg).iter().fold(enum_set!(), |a, &&b| a | b);
     mods | regs
 }
 

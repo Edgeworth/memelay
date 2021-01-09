@@ -37,6 +37,10 @@ impl<T: Copy + PartialEq + Ord + fmt::Debug> CountMap<T> {
         self.c.iter().find(|x| x.0 == k).map(|x| x.1).unwrap_or(0)
     }
 
+    pub fn num_pressed(&self) -> usize {
+        self.c.len()
+    }
+
     pub fn peek_adjust(&self, k: T, press: bool) -> i32 {
         let count = press_to_count(press);
         self.get_count(k) + count
