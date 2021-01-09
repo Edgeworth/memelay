@@ -14,7 +14,8 @@ lazy_static = "*"
 log = "*"
 ordered-float = "*"
 pretty_env_logger = "*"
-radiate = {path = "radiate/radiate"}
+priority-queue = "*"
+radiate = "*"
 rand = "*"
 structopt = "*"
 strum = "*"
@@ -23,4 +24,4 @@ syn = "=1.0.57"
 
 [profile.release]
 debug = 1 # line tables only
-lto = true
+lto = false

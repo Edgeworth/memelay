@@ -74,8 +74,11 @@ impl Default for Env {
 #[derive(Debug, StructOpt)]
 #[structopt(name = "hodlr", about = "Hodlr CLI")]
 struct Args {
-    #[structopt(short, long, default_value = "1000")]
+    #[structopt(short, long, default_value = "100")]
     pop_size: i32,
+
+    #[structopt(short, long, default_value = "100")]
+    gen_runs: i32,
 }
 
 pub fn run() -> Result<()> {
@@ -103,7 +106,7 @@ pub fn run() -> Result<()> {
             if num % 10 == 0 {
                 println!("{}", env.format_solution(model));
             }
-            num == 20000
+            num == args.gen_runs
         })
         .map_err(|e| eyre!(e))?;
 
