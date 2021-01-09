@@ -1,8 +1,7 @@
 use crate::models::count_map::CountMap;
 use crate::prelude::*;
-use crate::types::{KCSet, KCSetExt, KeyEv, KC};
+use crate::types::{KeyEv, KC};
 use derive_more::Display;
-
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Display)]
 #[display(fmt = "count: {}, pending: {}", kcm, pending_update)]
@@ -55,6 +54,7 @@ impl KeyAutomata {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::types::KCSet;
     use enumset::enum_set;
 
     const NONE: KCSet = enum_set!();
