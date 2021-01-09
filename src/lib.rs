@@ -25,21 +25,44 @@ mod types;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Env {
+    layout: String,
     cost: Vec<f64>,
     fing: Vec<Finger>,
     corpus: Vec<PhysEv>,
 }
 
 impl Env {
-    pub fn new(cost: Vec<f64>, fing: Vec<Finger>, corpus: Vec<PhysEv>) -> Self {
-        Self { cost, fing, corpus }
+    pub fn new(layout: String, cost: Vec<f64>, fing: Vec<Finger>, corpus: Vec<PhysEv>) -> Self {
+        Self { layout, cost, fing, corpus }
+    }
+
+    pub fn format_solution(&self, l: Layout) -> String {
+        let mut s = String::new();
+        println!("{}", self.layout);
+        for (i, layer) in l.layers.iter().enumerate() {
+            s += &format!("Layer {}\n", i);
+            let mut idx = 0;
+            for c in self.layout.chars() {
+                if c == 'X' {
+                    let mut kstr = format!("{:?}", layer.keys[idx]);
+                    kstr.retain(|c| !r"() ".contains(c));
+                    let kstr = kstr.replace("EnumSet", "");
+                    s += &kstr;
+                    idx += 1;
+                } else {
+                    s.push(c);
+                }
+            }
+            s.push('\n');
+        }
+        s
     }
 }
 
 impl Envionment for Env {}
 impl Default for Env {
     fn default() -> Self {
-        Self::new(vec![], vec![], vec![])
+        Self::new("".to_owned(), vec![], vec![], vec![])
     }
 }
 
@@ -47,7 +70,7 @@ pub fn run() -> Result<()> {
     let env = env_from_file("moonlander.cfg", "keys_notime.data")?;
     let (top, _) = Population::<Layout, Env, Fitness>::new()
         .constrain(env.clone())
-        .impose(Fitness::new(env))
+        .impose(Fitness::new(env.clone()))
         .size(100)
         .populate_base()
         .dynamic_distance(true)
@@ -63,11 +86,11 @@ pub fn run() -> Result<()> {
         })
         .run(|_, fit, num| {
             println!("Generation: {} score: {:.3?}", num, fit);
-            num == 500
+            num == 2
         })
         .map_err(|e| eyre!(e))?;
 
-    println!("Solution: {}", top);
+    println!("Solution: {}", env.format_solution(top));
 
     Ok(())
 }
