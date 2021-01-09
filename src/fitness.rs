@@ -56,7 +56,11 @@ impl Fitness {
         }
     }
 
-    fn inherent_cost(&self, l: &Layout) -> f64 {
+    fn phys_cost(&self, _: &Layout, pev: PhysEv) -> f64 {
+        self.env.cost[pev.phys as usize]
+    }
+
+    fn layout_cost(&self, l: &Layout) -> f64 {
         // Penalise more layers.
         let mut cost = l.layers.len() as f64;
         for layer in l.layers.iter() {
@@ -87,6 +91,7 @@ impl Problem<Layout> for Fitness {
             let n = v.1;
             seen.insert(n.clone());
 
+            // println!("cost: {}, dijk: {}, seen: {}", v.0, n, seen.len());
             // Look for getting furthest through corpus, then for lowest cost.
             if n.corpus_idx > best.0 || (n.corpus_idx == best.0 && dist[&n] < best.1) {
                 best = (n.corpus_idx, dist[&n])
@@ -108,7 +113,7 @@ impl Problem<Layout> for Fitness {
                             continue;
                         }
 
-                        let cost = v.0 + 1.0.into(); // TODO: Cost function.
+                        let cost = v.0 + OrderedFloat(self.phys_cost(l, pev));
                         let d = dist.entry(next.clone()).or_insert(cost);
                         if cost <= *d {
                             *d = cost;
@@ -118,9 +123,10 @@ impl Problem<Layout> for Fitness {
                 }
             }
         }
+        // println!("DONE");
         let mut fitness = best.0 as f64; // Typing all corpus is top priority.
         fitness = fitness * 10000.0 - best.1.into_inner(); // Next is minimising cost.
-        fitness = fitness * 1000.0 - self.inherent_cost(l);
+        fitness = fitness * 1000.0 - self.layout_cost(l);
         fitness as f32
     }
 }
