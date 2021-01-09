@@ -1,13 +1,11 @@
-use crate::fitness::Fitness;
 use crate::models::us::US_LAYER;
-use crate::prelude::*;
-use crate::types::{Finger, KCSet, KeyEv, PhysEv, KC};
-use enumset::enum_set;
+use crate::types::{Finger, KCSet, PhysEv, KC};
+use crate::{prelude::*, Env};
 use std::fs;
 use std::path::Path;
 use std::str::FromStr;
 
-pub fn fitness_from_file<P: AsRef<Path>>(cfg_path: P, corpus_path: P) -> Result<Fitness> {
+pub fn env_from_file<P: AsRef<Path>>(cfg_path: P, corpus_path: P) -> Result<Env> {
     const ALLOWED: &str = "RLPMIT-.0123456789";
     let mut cost = Vec::new();
     let mut fing = Vec::new();
@@ -125,6 +123,6 @@ pub fn fitness_from_file<P: AsRef<Path>>(cfg_path: P, corpus_path: P) -> Result<
     if cost.len() != fing.len() {
         Err(eyre!("{} costs does not match {} fingers", cost.len(), fing.len()))
     } else {
-        Ok(Fitness::new(cost, fing, corpus))
+        Ok(Env::new(cost, fing, corpus))
     }
 }
