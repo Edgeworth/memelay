@@ -38,7 +38,6 @@ impl Env {
 
     pub fn format_solution(&self, l: Layout) -> String {
         let mut s = String::new();
-        println!("{}", self.layout);
         for (i, layer) in l.layers.iter().enumerate() {
             s += &format!("Layer {}\n", i);
             let mut idx = 0;
@@ -86,7 +85,7 @@ pub fn run() -> Result<()> {
         })
         .run(|_, fit, num| {
             println!("Generation: {} score: {:.3?}", num, fit);
-            num == 2
+            num == 500
         })
         .map_err(|e| eyre!(e))?;
 
