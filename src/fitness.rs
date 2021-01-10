@@ -93,7 +93,7 @@ impl Fitness {
             if n.corpus_idx > best.0 || (n.corpus_idx == best.0 && d < best.1) {
                 best = (n.corpus_idx, d)
             }
-            if n.corpus_idx - n.start_idx >= block_size - 1 {
+            if n.corpus_idx - n.start_idx >= block_size {
                 break;
             }
             // Try pressing and releasing physical keys.
