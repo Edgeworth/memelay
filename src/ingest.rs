@@ -1,5 +1,7 @@
+use enumset::enum_set;
+
 use crate::layout_eval::LayoutCfg;
-use crate::models::layout::Layout;
+use crate::models::layout::{Layer, Layout};
 use crate::models::us::US_LAYER;
 use crate::prelude::*;
 use crate::types::{Finger, KCSet, PhysEv, KC};
@@ -15,7 +17,26 @@ enum State {
 }
 
 pub fn load_layout<P: AsRef<Path>>(layout_path: P) -> Result<Layout> {
-    todo!()
+    const SKIP: &str = "|\\/";
+    let mut keys = Vec::new();
+    for i in fs::read_to_string(layout_path)?.lines() {
+        if i.starts_with("layer") {
+            continue;
+        }
+        for item in i.split(|c: char| c.is_whitespace() || SKIP.contains(c)) {
+            if item.is_empty() {
+                continue;
+            }
+            let mut kcset = enum_set!();
+            for kc in item.split('+') {
+                if kc != "-" {
+                    kcset |= KC::from_str(kc)?;
+                }
+            }
+            keys.push(kcset);
+        }
+    }
+    Ok(Layout::new().with_layer(Layer::new(&keys)))
 }
 
 pub fn load_layout_cfg<P: AsRef<Path>>(cfg_path: P) -> Result<LayoutCfg> {
@@ -39,8 +60,7 @@ pub fn load_layout_cfg<P: AsRef<Path>>(cfg_path: P) -> Result<LayoutCfg> {
             layout += i;
             layout.push('\n');
         } else {
-            let items = i.split(char::is_whitespace).collect::<Vec<_>>();
-            for item in items.iter() {
+            for item in i.split(char::is_whitespace) {
                 let filtered: String = item.chars().filter(|&c| ALLOWED.contains(c)).collect();
                 if filtered.is_empty() {
                     continue;

@@ -164,7 +164,14 @@ impl LayoutEval {
             }
         }
         // Typing all corpus is top priority, then cost to do so.
-        // println!("asdf {} {}", (best.0 - st.start_idx) as u128, block_size as u128);
+        // println!(
+        //     "asdf {} {} {}, stuck on: {:?}",
+        //     best.0 as u128,
+        //     st.start_idx,
+        //     block_size as u128,
+        //     st.us.get_key(self.corpus[best.0 as usize].phys)
+        // );
+
         let fitness = combine_fitness(0, (best.0 - st.start_idx) as u128, block_size as u128);
         let fitness = combine_cost(fitness, best.1.into_inner() as u128, block_size as u128 * 1000);
         fitness
