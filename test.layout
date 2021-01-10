@@ -1,8 +1,9 @@
-G	Backslash	A	Slash	Enter	V	N	|	E	End	L	Semicolon	Space		Delete
-R	O	LeftBracket	F|Shift		H	F7	|	Num8	Down	F	M	Q	X	Grave
-I	Quote	I	P	*	MediaMute	Num7	|	E|Shift|Alt		*Num3	W	T		Y
-MediaVolDown		C	Home	D	Comma		|		Backspace	MediaMute	J	Dot	Dot	S
-B	Num9	K	U				|			Y	Pause	A	Z	Num9
-					Shift	Comma	|	F11
-						/		\	Delete
-					Tab	|		|
+layer 0
+O	U	R	Backslash	N	Left	S	|	Num7	J	Num8+Alt+Super	Slash	C	I	H
+E	D	-	Left	P	A+Shift	Equals	|	Semicolon	L	NumLock	A	Shift	Quote	Num0
+Backspace	K	Num2	U	M	V	Home	|	W	Semicolon	G	Tab	-	End	F11
+Y	Z	Backslash	F10	Q	B		|		F8	End	App	Num5	Down	-
+Num7	Minus	T	O	Esc			|			F8	Enter	I	Space	R
+					Num1	Comma	|	X	Dot
+					-	/		\	Enter
+					W	|		|	F

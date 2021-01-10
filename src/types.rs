@@ -90,7 +90,7 @@ impl PhysEv {
 
 // Based on QMK keycodes.
 #[allow(clippy::derive_hash_xor_eq)]
-#[derive(Debug, Ord, PartialOrd, EnumSetType, EnumIter, Hash, Display)]
+#[derive(Debug, Ord, PartialOrd, EnumSetType, EnumIter, EnumString, Hash, Display)]
 pub enum KC {
     // Numbers:
     Num0,
