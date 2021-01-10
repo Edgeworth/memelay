@@ -92,10 +92,14 @@ impl Layout {
 mod tests {
     use super::*;
     use crate::types::KC;
+    use lazy_static::lazy_static;
 
     const CTRL_C: KCSet = enum_set!(KC::C | KC::Ctrl);
     const C: KCSet = enum_set!(KC::C);
-    const CNST: Constants = Constants { max_phys_duplicate_per_layer: 1, ..Constants::new() };
+    lazy_static! {
+        static ref CNST: Constants =
+            Constants { max_phys_duplicate_per_layer: 1, ..Default::default() };
+    }
 
     #[test]
     fn normalise_mod() {
