@@ -12,7 +12,7 @@
 
 use crate::env::Env;
 use crate::fitness::Fitness;
-use crate::models::layer::Layout;
+use crate::models::layout::Layout;
 use crate::prelude::*;
 use env::Constants;
 use radiate::{Config, Genocide, ParentalCriteria, Population, SurvivalCriteria};
@@ -21,6 +21,7 @@ use structopt::StructOpt;
 
 mod env;
 mod fitness;
+mod genome;
 mod ingest;
 mod models;
 pub mod prelude;
