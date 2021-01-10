@@ -4,7 +4,7 @@ use crate::types::{PhysEv, KC};
 
 mod count_map;
 pub mod key_automata;
-pub mod layer;
+pub mod layout;
 pub mod qmk;
 pub mod us;
 

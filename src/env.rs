@@ -1,5 +1,5 @@
 use crate::ingest::{load_corpus, load_layout_cfg};
-use crate::models::layer::Layout;
+use crate::models::layout::Layout;
 use crate::prelude::*;
 use crate::types::{Finger, PhysEv};
 use crate::Args;
@@ -66,7 +66,7 @@ pub struct Constants {
 
     #[structopt(
         long,
-        default_value = "70,4,4,2,2",
+        default_value = "100,4,3,2,1",
         use_delimiter = true,
         help = "Weight to assign k mod keycodes to a key, where k is in the index."
     )]

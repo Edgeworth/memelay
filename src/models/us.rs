@@ -1,7 +1,7 @@
 use crate::env::Constants;
 use crate::models::count_map::CountMap;
 use crate::models::key_automata::KeyAutomata;
-use crate::models::layer::{Layer, Layout};
+use crate::models::layout::{Layer, Layout};
 use crate::models::Model;
 use crate::types::{KCSet, KeyEv, PhysEv, KC};
 use derive_more::Display;

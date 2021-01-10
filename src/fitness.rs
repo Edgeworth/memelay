@@ -1,4 +1,4 @@
-use crate::models::layer::Layout;
+use crate::models::layout::Layout;
 use crate::models::qmk::QmkModel;
 use crate::models::us::USModel;
 use crate::models::Model;
