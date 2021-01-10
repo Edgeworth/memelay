@@ -1,5 +1,6 @@
 use enumset::{enum_set, EnumSet, EnumSetType};
 use rand::seq::IteratorRandom;
+use rand_distr::{Distribution, WeightedAliasIndex};
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, EnumString};
 
@@ -37,8 +38,10 @@ impl KCSetExt for KCSet {
 }
 
 pub fn rand_kcset<R: rand::Rng + ?Sized>(r: &mut R, cnst: &Constants) -> KCSet {
-    let num_mod = r.gen_range(0..=cnst.max_mod_assigned);
-    let num_reg = r.gen_range(0..=cnst.max_reg_assigned);
+    let mod_idx = WeightedAliasIndex::new(cnst.num_mod_assigned_weights.clone()).unwrap();
+    let reg_idx = WeightedAliasIndex::new(cnst.num_reg_assigned_weights.clone()).unwrap();
+    let num_mod = mod_idx.sample(r);
+    let num_reg = reg_idx.sample(r);
     let mods = KC::iter().filter(|k| k.is_mod()).collect::<Vec<_>>();
     let regs = KC::iter().filter(|k| !k.is_mod()).collect::<Vec<_>>();
     let mods = mods.iter().choose_multiple(r, num_mod).iter().fold(enum_set!(), |a, &&b| a | b);

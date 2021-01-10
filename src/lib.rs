@@ -52,6 +52,11 @@ pub fn run() -> Result<()> {
     let env = Env::from_args(Args::from_args())?;
     let species_target = env.cnst.pop_size / 10;
 
+    // let mut layout = Layout::base(&mut env);
+    // println!("Rand layout: {}", env.layout_cfg.format_solution(&layout));
+
+    // return Ok(());
+
     let (top, _) = Population::<Layout, Env, Fitness>::new()
         .size(env.cnst.pop_size as i32)
         .constrain(env.clone())
