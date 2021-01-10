@@ -1,4 +1,4 @@
-use crate::env::LayoutCfg;
+use crate::layout_eval::LayoutCfg;
 use crate::models::us::US_LAYER;
 use crate::prelude::*;
 use crate::types::{Finger, KCSet, PhysEv, KC};

@@ -1,9 +1,3 @@
-use crate::ingest::{load_corpus, load_layout_cfg};
-use crate::models::layout::Layout;
-use crate::prelude::*;
-use crate::types::{Finger, PhysEv};
-use crate::Args;
-use radiate::Envionment;
 use structopt::StructOpt;
 
 #[derive(Debug, Clone, StructOpt, Default, PartialEq)]
@@ -65,7 +59,7 @@ pub struct Constants {
         use_delimiter = true,
         help = "Weight to assign k regular keycodes to a key, where k is in the index."
     )]
-    pub num_reg_assigned_weights: Vec<f32>,
+    pub num_reg_assigned_weights: Vec<f64>,
 
     #[structopt(
         long,
@@ -73,7 +67,7 @@ pub struct Constants {
         use_delimiter = true,
         help = "Weight to assign k mod keycodes to a key, where k is in the index."
     )]
-    pub num_mod_assigned_weights: Vec<f32>,
+    pub num_mod_assigned_weights: Vec<f64>,
 
     #[structopt(
         long,
@@ -81,7 +75,7 @@ pub struct Constants {
         use_delimiter = true,
         help = "Weights to roulette each crossover strategy."
     )]
-    pub crossover_strat_weights: Vec<f32>,
+    pub crossover_strat_weights: Vec<f64>,
 
     #[structopt(
         long,
@@ -89,65 +83,5 @@ pub struct Constants {
         use_delimiter = true,
         help = "Weights to roulette each mutate strategy."
     )]
-    pub mutate_strat_weights: Vec<f32>,
-}
-
-#[derive(Debug, Clone, Default, PartialEq)]
-pub struct LayoutCfg {
-    pub layout: String,
-    pub cost: Vec<f64>,
-    pub fing: Vec<Finger>,
-}
-
-impl LayoutCfg {
-    pub fn format_solution(&self, l: &Layout) -> String {
-        let mut s = String::new();
-        for (i, layer) in l.layers.iter().enumerate() {
-            s += &format!("Layer {}\n", i);
-            let mut idx = 0;
-            for c in self.layout.chars() {
-                if c == 'X' {
-                    let mut kstr = format!("{:?}", layer.keys[idx]);
-                    kstr.retain(|c| !r"() ".contains(c));
-                    let kstr = kstr.replace("EnumSet", "");
-                    s += &kstr;
-                    idx += 1;
-                } else {
-                    s.push(c);
-                }
-            }
-            s.push('\n');
-        }
-        s
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Env {
-    pub layout_cfg: LayoutCfg,
-    pub corpus: Vec<PhysEv>,
-    pub cnst: Constants,
-}
-
-impl Env {
-    pub fn from_args(args: Args) -> Result<Self> {
-        let layout_cfg = load_layout_cfg(&args.cfg_path)?;
-        let corpus = load_corpus(&args.corpus_path)?;
-        Ok(Self { layout_cfg, corpus, cnst: args.cnst })
-    }
-
-    pub fn num_physical(&self) -> usize {
-        self.layout_cfg.cost.len()
-    }
-}
-
-impl Envionment for Env {}
-impl Default for Env {
-    fn default() -> Self {
-        Self {
-            layout_cfg: Default::default(),
-            corpus: Default::default(),
-            cnst: Default::default(),
-        }
-    }
+    pub mutate_strat_weights: Vec<f64>,
 }
