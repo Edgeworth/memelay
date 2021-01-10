@@ -1,7 +1,6 @@
 use crate::constants::Constants;
-use crate::ga::runner::Ctx;
-use crate::ga::util::crossover_vec;
-use crate::ga::Evaluator;
+use crate::ga::util::{combine_cost, combine_fitness, crossover_vec};
+use crate::ga::{Cfg, Evaluator};
 use crate::ingest::{load_corpus, load_layout_cfg};
 use crate::models::layout::Layout;
 use crate::models::qmk::QmkModel;
@@ -44,13 +43,16 @@ impl LayoutCfg {
     pub fn format(&self, l: &Layout) -> String {
         let mut s = String::new();
         for (i, layer) in l.layers.iter().enumerate() {
-            s += &format!("Layer {}\n", i);
+            s += &format!("layer {}\n", i);
             let mut idx = 0;
             for c in self.layout.chars() {
                 if c == 'X' {
                     let mut kstr = format!("{:?}", layer.keys[idx]);
                     kstr.retain(|c| !r"() ".contains(c));
-                    let kstr = kstr.replace("EnumSet", "");
+                    kstr = kstr.replace("EnumSet", "").replace("|", "+");
+                    if kstr.is_empty() {
+                        kstr = "-".to_owned();
+                    }
                     s += &kstr;
                     idx += 1;
                 } else {
@@ -111,19 +113,19 @@ impl LayoutEval {
         self.layout_cfg.cost[pev.phys as usize]
     }
 
-    fn layout_cost(&self, l: &Layout) -> f64 {
+    fn layout_cost(&self, l: &Layout) -> u128 {
         // Penalise more layers.
-        let mut cost = l.layers.len() as f64;
+        let mut cost = l.layers.len() as u128;
         for layer in l.layers.iter() {
             for kcset in layer.keys.iter() {
                 // Penalise more keys.
-                cost += kcset.len() as f64;
+                cost += kcset.len() as u128;
             }
         }
         cost
     }
 
-    fn path_fitness(&self, l: &Layout, start_idx: usize, block_size: usize) -> f64 {
+    fn path_fitness(&self, l: &Layout, start_idx: usize, block_size: usize) -> u128 {
         let mut q: PriorityQueue<OrderedFloat<f64>, Node<'_>> = PriorityQueue::new();
         let mut seen: HashSet<Node<'_>> = HashSet::new();
         let mut best = (0, OrderedFloat(0.0));
@@ -161,24 +163,26 @@ impl LayoutEval {
                 }
             }
         }
-        let mut fitness = (best.0 - st.start_idx) as f64; // Typing all corpus is top priority.
-        fitness = fitness * 10000.0 - best.1.into_inner(); // Next is minimising cost.
+        // Typing all corpus is top priority, then cost to do so.
+        // println!("asdf {} {}", (best.0 - st.start_idx) as u128, block_size as u128);
+        let fitness = combine_fitness(0, (best.0 - st.start_idx) as u128, block_size as u128);
+        let fitness = combine_cost(fitness, best.1.into_inner() as u128, block_size as u128 * 1000);
         fitness
     }
 }
 
 impl Evaluator for LayoutEval {
     type T = Layout;
-    type F = f64;
+    type F = u128;
 
-    fn reproduce(&mut self, ctx: &Ctx, a: &Layout, b: &Layout) -> Layout {
+    fn reproduce(&self, cfg: &Cfg, a: &Layout, b: &Layout) -> Layout {
         let mut r = rand::thread_rng();
         let layer_idx = r.gen_range(0..a.layers.len());
         let key_idx = r.gen_range(0..a.layers[layer_idx].keys.len());
         let layer_idx2 = r.gen_range(0..a.layers.len());
         let key_idx2 = r.gen_range(0..a.layers[layer_idx2].keys.len());
 
-        let mut l = if r.gen::<f64>() < ctx.xover_rate {
+        let mut l = if r.gen::<f64>() < cfg.xover_rate {
             let idx = WeightedAliasIndex::new(self.cnst.crossover_strat_weights.clone()).unwrap();
             let mut l = Layout::new();
 
@@ -238,21 +242,21 @@ impl Evaluator for LayoutEval {
         l
     }
 
-    fn fitness(&mut self, _ctx: &Ctx, a: &Layout) -> f64 {
+    fn fitness(&self, _: &Cfg, a: &Layout) -> u128 {
         let block_size = self.cnst.batch_size.min(self.corpus.len());
-        let mut shortest_path_cost_avg = 0.0;
+        let mut shortest_path_cost_avg = 0;
         let mut r = rand::thread_rng();
         for _ in 0..self.cnst.batch_num {
             let start_idx = r.gen_range(0..=(self.corpus.len() - block_size));
             shortest_path_cost_avg += self.path_fitness(a, start_idx, block_size);
         }
-        // println!("DONE: {} {}", best.0, st.start_idx);
-        let mut fitness = shortest_path_cost_avg / self.cnst.batch_num as f64;
-        fitness = fitness * 1000.0 - self.layout_cost(a);
+        let fitness = shortest_path_cost_avg / self.cnst.batch_num as u128;
+        // println!("DONE: {}", fitness);
+        let fitness = combine_cost(fitness, self.layout_cost(a), 1000);
         fitness
     }
 
-    fn distance(&mut self, _ctx: &Ctx, a: &Layout, b: &Layout) -> f64 {
+    fn distance(&self, _: &Cfg, a: &Layout, b: &Layout) -> f64 {
         let mut dist = 0.0;
         let layer_min = a.layers.len().min(b.layers.len());
         let layer_max = a.layers.len().max(b.layers.len());

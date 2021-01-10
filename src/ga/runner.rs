@@ -1,4 +1,7 @@
+use rand_distr::{Distribution, WeightedAliasIndex};
+
 use crate::ga::{Cfg, Evaluator};
+use crate::prelude::*;
 
 #[derive(Debug, Clone, PartialOrd, PartialEq)]
 pub struct Individual<E: Evaluator> {
@@ -7,25 +10,73 @@ pub struct Individual<E: Evaluator> {
     pub species: usize,
 }
 
-#[derive(Debug, Clone, PartialOrd, PartialEq)]
-pub struct Ctx {
-    pub xover_rate: f64,
+pub struct Generation<E: Evaluator> {
+    mems: Vec<Individual<E>>,
 }
 
-#[derive(Debug, Clone, PartialOrd, PartialEq)]
+impl<E: Evaluator> Generation<E> {
+    pub fn from_states(states: Vec<E::T>) -> Self {
+        let mems = states
+            .into_iter()
+            .map(|state| Individual { state, fitness: Default::default(), species: 0 })
+            .collect();
+        Self { mems }
+    }
+
+    fn evaluate(&mut self, cfg: &Cfg, eval: &E) {
+        self.mems.par_iter_mut().for_each(|mem| {
+            let f = eval.fitness(cfg, &mem.state);
+            mem.fitness = f;
+        });
+        self.mems.par_sort_by(|a, b| b.fitness.partial_cmp(&a.fitness).unwrap());
+    }
+
+    fn get_best(&self) -> Individual<E> {
+        self.mems[0].clone()
+    }
+
+    fn get_top_proportion(&self, prop: f64) -> Vec<Individual<E>> {
+        let num = self.mems.len() as f64 * prop;
+        self.mems.iter().cloned().take(num as usize).collect()
+    }
+
+    fn create_next_gen(&self, eval: &E, cfg: &Cfg) -> Generation<E> {
+        // Pick survivors:
+        let survivors = self.get_top_proportion(cfg.top_prop);
+
+        // Reproduce:
+        let mut new_states = (survivors.len()..self.mems.len())
+            .into_par_iter()
+            .map(|_| {
+                let mut r = rand::thread_rng();
+                let idx =
+                    WeightedAliasIndex::new(self.mems.iter().map(|mem| mem.fitness).collect())
+                        .unwrap();
+                let a = &self.mems[idx.sample(&mut r)];
+                let b = &self.mems[idx.sample(&mut r)];
+                eval.reproduce(cfg, &a.state, &b.state)
+            })
+            .collect::<Vec<_>>();
+        new_states.extend(survivors.into_iter().map(|mem| mem.state));
+        Self::from_states(new_states)
+    }
+}
+
 pub struct Runner<E: Evaluator> {
     eval: E,
     cfg: Cfg,
+    gen: Generation<E>,
 }
 
 impl<E: Evaluator> Runner<E> {
-    pub fn new(eval: E, cfg: Cfg) -> Self {
-        Self { eval, cfg }
+    pub fn new(eval: E, cfg: Cfg, gen: Generation<E>) -> Self {
+        Self { eval, cfg, gen }
     }
 
     pub fn run_iter(&mut self) -> Individual<E> {
-        todo!()
+        self.gen.evaluate(&self.cfg, &self.eval);
+        let best = self.gen.get_best();
+        self.gen = self.gen.create_next_gen(&self.eval, &self.cfg);
+        best
     }
-
-    fn evalute(&mut self) {}
 }

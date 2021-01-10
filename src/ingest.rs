@@ -1,4 +1,5 @@
 use crate::layout_eval::LayoutCfg;
+use crate::models::layout::Layout;
 use crate::models::us::US_LAYER;
 use crate::prelude::*;
 use crate::types::{Finger, KCSet, PhysEv, KC};
@@ -11,6 +12,10 @@ enum State {
     Layout,
     Cost,
     Finger,
+}
+
+pub fn load_layout<P: AsRef<Path>>(layout_path: P) -> Result<Layout> {
+    todo!()
 }
 
 pub fn load_layout_cfg<P: AsRef<Path>>(cfg_path: P) -> Result<LayoutCfg> {
