@@ -36,7 +36,7 @@ pub struct Constants {
 
     #[structopt(
         long,
-        default_value = "10",
+        default_value = "20",
         help = "Maximum number of physical keys with mod keycodes per layer"
     )]
     pub max_phys_mod_per_layer: usize,
@@ -51,41 +51,42 @@ pub struct Constants {
     #[structopt(
         long,
         default_value = "1",
-        help = "Maximum number of regular keycodes assigned to a key"
-    )]
-    pub max_reg_assigned: usize,
-
-    #[structopt(
-        long,
-        default_value = "4",
-        help = "Maximum number of mod keycodes assigned to a key"
-    )]
-    pub max_mod_assigned: usize,
-
-    #[structopt(
-        long,
-        default_value = "1",
         help = "Maximum number of duplicate mod keycodes pressed"
     )]
     pub max_mod_pressed: usize,
-}
 
-impl Constants {
-    pub const fn new() -> Self {
-        Self {
-            pop_size: 0,
-            runs: 0,
-            batch_size: 0,
-            batch_num: 0,
-            max_phys_pressed: 0,
-            max_phys_idle: 0,
-            max_phys_mod_per_layer: 0,
-            max_phys_duplicate_per_layer: 0,
-            max_reg_assigned: 0,
-            max_mod_assigned: 0,
-            max_mod_pressed: 0,
-        }
-    }
+    // Roulette distributions for controlling randomness in various places:
+    #[structopt(
+        long,
+        default_value = "30,70",
+        use_delimiter = true,
+        help = "Weight to assign k regular keycodes to a key, where k is in the index."
+    )]
+    pub num_reg_assigned_weights: Vec<f32>,
+
+    #[structopt(
+        long,
+        default_value = "70,4,4,2,2",
+        use_delimiter = true,
+        help = "Weight to assign k mod keycodes to a key, where k is in the index."
+    )]
+    pub num_mod_assigned_weights: Vec<f32>,
+
+    #[structopt(
+        long,
+        default_value = "1,10",
+        use_delimiter = true,
+        help = "Weights to roulette each crossover strategy."
+    )]
+    pub crossover_strat_weights: Vec<f32>,
+
+    #[structopt(
+        long,
+        default_value = "10,1,20",
+        use_delimiter = true,
+        help = "Weights to roulette each mutate strategy."
+    )]
+    pub mutate_strat_weights: Vec<f32>,
 }
 
 #[derive(Debug, Clone, Default, PartialEq)]

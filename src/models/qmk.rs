@@ -8,6 +8,7 @@ use crate::Env;
 use derive_more::Display;
 use radiate::Genome;
 use rand::Rng;
+use rand_distr::{Distribution, WeightedAliasIndex};
 use std::sync::{Arc, RwLock};
 
 fn crossover_vec<T: Clone>(a: &[T], b: &[T], crosspoint: usize) -> Vec<T> {
@@ -24,34 +25,58 @@ impl Genome<Layout, Env> for Layout {
         env: Arc<RwLock<Env>>,
         crossover_rate: f32,
     ) -> Option<Layout> {
-        const MUTATE_KEY_PROB: f32 = 0.95;
         let mut r = rand::thread_rng();
         let env = env.read().unwrap();
         let layer_idx = r.gen_range(0..p1.layers.len());
         let key_idx = r.gen_range(0..p1.layers[layer_idx].keys.len());
+        let layer_idx2 = r.gen_range(0..p1.layers.len());
+        let key_idx2 = r.gen_range(0..p1.layers[layer_idx2].keys.len());
 
         let mut l = if r.gen::<f32>() < crossover_rate {
+            let crossover_idx =
+                WeightedAliasIndex::new(env.cnst.crossover_strat_weights.clone()).unwrap();
             let mut l = Layout::new();
-            if r.gen::<bool>() {
-                // Crossover on layer level.
-                let crosspoint = r.gen_range(0..p1.layers.len());
-                l.layers = crossover_vec(&p1.layers, &p2.layers, crosspoint);
-            } else {
-                // Crossover on keys level;
-                l.layers = p1.layers.clone();
-                l.layers[layer_idx].keys =
-                    crossover_vec(&p1.layers[layer_idx].keys, &p2.layers[layer_idx].keys, key_idx);
+
+            match crossover_idx.sample(&mut r) {
+                0 => {
+                    // Crossover on layer level.
+                    let crosspoint = r.gen_range(0..p1.layers.len());
+                    l.layers = crossover_vec(&p1.layers, &p2.layers, crosspoint);
+                }
+                1 => {
+                    // Crossover on keys level;
+                    l.layers = p1.layers.clone();
+                    l.layers[layer_idx].keys = crossover_vec(
+                        &p1.layers[layer_idx].keys,
+                        &p2.layers[layer_idx].keys,
+                        key_idx,
+                    );
+                }
+                _ => panic!("unknown crossover strategy"),
             }
             Some(l)
         } else {
+            let crossover_idx =
+                WeightedAliasIndex::new(env.cnst.mutate_strat_weights.clone()).unwrap();
             let mut l = p1.clone();
-            if r.gen::<f32>() < MUTATE_KEY_PROB {
-                // Mutate random key.
-                l.layers[layer_idx].keys[key_idx] = rand_kcset(&mut r, &env.cnst);
-            } else {
-                // Swap random layer.
-                let swap_idx = r.gen_range(0..p1.layers.len());
-                l.layers.swap(layer_idx, swap_idx);
+
+            match crossover_idx.sample(&mut r) {
+                0 => {
+                    // Mutate random key.
+                    l.layers[layer_idx].keys[key_idx] = rand_kcset(&mut r, &env.cnst);
+                }
+                1 => {
+                    // Swap random layer.
+                    let swap_idx = r.gen_range(0..p1.layers.len());
+                    l.layers.swap(layer_idx, swap_idx);
+                }
+                2 => {
+                    // Swap random key
+                    let tmp = l.layers[layer_idx].keys[key_idx];
+                    l.layers[layer_idx].keys[key_idx] = l.layers[layer_idx2].keys[key_idx2];
+                    l.layers[layer_idx2].keys[key_idx2] = tmp;
+                }
+                _ => panic!("unknown crossover strategy"),
             }
             Some(l)
         };
