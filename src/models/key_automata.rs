@@ -1,6 +1,5 @@
-use crate::constants::MAX_KCSET_MOD;
+use crate::env::Constants;
 use crate::models::count_map::CountMap;
-use crate::prelude::*;
 use crate::types::{KeyEv, KC};
 use derive_more::Display;
 
@@ -16,10 +15,10 @@ impl KeyAutomata {
         Self { kcm: CountMap::new(), pending_update: false }
     }
 
-    pub fn valid(&mut self, kev: KeyEv) -> bool {
+    pub fn valid(&mut self, kev: KeyEv, cnst: &Constants) -> bool {
         for kc in kev.key.iter() {
             let peek = self.kcm.peek_adjust(kc, kev.press);
-            if kc.is_mod() && peek > MAX_KCSET_MOD as i32 {
+            if kc.is_mod() && peek > cnst.max_mod_pressed as i32 {
                 return false;
             }
             if peek < 0 {

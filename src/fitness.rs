@@ -1,4 +1,3 @@
-use crate::constants::{BATCH_SIZE, NUM_BATCH};
 use crate::models::layer::Layout;
 use crate::models::qmk::QmkModel;
 use crate::models::us::USModel;
@@ -10,7 +9,7 @@ use ordered_float::OrderedFloat;
 use priority_queue::PriorityQueue;
 use radiate::Problem;
 use rand::Rng;
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::HashSet;
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Display)]
 #[display(fmt = "Node, corpus idx {}:\n  qmk: {}\n  us: {}", corpus_idx, qmk, us)]
@@ -41,11 +40,11 @@ impl Fitness {
     fn unify<'a>(&self, mut n: Node<'a>, pev: PhysEv) -> Option<Node<'a>> {
         let corpus = &self.env.corpus;
 
-        let mut events_qmk = n.qmk.event(pev);
+        let mut events_qmk = n.qmk.event(pev, &self.env.cnst);
         while !events_qmk.is_empty() && n.corpus_idx < corpus.len() {
             // If we get a stray release, ignore and skip it.
-            if n.us.valid(corpus[n.corpus_idx]) {
-                let mut events_us = n.us.event(corpus[n.corpus_idx]);
+            if n.us.valid(corpus[n.corpus_idx], &self.env.cnst) {
+                let mut events_us = n.us.event(corpus[n.corpus_idx], &self.env.cnst);
                 while !events_us.is_empty() && !events_qmk.is_empty() {
                     if events_us[0] != events_qmk[0] {
                         return None;
@@ -64,7 +63,7 @@ impl Fitness {
     }
 
     fn phys_cost(&self, _: &Layout, pev: PhysEv) -> f64 {
-        self.env.cost[pev.phys as usize]
+        self.env.layout_cfg.cost[pev.phys as usize]
     }
 
     fn layout_cost(&self, l: &Layout) -> f64 {
@@ -86,6 +85,7 @@ impl Fitness {
         let st = Node::new(l, start_idx);
         q.push(OrderedFloat(0.0), st.clone());
         while let Some((d, n)) = q.pop() {
+            let d = -d;
             seen.insert(n.clone());
 
             // println!("cost: {}, dijk: {}, seen: {}", -d, n, seen.len());
@@ -101,7 +101,7 @@ impl Fitness {
                 for i in 0..l.num_physical() {
                     let mut next = n.clone();
                     let pev = PhysEv::new(i as u32, press);
-                    if !next.qmk.valid(pev) {
+                    if !next.qmk.valid(pev, &self.env.cnst) {
                         continue;
                     }
 
@@ -110,7 +110,7 @@ impl Fitness {
                             continue;
                         }
 
-                        let cost = -d + OrderedFloat(self.phys_cost(l, pev));
+                        let cost = d + OrderedFloat(self.phys_cost(l, pev));
                         q.push_increase(-cost, next);
                     }
                 }
@@ -128,15 +128,15 @@ impl Problem<Layout> for Fitness {
     }
 
     fn solve(&self, l: &mut Layout) -> f32 {
-        let block_size = BATCH_SIZE.min(self.env.corpus.len());
+        let block_size = self.env.cnst.batch_size.min(self.env.corpus.len());
         let mut shortest_path_cost_avg = 0.0;
         let mut r = rand::thread_rng();
-        for _ in 0..NUM_BATCH {
+        for _ in 0..self.env.cnst.batch_num {
             let start_idx = r.gen_range(0..=(self.env.corpus.len() - block_size));
             shortest_path_cost_avg += self.path_fitness(l, start_idx, block_size);
         }
         // println!("DONE: {} {}", best.0, st.start_idx);
-        let mut fitness = shortest_path_cost_avg / NUM_BATCH as f64;
+        let mut fitness = shortest_path_cost_avg / self.env.cnst.batch_num as f64;
         fitness = fitness * 1000.0 - self.layout_cost(l);
         fitness as f32
     }

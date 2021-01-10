@@ -1,3 +1,4 @@
+use crate::env::Constants;
 use crate::models::count_map::CountMap;
 use crate::models::key_automata::KeyAutomata;
 use crate::models::layer::{Layer, Layout};
@@ -118,14 +119,14 @@ impl USModel {
 }
 
 impl Model for USModel {
-    fn valid(&mut self, pev: PhysEv) -> bool {
+    fn valid(&mut self, pev: PhysEv, cnst: &Constants) -> bool {
         let peek = self.phys.peek_adjust(pev.phys, pev.press);
         let kev = KeyEv::new(self.get_key(pev.phys), pev.press);
         // Don't allow pressing the same physical key multiple times.
-        self.ks.valid(kev) && (peek == 0 || peek == 1)
+        self.ks.valid(kev, cnst) && (peek == 0 || peek == 1)
     }
 
-    fn event(&mut self, pev: PhysEv) -> Vec<CountMap<KC>> {
+    fn event(&mut self, pev: PhysEv, _cnst: &Constants) -> Vec<CountMap<KC>> {
         self.phys.adjust_count(pev.phys, pev.press);
         self.ks.key_event(KeyEv::new(self.get_key(pev.phys), pev.press))
     }

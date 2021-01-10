@@ -1,8 +1,9 @@
-use crate::constants::{MAX_KEY_MOD_ASSIGN, MAX_KEY_REG_ASSIGN};
 use enumset::{enum_set, EnumSet, EnumSetType};
 use rand::seq::IteratorRandom;
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, EnumString};
+
+use crate::env::Constants;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, EnumString, Display)]
 pub enum Finger {
@@ -35,9 +36,9 @@ impl KCSetExt for KCSet {
     }
 }
 
-pub fn rand_kcset<R: rand::Rng + ?Sized>(r: &mut R) -> KCSet {
-    let num_mod = r.gen_range(0..=MAX_KEY_MOD_ASSIGN);
-    let num_reg = r.gen_range(0..=MAX_KEY_REG_ASSIGN);
+pub fn rand_kcset<R: rand::Rng + ?Sized>(r: &mut R, cnst: &Constants) -> KCSet {
+    let num_mod = r.gen_range(0..=cnst.max_mod_assigned);
+    let num_reg = r.gen_range(0..=cnst.max_reg_assigned);
     let mods = KC::iter().filter(|k| k.is_mod()).collect::<Vec<_>>();
     let regs = KC::iter().filter(|k| !k.is_mod()).collect::<Vec<_>>();
     let mods = mods.iter().choose_multiple(r, num_mod).iter().fold(enum_set!(), |a, &&b| a | b);

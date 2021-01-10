@@ -1,4 +1,4 @@
-use crate::constants::{MAX_IDLE, MAX_PRESS};
+use crate::env::Constants;
 use crate::models::count_map::CountMap;
 use crate::models::key_automata::KeyAutomata;
 use crate::models::layer::{Layer, Layout};
@@ -21,11 +21,12 @@ impl Genome<Layout, Env> for Layout {
     fn crossover(
         p1: &Layout,
         p2: &Layout,
-        _: Arc<RwLock<Env>>,
+        env: Arc<RwLock<Env>>,
         crossover_rate: f32,
     ) -> Option<Layout> {
         const MUTATE_KEY_PROB: f32 = 0.95;
         let mut r = rand::thread_rng();
+        let env = env.read().unwrap();
         let layer_idx = r.gen_range(0..p1.layers.len());
         let key_idx = r.gen_range(0..p1.layers[layer_idx].keys.len());
 
@@ -46,7 +47,7 @@ impl Genome<Layout, Env> for Layout {
             let mut l = p1.clone();
             if r.gen::<f32>() < MUTATE_KEY_PROB {
                 // Mutate random key.
-                l.layers[layer_idx].keys[key_idx] = rand_kcset(&mut r);
+                l.layers[layer_idx].keys[key_idx] = rand_kcset(&mut r, &env.cnst);
             } else {
                 // Swap random layer.
                 let swap_idx = r.gen_range(0..p1.layers.len());
@@ -55,7 +56,7 @@ impl Genome<Layout, Env> for Layout {
             Some(l)
         };
         if let Some(l) = &mut l {
-            l.normalise();
+            l.normalise(&env.cnst);
         }
         l
     }
@@ -78,8 +79,8 @@ impl Genome<Layout, Env> for Layout {
         dist as f32 / 500.0
     }
     fn base(env: &mut Env) -> Layout {
-        let mut l = Layout::new().with_layer(Layer::rand_with_size(env.num_physical()));
-        l.normalise();
+        let mut l = Layout::new().with_layer(Layer::rand_with_size(env.num_physical(), &env.cnst));
+        l.normalise(&env.cnst);
         l
     }
 }
@@ -106,13 +107,13 @@ impl<'a> QmkModel<'a> {
 }
 
 impl<'a> Model for QmkModel<'a> {
-    fn valid(&mut self, pev: PhysEv) -> bool {
+    fn valid(&mut self, pev: PhysEv, cnst: &Constants) -> bool {
         // Limit number pressed to 4.
-        if self.phys.num_pressed() > MAX_PRESS {
+        if self.phys.num_pressed() > cnst.max_phys_pressed {
             return false;
         }
         // Limit idle to 4.
-        if self.idle_count > MAX_IDLE {
+        if self.idle_count > cnst.max_phys_idle {
             return false;
         }
         let key = self.get_key(pev.phys);
@@ -123,10 +124,10 @@ impl<'a> Model for QmkModel<'a> {
         let peek = self.phys.peek_adjust(pev.phys, pev.press);
         let kev = KeyEv::new(key, pev.press);
         // Don't allow pressing the same physical key multiple times.
-        self.ks.valid(kev) && (peek == 0 || peek == 1)
+        self.ks.valid(kev, cnst) && (peek == 0 || peek == 1)
     }
 
-    fn event(&mut self, pev: PhysEv) -> Vec<CountMap<KC>> {
+    fn event(&mut self, pev: PhysEv, _cnst: &Constants) -> Vec<CountMap<KC>> {
         self.phys.adjust_count(pev.phys, pev.press);
         let kev = self.ks.key_event(KeyEv::new(self.get_key(pev.phys), pev.press));
         if kev.is_empty() {
