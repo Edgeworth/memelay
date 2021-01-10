@@ -10,83 +10,50 @@
     map_first_last
 )]
 
+use crate::env::Env;
 use crate::fitness::Fitness;
-use crate::ingest::env_from_file;
 use crate::models::layer::Layout;
 use crate::prelude::*;
-use crate::types::{Finger, PhysEv};
-use radiate::{Config, Envionment, Genocide, ParentalCriteria, Population, SurvivalCriteria};
+use env::Constants;
+use radiate::{Config, Genocide, ParentalCriteria, Population, SurvivalCriteria};
+use std::path::PathBuf;
 use structopt::StructOpt;
 
-pub mod constants;
+mod env;
 mod fitness;
 mod ingest;
 mod models;
 pub mod prelude;
 mod types;
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct Env {
-    layout: String,
-    cost: Vec<f64>,
-    fing: Vec<Finger>,
-    corpus: Vec<PhysEv>,
-}
-
-impl Env {
-    pub fn new(layout: String, cost: Vec<f64>, fing: Vec<Finger>, corpus: Vec<PhysEv>) -> Self {
-        Self { layout, cost, fing, corpus }
-    }
-
-    pub fn format_solution(&self, l: &Layout) -> String {
-        let mut s = String::new();
-        for (i, layer) in l.layers.iter().enumerate() {
-            s += &format!("Layer {}\n", i);
-            let mut idx = 0;
-            for c in self.layout.chars() {
-                if c == 'X' {
-                    let mut kstr = format!("{:?}", layer.keys[idx]);
-                    kstr.retain(|c| !r"() ".contains(c));
-                    let kstr = kstr.replace("EnumSet", "");
-                    s += &kstr;
-                    idx += 1;
-                } else {
-                    s.push(c);
-                }
-            }
-            s.push('\n');
-        }
-        s
-    }
-
-    pub fn num_physical(&self) -> usize {
-        self.cost.len()
-    }
-}
-
-impl Envionment for Env {}
-impl Default for Env {
-    fn default() -> Self {
-        Self::new("".to_owned(), vec![], vec![], vec![])
-    }
-}
-
 #[derive(Debug, StructOpt)]
 #[structopt(name = "hodlr", about = "Hodlr CLI")]
-struct Args {
-    #[structopt(short, long, default_value = "100")]
-    pop_size: i32,
+pub struct Args {
+    #[structopt(
+        long,
+        default_value = "moonlander.cfg",
+        parse(from_os_str),
+        help = "Config file describing target layout and costs"
+    )]
+    cfg_path: PathBuf,
 
-    #[structopt(short, long, default_value = "100")]
-    gen_runs: i32,
+    #[structopt(
+        long,
+        parse(from_os_str),
+        help = "Corpus file describing typing data to optimise to"
+    )]
+    corpus_path: PathBuf,
+
+    #[structopt(flatten)]
+    cnst: Constants,
 }
 
 pub fn run() -> Result<()> {
-    let args = Args::from_args();
-    let species_target = args.pop_size / 10;
-    let env = env_from_file("moonlander.cfg", "keys_notime.data.bak")?;
+    let env = Env::from_args(Args::from_args())?;
+    let species_target = env.cnst.pop_size / 10;
+
     let (top, _) = Population::<Layout, Env, Fitness>::new()
-        .size(args.pop_size)
+        .size(env.cnst.pop_size as i32)
         .constrain(env.clone())
         .impose(Fitness::new(env.clone()))
         .populate_base()
@@ -104,13 +71,13 @@ pub fn run() -> Result<()> {
         .run(|model, fit, num| {
             println!("Generation: {} score: {:.3?}", num, fit);
             if num % 10 == 0 {
-                println!("{}", env.format_solution(model));
+                println!("{}", env.layout_cfg.format_solution(model));
             }
-            num == args.gen_runs
+            num == env.cnst.runs as i32
         })
         .map_err(|e| eyre!(e))?;
 
-    println!("Solution: {}", env.format_solution(&top));
+    println!("Solution: {}", env.layout_cfg.format_solution(&top));
 
     Ok(())
 }
