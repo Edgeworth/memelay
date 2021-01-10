@@ -15,7 +15,7 @@ use crate::fitness::Fitness;
 use crate::models::layout::Layout;
 use crate::prelude::*;
 use env::Constants;
-use radiate::{Config, Genocide, ParentalCriteria, Population, SurvivalCriteria};
+use radiate::{Config, Genocide, ParentalCriteria, Population, Problem, SurvivalCriteria};
 use std::path::PathBuf;
 use structopt::StructOpt;
 
@@ -58,14 +58,14 @@ pub fn run() -> Result<()> {
 
     // return Ok(());
 
-    let (top, _) = Population::<Layout, Env, Fitness>::new()
+    let mut pop = Population::<Layout, Env, Fitness>::new()
         .size(env.cnst.pop_size as i32)
         .constrain(env.clone())
         .impose(Fitness::new(env.clone()))
         .populate_base()
         .dynamic_distance(true)
         .stagnation(10, vec![Genocide::KillWorst(0.9)])
-        .debug(false)
+        .debug(env.cnst.debug)
         .survivor_criteria(SurvivalCriteria::Fittest)
         .parental_criteria(ParentalCriteria::BiasedRandom)
         .configure(Config {
@@ -73,7 +73,9 @@ pub fn run() -> Result<()> {
             crossover_rate: 0.2,
             distance: 0.5,
             species_target: species_target as usize,
-        })
+        });
+
+    let (top, _) = pop
         .run(|model, fit, num| {
             println!("Generation: {} score: {:.3?}", num, fit);
             if num % 10 == 0 {
@@ -82,6 +84,14 @@ pub fn run() -> Result<()> {
             num == env.cnst.runs as i32
         })
         .map_err(|e| eyre!(e))?;
+
+    let fitness = Fitness::new(env.clone());
+    for (idx, mem) in pop.members_mut().iter().take(10).enumerate() {
+        let mut l = mem.member.write().unwrap();
+        let val = fitness.solve(&mut l);
+        let fmt = env.layout_cfg.format_solution(&l);
+        println!("Soln {} fitness {}: {}", idx, val, fmt);
+    }
 
     println!("Solution: {}", env.layout_cfg.format_solution(&top));
 
