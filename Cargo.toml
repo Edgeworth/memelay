@@ -17,11 +17,11 @@ pretty_env_logger = "*"
 priority-queue = "*"
 rand = "*"
 rand_distr = "*"
+rayon = "*"
 structopt = "*"
 strum = "*"
 strum_macros = "*"
 syn = "=1.0.57"
-
 [profile.release]
 debug = 1 # line tables only
 lto = false

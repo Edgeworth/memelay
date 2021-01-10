@@ -11,9 +11,11 @@
 )]
 
 use crate::constants::Constants;
-use crate::ga::runner::Runner;
-use crate::ga::Cfg;
+use crate::ga::runner::{Generation, Runner};
+use crate::ga::{Cfg, Evaluator};
+use crate::ingest::load_layout;
 use crate::layout_eval::LayoutEval;
+use crate::models::layout::Layout;
 use crate::prelude::*;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -50,8 +52,15 @@ pub struct Args {
 
 pub fn run() -> Result<()> {
     let eval = LayoutEval::from_args(Args::from_args())?;
-    let mut runner =
-        Runner::new(eval.clone(), Cfg { xover_rate: 0.3, pop_size: eval.cnst.pop_size });
+    let cfg = Cfg { xover_rate: 0.3, pop_size: eval.cnst.pop_size, top_prop: 0.1 };
+
+    // let l = load_layout("test.layout")?;
+    // eval.fitness(&cfg, &l);
+
+    let initial = (0..cfg.pop_size)
+        .map(|_| Layout::rand_with_size(eval.num_physical(), &eval.cnst))
+        .collect();
+    let mut runner = Runner::new(eval.clone(), cfg, Generation::from_states(initial));
 
     let mut best;
     for i in 0..eval.cnst.runs {

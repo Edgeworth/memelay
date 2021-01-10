@@ -71,6 +71,12 @@ impl Layout {
         Self { layers: vec![] }
     }
 
+    pub fn rand_with_size(size: usize, cnst: &Constants) -> Self {
+        let mut l = Layout::new().with_layer(Layer::rand_with_size(size, cnst));
+        l.normalise(&cnst);
+        l
+    }
+
     pub fn with_layer(mut self, l: Layer) -> Self {
         self.layers.push(l);
         self

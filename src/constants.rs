@@ -2,16 +2,16 @@ use structopt::StructOpt;
 
 #[derive(Debug, Clone, StructOpt, Default, PartialEq)]
 pub struct Constants {
-    #[structopt(short, long, default_value = "100", help = "Population size for GA")]
+    #[structopt(short, long, default_value = "500", help = "Population size for GA")]
     pub pop_size: usize,
 
     #[structopt(short, long, default_value = "100", help = "Number of generations to run for GA")]
     pub runs: usize,
 
-    #[structopt(long, default_value = "100", help = "Batch size for GA fitness")]
+    #[structopt(long, default_value = "20000", help = "Batch size for GA fitness")]
     pub batch_size: usize,
 
-    #[structopt(long, default_value = "10", help = "Number of batches to run for GA fitness")]
+    #[structopt(long, default_value = "1", help = "Number of batches to run for GA fitness")]
     pub batch_num: usize,
 
     #[structopt(long, help = "Print GA debug info.")]
@@ -55,7 +55,7 @@ pub struct Constants {
     // Roulette distributions for controlling randomness in various places:
     #[structopt(
         long,
-        default_value = "30,70",
+        default_value = "10,90",
         use_delimiter = true,
         help = "Weight to assign k regular keycodes to a key, where k is in the index."
     )]
