@@ -113,7 +113,7 @@ impl USModel {
         Self { layout: &US_LAYOUT, phys: CountMap::new(), ks: KeyAutomata::new() }
     }
 
-    fn get_key(&self, phys: u32) -> KCSet {
+    pub fn get_key(&self, phys: u32) -> KCSet {
         self.layout.layers[0].keys[phys as usize]
     }
 }
