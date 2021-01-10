@@ -1,4 +1,4 @@
-use crate::constants::{MAX_MODS_PER_LAYER, MAX_SAME};
+use crate::env::Constants;
 use crate::models::count_map::CountMap;
 use crate::types::{rand_kcset, KCSet, KCSetExt};
 use derive_more::Display;
@@ -16,21 +16,21 @@ impl Layer {
         Self { keys: keys.to_vec() }
     }
 
-    pub fn rand_with_size(len: usize) -> Self {
+    pub fn rand_with_size(len: usize, cnst: &Constants) -> Self {
         let mut r = rand::thread_rng();
-        Self { keys: (0..len).map(|_| rand_kcset(&mut r)).collect() }
+        Self { keys: (0..len).map(|_| rand_kcset(&mut r, cnst)).collect() }
     }
 
     pub fn num_physical(&self) -> usize {
         self.keys.len()
     }
 
-    pub fn normalise(&mut self, max_mods_per_layer: i32, max_same: i32) {
+    pub fn normalise(&mut self, cnst: &Constants) {
         let mut r = rand::thread_rng();
         let mods =
             self.keys.iter_mut().filter(|kcset| !kcset.mods().is_empty()).collect::<Vec<_>>();
         // Remove excess mod keys.
-        let remove_count = mods.len() as i32 - max_mods_per_layer;
+        let remove_count = mods.len() as i32 - cnst.max_phys_mod_per_layer as i32;
         if remove_count > 0 {
             let to_remove = mods.into_iter().choose_multiple(&mut r, remove_count as usize);
             for kcset in to_remove {
@@ -42,7 +42,7 @@ impl Layer {
         let mut cm: CountMap<KCSet> = CountMap::new();
         let mut keys = Vec::new();
         for &kcset in self.keys.iter() {
-            if cm.adjust_count(kcset, true) <= max_same {
+            if cm.adjust_count(kcset, true) <= cnst.max_phys_duplicate_per_layer as i32 {
                 keys.push(kcset);
             } else {
                 keys.push(enum_set!());
@@ -81,9 +81,9 @@ impl Layout {
     }
 
     // Gets rid of useless layout features.
-    pub fn normalise(&mut self) {
+    pub fn normalise(&mut self, cnst: &Constants) {
         for layer in self.layers.iter_mut() {
-            layer.normalise(MAX_MODS_PER_LAYER as i32, MAX_SAME as i32);
+            layer.normalise(cnst);
         }
     }
 }
@@ -95,25 +95,26 @@ mod tests {
 
     const CTRL_C: KCSet = enum_set!(KC::C | KC::Ctrl);
     const C: KCSet = enum_set!(KC::C);
+    const CNST: Constants = Constants { max_phys_duplicate_per_layer: 1, ..Constants::new() };
 
     #[test]
     fn normalise_mod() {
         let mut l = Layer::new(&[CTRL_C]);
-        l.normalise(0, 1);
+        l.normalise(&CNST);
         assert_eq!(l, Layer::new(&[C]));
     }
 
     #[test]
     fn normalise_same() {
         let mut l = Layer::new(&[C, C]);
-        l.normalise(0, 1);
+        l.normalise(&CNST);
         assert_eq!(l, Layer::new(&[C, enum_set!()]));
     }
 
     #[test]
     fn normalise_mod_same() {
         let mut l = Layer::new(&[CTRL_C, C]);
-        l.normalise(0, 1);
+        l.normalise(&CNST);
         assert_eq!(l, Layer::new(&[C, enum_set!()]));
     }
 }

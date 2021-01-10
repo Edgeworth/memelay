@@ -1,6 +1,7 @@
+use crate::env::LayoutCfg;
 use crate::models::us::US_LAYER;
+use crate::prelude::*;
 use crate::types::{Finger, KCSet, PhysEv, KC};
-use crate::{prelude::*, Env};
 use std::fs;
 use std::path::Path;
 use std::str::FromStr;
@@ -12,7 +13,7 @@ enum State {
     Finger,
 }
 
-pub fn env_from_file<P: AsRef<Path>>(cfg_path: P, corpus_path: P) -> Result<Env> {
+pub fn load_layout_cfg<P: AsRef<Path>>(cfg_path: P) -> Result<LayoutCfg> {
     const ALLOWED: &str = "RLPMIT-.0123456789X";
     let mut state = State::Layout;
     let mut layout = String::new();
@@ -47,6 +48,15 @@ pub fn env_from_file<P: AsRef<Path>>(cfg_path: P, corpus_path: P) -> Result<Env>
             }
         }
     }
+
+    if cost.len() != fing.len() {
+        Err(eyre!("{} costs does not match {} fingers", cost.len(), fing.len()))
+    } else {
+        Ok(LayoutCfg { layout, cost, fing })
+    }
+}
+
+pub fn load_corpus<P: AsRef<Path>>(corpus_path: P) -> Result<Vec<PhysEv>> {
     let mut corpus = Vec::new();
     for i in fs::read_to_string(corpus_path)?.lines() {
         let items = i.split(char::is_whitespace).collect::<Vec<_>>();
@@ -146,9 +156,5 @@ pub fn env_from_file<P: AsRef<Path>>(cfg_path: P, corpus_path: P) -> Result<Env>
         let index = US_LAYER.keys.iter().position(|&x| x == key).unwrap();
         corpus.push(PhysEv::new(index as u32, pressed));
     }
-    if cost.len() != fing.len() {
-        Err(eyre!("{} costs does not match {} fingers", cost.len(), fing.len()))
-    } else {
-        Ok(Env::new(layout, cost, fing, corpus))
-    }
+    Ok(corpus)
 }
