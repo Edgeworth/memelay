@@ -2,6 +2,7 @@ use crate::env::Env;
 use crate::models::layout::{Layer, Layout};
 use crate::types::rand_kcset;
 use radiate::Genome;
+use rand::seq::IteratorRandom;
 use rand::Rng;
 use rand_distr::{Distribution, WeightedAliasIndex};
 use std::sync::{Arc, RwLock};
@@ -28,11 +29,10 @@ impl Genome<Layout, Env> for Layout {
         let key_idx2 = r.gen_range(0..p1.layers[layer_idx2].keys.len());
 
         let mut l = if r.gen::<f32>() < crossover_rate {
-            let crossover_idx =
-                WeightedAliasIndex::new(env.cnst.crossover_strat_weights.clone()).unwrap();
+            let idx = WeightedAliasIndex::new(env.cnst.crossover_strat_weights.clone()).unwrap();
             let mut l = Layout::new();
 
-            match crossover_idx.sample(&mut r) {
+            match idx.sample(&mut r) {
                 0 => {
                     // Crossover on layer level.
                     let crosspoint = r.gen_range(0..p1.layers.len());
@@ -51,27 +51,36 @@ impl Genome<Layout, Env> for Layout {
             }
             Some(l)
         } else {
-            let crossover_idx =
-                WeightedAliasIndex::new(env.cnst.mutate_strat_weights.clone()).unwrap();
+            let idx = WeightedAliasIndex::new(env.cnst.mutate_strat_weights.clone()).unwrap();
             let mut l = p1.clone();
 
-            match crossover_idx.sample(&mut r) {
+            match idx.sample(&mut r) {
                 0 => {
-                    // Mutate random key.
-                    l.layers[layer_idx].keys[key_idx] = rand_kcset(&mut r, &env.cnst);
+                    // Mutate random available key.
+                    let avail = l.layers[layer_idx].keys.iter_mut().filter(|k| !k.is_empty());
+                    if let Some(key) = avail.choose(&mut r) {
+                        *key = rand_kcset(&mut r, &env.cnst);
+                    }
                 }
                 1 => {
+                    // Mutate random empty key.
+                    let empty = l.layers[layer_idx].keys.iter_mut().filter(|k| k.is_empty());
+                    if let Some(key) = empty.choose(&mut r) {
+                        *key = rand_kcset(&mut r, &env.cnst);
+                    }
+                }
+                2 => {
                     // Swap random layer.
                     let swap_idx = r.gen_range(0..p1.layers.len());
                     l.layers.swap(layer_idx, swap_idx);
                 }
-                2 => {
+                3 => {
                     // Swap random key
                     let tmp = l.layers[layer_idx].keys[key_idx];
                     l.layers[layer_idx].keys[key_idx] = l.layers[layer_idx2].keys[key_idx2];
                     l.layers[layer_idx2].keys[key_idx2] = tmp;
                 }
-                _ => panic!("unknown crossover strategy"),
+                _ => panic!("unknown mutation strategy"),
             }
             Some(l)
         };

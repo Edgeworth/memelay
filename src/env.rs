@@ -20,6 +20,9 @@ pub struct Constants {
     #[structopt(long, default_value = "10", help = "Number of batches to run for GA fitness")]
     pub batch_num: usize,
 
+    #[structopt(long, help = "Print GA debug info.")]
+    pub debug: bool,
+
     #[structopt(
         long,
         default_value = "4",
@@ -82,7 +85,7 @@ pub struct Constants {
 
     #[structopt(
         long,
-        default_value = "10,1,20",
+        default_value = "20,5,1,20",
         use_delimiter = true,
         help = "Weights to roulette each mutate strategy."
     )]
