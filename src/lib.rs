@@ -10,19 +10,18 @@
     map_first_last
 )]
 
-use crate::env::Env;
-use crate::fitness::Fitness;
-use crate::models::layout::Layout;
+use crate::constants::Constants;
+use crate::ga::runner::Runner;
+use crate::ga::Cfg;
+use crate::layout_eval::LayoutEval;
 use crate::prelude::*;
-use env::Constants;
-use radiate::{Config, Genocide, ParentalCriteria, Population, Problem, SurvivalCriteria};
 use std::path::PathBuf;
 use structopt::StructOpt;
 
-mod env;
-mod fitness;
-mod genome;
+mod constants;
+mod ga;
 mod ingest;
+mod layout_eval;
 mod models;
 pub mod prelude;
 mod types;
@@ -50,50 +49,26 @@ pub struct Args {
 }
 
 pub fn run() -> Result<()> {
-    let env = Env::from_args(Args::from_args())?;
-    let species_target = env.cnst.pop_size / 10;
+    let eval = LayoutEval::from_args(Args::from_args())?;
+    let mut runner =
+        Runner::new(eval.clone(), Cfg { xover_rate: 0.3, pop_size: eval.cnst.pop_size });
 
-    // let mut layout = Layout::base(&mut env);
-    // println!("Rand layout: {}", env.layout_cfg.format_solution(&layout));
-
-    // return Ok(());
-
-    let mut pop = Population::<Layout, Env, Fitness>::new()
-        .size(env.cnst.pop_size as i32)
-        .constrain(env.clone())
-        .impose(Fitness::new(env.clone()))
-        .populate_base()
-        .dynamic_distance(true)
-        .stagnation(10, vec![Genocide::KillWorst(0.9)])
-        .debug(env.cnst.debug)
-        .survivor_criteria(SurvivalCriteria::Fittest)
-        .parental_criteria(ParentalCriteria::BiasedRandom)
-        .configure(Config {
-            inbreed_rate: 0.001,
-            crossover_rate: 0.2,
-            distance: 0.5,
-            species_target: species_target as usize,
-        });
-
-    let (top, _) = pop
-        .run(|model, fit, num| {
-            println!("Generation: {} score: {:.3?}", num, fit);
-            if num % 10 == 0 {
-                println!("{}", env.layout_cfg.format_solution(model));
-            }
-            num == env.cnst.runs as i32
-        })
-        .map_err(|e| eyre!(e))?;
-
-    let fitness = Fitness::new(env.clone());
-    for (idx, mem) in pop.members_mut().iter().take(10).enumerate() {
-        let mut l = mem.member.write().unwrap();
-        let val = fitness.solve(&mut l);
-        let fmt = env.layout_cfg.format_solution(&l);
-        println!("Soln {} fitness {}: {}", idx, val, fmt);
+    let mut best;
+    for i in 0..eval.cnst.runs {
+        best = runner.run_iter();
+        println!("Generation: {} score: {:.3?}", i, best.fitness);
+        if i % 10 == 0 {
+            println!("{}", eval.layout_cfg.format(&best.state));
+        }
     }
 
-    println!("Solution: {}", env.layout_cfg.format_solution(&top));
+    // let fitness = Fitness::new(eval.clone());
+    // for (idx, mem) in pop.members_mut().iter().take(10).enumerate() {
+    //     let mut l = mem.member.write().unwrap();
+    //     let val = fitness.solve(&mut l);
+    //     let fmt = eval.layout_cfg.format_solution(&l);
+    //     println!("Soln {} fitness {}: {}", idx, val, fmt);
+    // }
 
     Ok(())
 }

@@ -1,10 +1,9 @@
+use crate::constants::Constants;
 use enumset::{enum_set, EnumSet, EnumSetType};
 use rand::seq::IteratorRandom;
 use rand_distr::{Distribution, WeightedAliasIndex};
 use strum::IntoEnumIterator;
 use strum_macros::{Display, EnumIter, EnumString};
-
-use crate::env::Constants;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, EnumString, Display)]
 pub enum Finger {
