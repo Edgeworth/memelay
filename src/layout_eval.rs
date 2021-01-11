@@ -1,36 +1,15 @@
 use crate::constants::Constants;
-use crate::ga::util::{combine_cost, combine_fitness, crossover_vec};
+use crate::ga::util::{combine_cost, crossover_vec};
 use crate::ga::{Cfg, Evaluator};
 use crate::ingest::{load_corpus, load_layout_cfg};
 use crate::models::layout::Layout;
-use crate::models::qmk::QmkModel;
-use crate::models::us::USModel;
-use crate::models::Model;
+use crate::path::PathFinder;
 use crate::prelude::*;
 use crate::types::{rand_kcset, Finger, PhysEv};
 use crate::Args;
-use derive_more::Display;
-use ordered_float::OrderedFloat;
-use priority_queue::PriorityQueue;
 use rand::prelude::IteratorRandom;
 use rand::Rng;
 use rand_distr::{Distribution, WeightedAliasIndex};
-use std::collections::HashSet;
-
-#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Display)]
-#[display(fmt = "Node, corpus idx {}:\n  qmk: {}\n  us: {}", corpus_idx, qmk, us)]
-pub struct Node<'a> {
-    pub qmk: QmkModel<'a>, // Currently have this keyboard state.
-    pub us: USModel,
-    pub start_idx: usize,
-    pub corpus_idx: usize, // Processed this much of the corpus.
-}
-
-impl<'a> Node<'a> {
-    pub fn new(layout: &'a Layout, corpus_idx: usize) -> Self {
-        Self { qmk: QmkModel::new(layout), us: USModel::new(), start_idx: corpus_idx, corpus_idx }
-    }
-}
 
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct LayoutCfg {
@@ -63,6 +42,10 @@ impl LayoutCfg {
         }
         s
     }
+
+    pub fn num_physical(&self) -> usize {
+        self.cost.len()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -79,37 +62,6 @@ impl LayoutEval {
         Ok(Self { layout_cfg, corpus, cnst: args.cnst.clone() })
     }
 
-    pub fn num_physical(&self) -> usize {
-        self.layout_cfg.cost.len()
-    }
-
-    // Check that |ev| could be produced from Node by consuming corpus operations.
-    fn try_event<'a>(&self, mut n: Node<'a>, pev: PhysEv) -> Option<Node<'a>> {
-        let mut events_qmk = n.qmk.event(pev, &self.cnst)?;
-        while !events_qmk.is_empty() && n.corpus_idx < self.corpus.len() {
-            // If we get a stray release which causes US model to fail, ignore and skip it.
-            if let Some(mut events_us) = n.us.event(self.corpus[n.corpus_idx], &self.cnst) {
-                while !events_us.is_empty() && !events_qmk.is_empty() {
-                    if events_us[0] != events_qmk[0] {
-                        return None;
-                    }
-                    events_us.remove(0);
-                    events_qmk.remove(0);
-                }
-            }
-            n.corpus_idx += 1;
-        }
-        if events_qmk.is_empty() {
-            Some(n)
-        } else {
-            None
-        }
-    }
-
-    fn phys_cost(&self, _: &Layout, pev: PhysEv) -> f64 {
-        self.layout_cfg.cost[pev.phys as usize]
-    }
-
     fn layout_cost(&self, l: &Layout) -> u128 {
         // Penalise more layers.
         let mut cost = l.layers.len() as u128;
@@ -120,53 +72,6 @@ impl LayoutEval {
             }
         }
         cost
-    }
-
-    fn path_fitness(&self, l: &Layout, start_idx: usize, block_size: usize) -> u128 {
-        let mut q: PriorityQueue<Node<'_>, OrderedFloat<f64>> = PriorityQueue::new();
-        let mut seen: HashSet<Node<'_>> = HashSet::new();
-        let mut best = (0, OrderedFloat(0.0));
-        let st = Node::new(l, start_idx);
-        q.push(st.clone(), OrderedFloat(0.0));
-        while let Some((n, d)) = q.pop() {
-            let d = -d;
-            seen.insert(n.clone());
-
-            // println!("cost: {}, dijk: {}, seen: {}", -d, n, seen.len());
-            // Look for getting furthest through corpus, then for lowest cost.
-            if n.corpus_idx > best.0 || (n.corpus_idx == best.0 && d < best.1) {
-                best = (n.corpus_idx, d)
-            }
-            if n.corpus_idx - n.start_idx >= block_size {
-                break;
-            }
-            // Try pressing and releasing physical keys.
-            for &press in &[true, false] {
-                for i in 0..l.num_physical() {
-                    let next = n.clone();
-                    let pev = PhysEv::new(i, press);
-                    if let Some(next) = self.try_event(next, pev) {
-                        if seen.contains(&next) {
-                            continue;
-                        }
-                        let cost = d + OrderedFloat(self.phys_cost(l, pev));
-                        q.push_increase(next, -cost);
-                    }
-                }
-            }
-        }
-        // Typing all corpus is top priority, then cost to do so.
-        // println!(
-        //     "asdf {} {} {}, stuck on: {:?}",
-        //     best.0 as u128,
-        //     st.start_idx,
-        //     block_size as u128,
-        //     st.us.get_key(self.corpus[best.0 as usize].phys)
-        // );
-
-        let fitness = combine_fitness(0, (best.0 - st.start_idx) as u128, block_size as u128);
-        let fitness = combine_cost(fitness, best.1.into_inner() as u128, block_size as u128 * 1000);
-        fitness
     }
 }
 
@@ -247,7 +152,13 @@ impl Evaluator for LayoutEval {
         let mut r = rand::thread_rng();
         for _ in 0..self.cnst.batch_num {
             let start_idx = r.gen_range(0..=(self.corpus.len() - block_size));
-            shortest_path_cost_avg += self.path_fitness(a, start_idx, block_size);
+            shortest_path_cost_avg += PathFinder::new(
+                &self.layout_cfg,
+                &self.corpus[start_idx..(start_idx + block_size)],
+                &self.cnst,
+                a,
+            )
+            .path_fitness();
         }
         let fitness = shortest_path_cost_avg / self.cnst.batch_num as u128;
         // println!("DONE: {}", fitness);
@@ -259,7 +170,8 @@ impl Evaluator for LayoutEval {
         let mut dist = 0.0;
         let layer_min = a.layers.len().min(b.layers.len());
         let layer_max = a.layers.len().max(b.layers.len());
-        dist += ((layer_max - layer_min) * self.num_physical()) as f64; // Different # layers is a big difference.
+        // Different # layers is a big difference.
+        dist += ((layer_max - layer_min) * self.layout_cfg.num_physical()) as f64;
         for i in 0..layer_min {
             for j in 0..a.layers[i].keys.len() {
                 if a.layers[i].keys[j] != b.layers[i].keys[j] {
