@@ -25,6 +25,7 @@ mod ga;
 mod ingest;
 mod layout_eval;
 mod models;
+mod path;
 pub mod prelude;
 mod types;
 
@@ -63,7 +64,7 @@ pub fn eval_layout<P: AsRef<Path>>(eval: LayoutEval, cfg: Cfg, p: P) -> Result<(
 
 pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
     let initial = (0..cfg.pop_size)
-        .map(|_| Layout::rand_with_size(eval.num_physical(), 2, &eval.cnst))
+        .map(|_| Layout::rand_with_size(eval.layout_cfg.num_physical(), 2, &eval.cnst))
         .collect();
     let mut runner = Runner::new(eval.clone(), cfg, Generation::from_states(initial));
 
