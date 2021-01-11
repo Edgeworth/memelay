@@ -15,6 +15,10 @@ impl KeyAutomata {
         Self { kcm: CountMap::new(), pending_update: false }
     }
 
+    pub fn kc_counts(&self) -> &CountMap<KC> {
+        &self.kcm
+    }
+
     pub fn event(&mut self, kev: KeyEv, cnst: &Constants) -> Option<Vec<CountMap<KC>>> {
         // Rules for events:
         //   1. Letter keys are always immediate
