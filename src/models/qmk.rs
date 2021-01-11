@@ -61,15 +61,11 @@ impl<'a> Model for QmkModel<'a> {
         if self.phys.num_pressed() > cnst.max_phys_pressed {
             return None; // Limit number pressed to 4.
         }
-        if self.idle_count > cnst.max_phys_idle {
-            return None; // Limit idle to 4.
-        }
 
         let (layer, key) = self.get_key(pev);
         if key.is_empty() && layer.is_none() {
             return None; // Don't press keys that don't do anything.
         }
-        self.layer = layer.unwrap_or(self.layer);
 
         let kev = self.ks.event(KeyEv::new(key, pev.press), cnst)?;
         if kev.is_empty() {
@@ -77,7 +73,21 @@ impl<'a> Model for QmkModel<'a> {
         } else {
             self.idle_count = 0;
         }
+
+        if let Some(layer) = layer {
+            self.layer = layer;
+            self.idle_count = 0; // Could switching layers as resetting idle.
+        }
+
+        if self.idle_count > cnst.max_phys_idle {
+            return None; // Limit idle.
+        }
+
         Some(kev)
+    }
+
+    fn kc_counts(&self) -> &CountMap<KC> {
+        self.ks.kc_counts()
     }
 }
 
