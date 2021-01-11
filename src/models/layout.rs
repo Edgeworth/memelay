@@ -71,8 +71,11 @@ impl Layout {
         Self { layers: vec![] }
     }
 
-    pub fn rand_with_size(size: usize, cnst: &Constants) -> Self {
-        let mut l = Layout::new().with_layer(Layer::rand_with_size(size, cnst));
+    pub fn rand_with_size(size: usize, num_layers: usize, cnst: &Constants) -> Self {
+        let mut l = Layout::new();
+        for _ in 0..num_layers {
+            l = l.with_layer(Layer::rand_with_size(size, cnst));
+        }
         l.normalise(&cnst);
         l
     }

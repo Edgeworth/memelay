@@ -2,7 +2,7 @@ use structopt::StructOpt;
 
 #[derive(Debug, Clone, StructOpt, Default, PartialEq)]
 pub struct Constants {
-    #[structopt(short, long, default_value = "500", help = "Population size for GA")]
+    #[structopt(short, long, default_value = "100", help = "Population size for GA")]
     pub pop_size: usize,
 
     #[structopt(short, long, default_value = "100", help = "Number of generations to run for GA")]
@@ -17,6 +17,7 @@ pub struct Constants {
     #[structopt(long, help = "Print GA debug info.")]
     pub debug: bool,
 
+    // Runtime search restrictions:
     #[structopt(
         long,
         default_value = "4",
@@ -33,6 +34,14 @@ pub struct Constants {
 
     #[structopt(
         long,
+        default_value = "1",
+        help = "Maximum number of duplicate mod keycodes pressed"
+    )]
+    pub max_mod_pressed: usize,
+
+    // Layout restrictions:
+    #[structopt(
+        long,
         default_value = "20",
         help = "Maximum number of physical keys with mod keycodes per layer"
     )]
@@ -44,13 +53,6 @@ pub struct Constants {
         help = "Maximum number of physical keys with identical keycode sets per layer"
     )]
     pub max_phys_duplicate_per_layer: usize,
-
-    #[structopt(
-        long,
-        default_value = "1",
-        help = "Maximum number of duplicate mod keycodes pressed"
-    )]
-    pub max_mod_pressed: usize,
 
     // Roulette distributions for controlling randomness in various places:
     #[structopt(
