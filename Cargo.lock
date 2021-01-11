@@ -254,6 +254,7 @@ dependencies = [
  "strum",
  "strum_macros",
  "syn",
+ "vec_map",
 ]
 
 [[package]]

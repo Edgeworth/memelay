@@ -12,7 +12,8 @@
 
 use crate::constants::Constants;
 use crate::ga::runner::{Generation, Runner};
-use crate::ga::Cfg;
+use crate::ga::{Cfg, Evaluator};
+use crate::ingest::load_layout;
 use crate::layout_eval::LayoutEval;
 use crate::models::layout::Layout;
 use crate::prelude::*;
@@ -53,12 +54,14 @@ pub fn run() -> Result<()> {
     let eval = LayoutEval::from_args(Args::from_args())?;
     let cfg = Cfg { xover_rate: 0.3, pop_size: eval.cnst.pop_size, top_prop: 0.1 };
 
-    // let l = load_layout("test.layout")?;
-    // let fitness = eval.fitness(&cfg, &l);
-    // println!("fitness: {}", fitness);
+    let l = load_layout("test.layout")?;
+    let fitness = eval.fitness(&cfg, &l);
+    println!("layout: {}", eval.layout_cfg.format(&l));
+    println!("fitness: {}", fitness);
+    panic!("done");
 
     let initial = (0..cfg.pop_size)
-        .map(|_| Layout::rand_with_size(eval.num_physical(), &eval.cnst))
+        .map(|_| Layout::rand_with_size(eval.num_physical(), 2, &eval.cnst))
         .collect();
     let mut runner = Runner::new(eval.clone(), cfg, Generation::from_states(initial));
 

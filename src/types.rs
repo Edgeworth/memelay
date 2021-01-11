@@ -70,20 +70,20 @@ impl KeyEv {
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct PhysEv {
-    pub phys: u32,
+    pub phys: usize,
     pub press: bool,
 }
 
 impl PhysEv {
-    pub fn new(phys: u32, press: bool) -> Self {
+    pub fn new(phys: usize, press: bool) -> Self {
         Self { phys, press }
     }
 
-    pub fn press(phys: u32) -> Self {
+    pub fn press(phys: usize) -> Self {
         Self::new(phys, true)
     }
 
-    pub fn release(phys: u32) -> Self {
+    pub fn release(phys: usize) -> Self {
         Self::new(phys, false)
     }
 }
@@ -195,6 +195,10 @@ pub enum KC {
     Shift,
     Alt,
     Super,
+
+    // Layer control:
+    Layer0,
+    Layer1,
 }
 
 impl KC {
