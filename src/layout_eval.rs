@@ -73,10 +73,10 @@ pub struct LayoutEval {
 }
 
 impl LayoutEval {
-    pub fn from_args(args: Args) -> Result<Self> {
+    pub fn from_args(args: &Args) -> Result<Self> {
         let layout_cfg = load_layout_cfg(&args.cfg_path)?;
         let corpus = load_corpus(&args.corpus_path)?;
-        Ok(Self { layout_cfg, corpus, cnst: args.cnst })
+        Ok(Self { layout_cfg, corpus, cnst: args.cnst.clone() })
     }
 
     pub fn num_physical(&self) -> usize {
@@ -123,12 +123,12 @@ impl LayoutEval {
     }
 
     fn path_fitness(&self, l: &Layout, start_idx: usize, block_size: usize) -> u128 {
-        let mut q: PriorityQueue<OrderedFloat<f64>, Node<'_>> = PriorityQueue::new();
+        let mut q: PriorityQueue<Node<'_>, OrderedFloat<f64>> = PriorityQueue::new();
         let mut seen: HashSet<Node<'_>> = HashSet::new();
         let mut best = (0, OrderedFloat(0.0));
         let st = Node::new(l, start_idx);
-        q.push(OrderedFloat(0.0), st.clone());
-        while let Some((d, n)) = q.pop() {
+        q.push(st.clone(), OrderedFloat(0.0));
+        while let Some((n, d)) = q.pop() {
             let d = -d;
             seen.insert(n.clone());
 
@@ -149,21 +149,20 @@ impl LayoutEval {
                         if seen.contains(&next) {
                             continue;
                         }
-
                         let cost = d + OrderedFloat(self.phys_cost(l, pev));
-                        q.push_increase(-cost, next);
+                        q.push_increase(next, -cost);
                     }
                 }
             }
         }
         // Typing all corpus is top priority, then cost to do so.
-        println!(
-            "asdf {} {} {}, stuck on: {:?}",
-            best.0 as u128,
-            st.start_idx,
-            block_size as u128,
-            st.us.get_key(self.corpus[best.0 as usize].phys)
-        );
+        // println!(
+        //     "asdf {} {} {}, stuck on: {:?}",
+        //     best.0 as u128,
+        //     st.start_idx,
+        //     block_size as u128,
+        //     st.us.get_key(self.corpus[best.0 as usize].phys)
+        // );
 
         let fitness = combine_fitness(0, (best.0 - st.start_idx) as u128, block_size as u128);
         let fitness = combine_cost(fitness, best.1.into_inner() as u128, block_size as u128 * 1000);

@@ -13,6 +13,7 @@ use vec_map::VecMap;
 pub struct QmkModel<'a> {
     pub layout: &'a Layout, // TODO: undo layout
     phys: CountMap<usize>,
+    // Holds KCSet initially used when a physical key was pressed. Needed for layers.
     cached_key: VecMap<KCSet>,
     layer: usize, // Current active layer.
     ks: KeyAutomata,
@@ -41,10 +42,6 @@ impl<'a> QmkModel<'a> {
         };
         let mut layer = None;
         // Filter layer stuff here, since it is never sent, just handled by QMK.
-        // TODO: Adjust layer handling - press, release etc. handling switching
-        // to another layer while holding keys down - this is causing dijkstra to fail
-        // need to keep track of what keycode a phys key sent when it was pressed / what it should
-        // send on release.
         if kcset.remove(KC::Layer0) {
             layer = Some(0);
         }

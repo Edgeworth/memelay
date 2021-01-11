@@ -1,11 +1,12 @@
 use crate::constants::Constants;
+use derive_more::Display;
 use enumset::{enum_set, EnumSet, EnumSetType};
 use rand::seq::IteratorRandom;
 use rand_distr::{Distribution, WeightedAliasIndex};
 use strum::IntoEnumIterator;
-use strum_macros::{Display, EnumIter, EnumString};
+use strum_macros::{Display as StrumDisplay, EnumIter, EnumString};
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, EnumString, Display)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, EnumString, StrumDisplay)]
 pub enum Finger {
     LP,
     LR,
@@ -68,7 +69,8 @@ impl KeyEv {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Display)]
+#[display(fmt = "({}, {})", phys, press)]
 pub struct PhysEv {
     pub phys: usize,
     pub press: bool,
@@ -90,7 +92,7 @@ impl PhysEv {
 
 // Based on QMK keycodes.
 #[allow(clippy::derive_hash_xor_eq)]
-#[derive(Debug, Ord, PartialOrd, EnumSetType, EnumIter, EnumString, Hash, Display)]
+#[derive(Debug, Ord, PartialOrd, EnumSetType, EnumIter, EnumString, Hash, StrumDisplay)]
 pub enum KC {
     // Numbers:
     Num0,
