@@ -125,4 +125,8 @@ impl Model for USModel {
         }
         self.ks.event(KeyEv::new(self.get_key(pev.phys), pev.press), cnst)
     }
+
+    fn kc_counts(&self) -> &CountMap<KC> {
+        self.ks.kc_counts()
+    }
 }

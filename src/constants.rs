@@ -22,9 +22,11 @@ pub struct Constants {
     )]
     pub max_phys_pressed: usize,
 
+    // Value of 2 allows e.g. ctrl + shift to be pressed, then a letter key, but not
+    // three modifiers.
     #[structopt(
         long,
-        default_value = "4",
+        default_value = "2",
         help = "Maximum number of physical key-strokes without generating any keycodes"
     )]
     pub max_phys_idle: usize,

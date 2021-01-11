@@ -21,14 +21,14 @@ pub enum Finger {
 }
 
 pub trait KCSetExt {
-    fn regular(&self) -> KCSet;
+    fn reg(&self) -> KCSet;
     fn mods(&self) -> KCSet;
 }
 
 pub type KCSet = EnumSet<KC>;
 
 impl KCSetExt for KCSet {
-    fn regular(&self) -> KCSet {
+    fn reg(&self) -> KCSet {
         self.iter().filter(|x| !x.is_mod()).collect()
     }
 
