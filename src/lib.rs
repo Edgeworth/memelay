@@ -17,7 +17,7 @@ use crate::ingest::load_layout;
 use crate::layout_eval::LayoutEval;
 use crate::models::layout::Layout;
 use crate::prelude::*;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
 mod constants;
@@ -46,20 +46,22 @@ pub struct Args {
     )]
     corpus_path: PathBuf,
 
+    #[structopt(short, long, parse(from_os_str), help = "Evaluate a given layout")]
+    eval_layout: Option<PathBuf>,
+
     #[structopt(flatten)]
     cnst: Constants,
 }
 
-pub fn run() -> Result<()> {
-    let eval = LayoutEval::from_args(Args::from_args())?;
-    let cfg = Cfg { xover_rate: 0.3, pop_size: eval.cnst.pop_size, top_prop: 0.1 };
-
-    let l = load_layout("test.layout")?;
+pub fn eval_layout<P: AsRef<Path>>(eval: LayoutEval, cfg: Cfg, p: P) -> Result<()> {
+    let l = load_layout(p)?;
     let fitness = eval.fitness(&cfg, &l);
     println!("layout: {}", eval.layout_cfg.format(&l));
     println!("fitness: {}", fitness);
-    panic!("done");
+    Ok(())
+}
 
+pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
     let initial = (0..cfg.pop_size)
         .map(|_| Layout::rand_with_size(eval.num_physical(), 2, &eval.cnst))
         .collect();
@@ -73,7 +75,6 @@ pub fn run() -> Result<()> {
             println!("{}", eval.layout_cfg.format(&best.state));
         }
     }
-
     // let fitness = Fitness::new(eval.clone());
     // for (idx, mem) in pop.members_mut().iter().take(10).enumerate() {
     //     let mut l = mem.member.write().unwrap();
@@ -81,6 +82,20 @@ pub fn run() -> Result<()> {
     //     let fmt = eval.layout_cfg.format_solution(&l);
     //     println!("Soln {} fitness {}: {}", idx, val, fmt);
     // }
+
+    Ok(())
+}
+
+pub fn run() -> Result<()> {
+    let args = Args::from_args();
+    let eval = LayoutEval::from_args(&args)?;
+    let cfg = Cfg { xover_rate: 0.3, pop_size: eval.cnst.pop_size, top_prop: 0.1 };
+
+    if let Some(p) = args.eval_layout {
+        eval_layout(eval, cfg, p)?;
+    } else {
+        evolve(eval, cfg)?;
+    }
 
     Ok(())
 }

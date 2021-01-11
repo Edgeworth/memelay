@@ -14,9 +14,6 @@ pub struct Constants {
     #[structopt(long, default_value = "1", help = "Number of batches to run for GA fitness")]
     pub batch_num: usize,
 
-    #[structopt(long, help = "Print GA debug info.")]
-    pub debug: bool,
-
     // Runtime search restrictions:
     #[structopt(
         long,
