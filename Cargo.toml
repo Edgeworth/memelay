@@ -22,6 +22,8 @@ structopt = "*"
 strum = "*"
 strum_macros = "*"
 syn = "=1.0.57"
+vec_map = "*"
+
 [profile.release]
 debug = 1 # line tables only
 lto = false

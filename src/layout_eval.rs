@@ -84,14 +84,11 @@ impl LayoutEval {
     }
 
     // Check that |ev| could be produced from Node by consuming corpus operations.
-    fn unify<'a>(&self, mut n: Node<'a>, pev: PhysEv) -> Option<Node<'a>> {
-        let corpus = &self.corpus;
-
-        let mut events_qmk = n.qmk.event(pev, &self.cnst);
-        while !events_qmk.is_empty() && n.corpus_idx < corpus.len() {
-            // If we get a stray release, ignore and skip it.
-            if n.us.valid(corpus[n.corpus_idx], &self.cnst) {
-                let mut events_us = n.us.event(corpus[n.corpus_idx], &self.cnst);
+    fn try_event<'a>(&self, mut n: Node<'a>, pev: PhysEv) -> Option<Node<'a>> {
+        let mut events_qmk = n.qmk.event(pev, &self.cnst)?;
+        while !events_qmk.is_empty() && n.corpus_idx < self.corpus.len() {
+            // If we get a stray release which causes US model to fail, ignore and skip it.
+            if let Some(mut events_us) = n.us.event(self.corpus[n.corpus_idx], &self.cnst) {
                 while !events_us.is_empty() && !events_qmk.is_empty() {
                     if events_us[0] != events_qmk[0] {
                         return None;
@@ -146,13 +143,9 @@ impl LayoutEval {
             // Try pressing and releasing physical keys.
             for &press in &[true, false] {
                 for i in 0..l.num_physical() {
-                    let mut next = n.clone();
-                    let pev = PhysEv::new(i as u32, press);
-                    if !next.qmk.valid(pev, &self.cnst) {
-                        continue;
-                    }
-
-                    if let Some(next) = self.unify(next, pev) {
+                    let next = n.clone();
+                    let pev = PhysEv::new(i, press);
+                    if let Some(next) = self.try_event(next, pev) {
                         if seen.contains(&next) {
                             continue;
                         }
@@ -164,13 +157,13 @@ impl LayoutEval {
             }
         }
         // Typing all corpus is top priority, then cost to do so.
-        // println!(
-        //     "asdf {} {} {}, stuck on: {:?}",
-        //     best.0 as u128,
-        //     st.start_idx,
-        //     block_size as u128,
-        //     st.us.get_key(self.corpus[best.0 as usize].phys)
-        // );
+        println!(
+            "asdf {} {} {}, stuck on: {:?}",
+            best.0 as u128,
+            st.start_idx,
+            block_size as u128,
+            st.us.get_key(self.corpus[best.0 as usize].phys)
+        );
 
         let fitness = combine_fitness(0, (best.0 - st.start_idx) as u128, block_size as u128);
         let fitness = combine_cost(fitness, best.1.into_inner() as u128, block_size as u128 * 1000);

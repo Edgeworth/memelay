@@ -15,20 +15,7 @@ impl KeyAutomata {
         Self { kcm: CountMap::new(), pending_update: false }
     }
 
-    pub fn valid(&mut self, kev: KeyEv, cnst: &Constants) -> bool {
-        for kc in kev.key.iter() {
-            let peek = self.kcm.peek_adjust(kc, kev.press);
-            if kc.is_mod() && peek > cnst.max_mod_pressed as i32 {
-                return false;
-            }
-            if peek < 0 {
-                return false;
-            }
-        }
-        true
-    }
-
-    pub fn key_event(&mut self, kev: KeyEv) -> Vec<CountMap<KC>> {
+    pub fn event(&mut self, kev: KeyEv, cnst: &Constants) -> Option<Vec<CountMap<KC>>> {
         // Rules for events:
         //   1. Letter keys are always immediate
         //   2. Multiple key presses of the same keycode don't generate new state.
@@ -39,8 +26,12 @@ impl KeyAutomata {
         let mut mods_released = false;
         let mut reg_changed = false;
         for kc in kev.key {
-            if self.kcm.adjust_count(kc, kev.press) < 0 {
-                panic!("keycode released too many times: {:?}", kev);
+            let count = self.kcm.adjust_count(kc, kev.press);
+            if kc.is_mod() && count > cnst.max_mod_pressed as i32 {
+                return None;
+            }
+            if count < 0 {
+                return None;
             }
             if kc.is_mod() && !kev.press {
                 mods_released = true;
@@ -63,48 +54,41 @@ impl KeyAutomata {
             self.pending_update = true;
         }
 
-        evs
+        Some(evs)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::tests::{kcm, merge_kcm};
     use crate::types::KCSet;
     use enumset::enum_set;
+    use lazy_static::lazy_static;
 
     const NONE: KCSet = enum_set!();
     const SUPER: KCSet = enum_set!(KC::Super);
     const CTRL: KCSet = enum_set!(KC::Ctrl);
     const C: KCSet = enum_set!(KC::C);
     const CTRL_C: KCSet = enum_set!(KC::C | KC::Ctrl);
-
-    fn kcm(kcset: KCSet) -> CountMap<KC> {
-        let kcm = CountMap::new();
-        merge_kcm(kcm, kcset)
-    }
-
-    fn merge_kcm(mut kcm: CountMap<KC>, kcset: KCSet) -> CountMap<KC> {
-        for kc in kcset {
-            kcm.adjust_count(kc, true);
-        }
-        kcm
+    lazy_static! {
+        static ref CNST: Constants = Constants { max_mod_pressed: 5, ..Default::default() };
     }
 
     #[test]
     fn regular_letter() {
         let mut ks = KeyAutomata::new();
-        assert_eq!(ks.key_event(KeyEv::press(C)), [kcm(C)]);
-        assert_eq!(ks.key_event(KeyEv::release(C)), [kcm(NONE)]);
+        assert_eq!(ks.event(KeyEv::press(C), &CNST).unwrap(), [kcm(C)]);
+        assert_eq!(ks.event(KeyEv::release(C), &CNST).unwrap(), [kcm(NONE)]);
     }
 
     #[test]
     fn multiple_taps_separate() {
         let mut ks = KeyAutomata::new();
-        assert_eq!(ks.key_event(KeyEv::press(C)), [kcm(C)]);
-        assert_eq!(ks.key_event(KeyEv::release(C)), [kcm(NONE)]);
-        assert_eq!(ks.key_event(KeyEv::press(C)), [kcm(C)]);
-        assert_eq!(ks.key_event(KeyEv::release(C)), [kcm(NONE)]);
+        assert_eq!(ks.event(KeyEv::press(C), &CNST).unwrap(), [kcm(C)]);
+        assert_eq!(ks.event(KeyEv::release(C), &CNST).unwrap(), [kcm(NONE)]);
+        assert_eq!(ks.event(KeyEv::press(C), &CNST).unwrap(), [kcm(C)]);
+        assert_eq!(ks.event(KeyEv::release(C), &CNST).unwrap(), [kcm(NONE)]);
     }
 
     #[test]
@@ -112,40 +96,40 @@ mod tests {
         let mut ks = KeyAutomata::new();
         let one = kcm(C);
         let two = merge_kcm(one.clone(), C);
-        assert_eq!(ks.key_event(KeyEv::press(C)), [one.clone()]);
-        assert_eq!(ks.key_event(KeyEv::press(C)), [two]);
-        assert_eq!(ks.key_event(KeyEv::release(C)), [one]);
-        assert_eq!(ks.key_event(KeyEv::release(C)), [kcm(NONE)]);
+        assert_eq!(ks.event(KeyEv::press(C), &CNST).unwrap(), [one.clone()]);
+        assert_eq!(ks.event(KeyEv::press(C), &CNST).unwrap(), [two]);
+        assert_eq!(ks.event(KeyEv::release(C), &CNST).unwrap(), [one]);
+        assert_eq!(ks.event(KeyEv::release(C), &CNST).unwrap(), [kcm(NONE)]);
     }
 
     #[test]
     fn ctrl_c_split() {
         let mut ks = KeyAutomata::new();
-        assert!(ks.key_event(KeyEv::press(CTRL)).is_empty());
-        assert_eq!(ks.key_event(KeyEv::press(C)), [kcm(CTRL_C)]);
-        assert_eq!(ks.key_event(KeyEv::release(C)), [kcm(CTRL)]);
-        assert_eq!(ks.key_event(KeyEv::release(CTRL)), [kcm(NONE)]);
+        assert_eq!(ks.event(KeyEv::press(CTRL), &CNST).unwrap(), []);
+        assert_eq!(ks.event(KeyEv::press(C), &CNST).unwrap(), [kcm(CTRL_C)]);
+        assert_eq!(ks.event(KeyEv::release(C), &CNST).unwrap(), [kcm(CTRL)]);
+        assert_eq!(ks.event(KeyEv::release(CTRL), &CNST).unwrap(), [kcm(NONE)]);
     }
 
     #[test]
     fn ctrl_c_coalesced() {
         let mut ks = KeyAutomata::new();
-        assert_eq!(ks.key_event(KeyEv::press(CTRL_C)), [kcm(CTRL_C)]);
-        assert_eq!(ks.key_event(KeyEv::release(CTRL_C)), [kcm(NONE)]);
+        assert_eq!(ks.event(KeyEv::press(CTRL_C), &CNST).unwrap(), [kcm(CTRL_C)]);
+        assert_eq!(ks.event(KeyEv::release(CTRL_C), &CNST).unwrap(), [kcm(NONE)]);
     }
 
     // Super only is used for e.g opening search bar.
     #[test]
     fn super_only() {
         let mut ks = KeyAutomata::new();
-        assert!(ks.key_event(KeyEv::press(SUPER)).is_empty());
-        assert_eq!(ks.key_event(KeyEv::release(SUPER)), [kcm(SUPER), kcm(NONE)]);
+        assert!(ks.event(KeyEv::press(SUPER), &CNST).unwrap().is_empty());
+        assert_eq!(ks.event(KeyEv::release(SUPER), &CNST).unwrap(), [kcm(SUPER), kcm(NONE)]);
     }
 
     #[test]
     #[should_panic]
     fn release_must_follow_press() {
         let mut ks = KeyAutomata::new();
-        ks.key_event(KeyEv::release(SUPER));
+        ks.event(KeyEv::release(SUPER), &CNST).unwrap();
     }
 }

@@ -19,8 +19,13 @@ enum State {
 pub fn load_layout<P: AsRef<Path>>(layout_path: P) -> Result<Layout> {
     const SKIP: &str = "|\\/";
     let mut keys = Vec::new();
+    let mut l = Layout::new();
     for i in fs::read_to_string(layout_path)?.lines() {
         if i.starts_with("layer") {
+            if !keys.is_empty() {
+                l = l.with_layer(Layer::new(&keys));
+                keys.clear();
+            }
             continue;
         }
         for item in i.split(|c: char| c.is_whitespace() || SKIP.contains(c)) {
@@ -36,7 +41,13 @@ pub fn load_layout<P: AsRef<Path>>(layout_path: P) -> Result<Layout> {
             keys.push(kcset);
         }
     }
-    Ok(Layout::new().with_layer(Layer::new(&keys)))
+    l = l.with_layer(Layer::new(&keys));
+
+    if l.layers.windows(2).any(|a| a[0].keys.len() != a[1].keys.len()) {
+        Err(eyre!("not all layers have the same size"))
+    } else {
+        Ok(l)
+    }
 }
 
 pub fn load_layout_cfg<P: AsRef<Path>>(cfg_path: P) -> Result<LayoutCfg> {
@@ -179,7 +190,7 @@ pub fn load_corpus<P: AsRef<Path>>(corpus_path: P) -> Result<Vec<PhysEv>> {
             _ => return Err(eyre!("unrecognised corpus key {}", kc)),
         });
         let index = US_LAYER.keys.iter().position(|&x| x == key).unwrap();
-        corpus.push(PhysEv::new(index as u32, pressed));
+        corpus.push(PhysEv::new(index, pressed));
     }
     Ok(corpus)
 }
