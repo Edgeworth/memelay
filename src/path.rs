@@ -6,7 +6,7 @@ use crate::models::layout::Layout;
 use crate::models::qmk::QmkModel;
 use crate::models::us::USModel;
 use crate::models::Model;
-use crate::types::{KCSetExt, PhysEv, KC};
+use crate::types::{KCSetExt, KeyEv, PhysEv, KC};
 use derive_more::Display;
 use ordered_float::OrderedFloat;
 use priority_queue::PriorityQueue;
@@ -29,7 +29,7 @@ impl<'a> Node<'a> {
 #[derive(Debug, Clone, PartialEq)]
 pub struct PathFinder<'a> {
     layout_cfg: &'a LayoutCfg,
-    events: Vec<CountMap<KC>>,
+    events: Vec<KeyEv>,
     cnst: &'a Constants,
     l: &'a Layout,
 }
@@ -56,36 +56,16 @@ impl<'a> PathFinder<'a> {
 
     // Check that |ev| could be produced from Node by consuming corpus operations.
     fn try_event<'b>(&self, mut n: Node<'b>, pev: PhysEv) -> Option<Node<'b>> {
-        let mut events_qmk = n.qmk.event(pev, &self.cnst)?;
+        let events_qmk = n.qmk.event(pev, &self.cnst)?;
         for ev in events_qmk.into_iter() {
-            if ev != self.events[n.idx] {
+            if n.idx < self.events.len() && ev != self.events[n.idx] {
                 return None;
             }
             n.idx += 1;
         }
+
         Some(n)
     }
-
-    // fn compute_cumulative(&self) -> Vec<usize> {
-    //     let mut reg_presses = Vec::new();
-    //     let us = USModel::new();
-    //     for prev in self.events.iter() {
-    //         // Assumes that a physical key will always map to the same key event.
-    //         let reg_count = us.get_key(prev.phys).reg().len();
-    //         reg_presses.push(reg_count);
-    //     }
-    //     let c = reg_presses
-    //         .iter()
-    //         .rev()
-    //         .scan(0, |c, cnt| {
-    //             *c += cnt;
-    //             Some(*c)
-    //         })
-    //         .collect::<Vec<_>>();
-    //     let mut c: Vec<usize> = c.iter().rev().copied().collect();
-    //     c.push(0);
-    //     c
-    // }
 
     pub fn path_fitness(&self) -> u128 {
         let mut q: PriorityQueue<Node<'_>, OrderedFloat<f64>> = PriorityQueue::new();
@@ -114,20 +94,12 @@ impl<'a> PathFinder<'a> {
                     let next = n.clone();
                     let pev = PhysEv::new(i, press);
                     if let Some(next) = self.try_event(next, pev) {
-                        // Assume that every press of a mod key will generate an event upon release.
-                        // TODO: this is not valid in case US model does e.g. ctrl, shift, alt and
-                        // wants to build up mods?
-
-                        // let qmk_mod_count = next.qmk.kc_counts().mods();
-                        // let us_mod_count = next.us.kc_counts().mods();
-                        // if qmk_mod_count != us_mod_count && qmk_mod_count.is_superset(&us_mod_count)
-                        // {
-                        //     continue;
-                        // }
                         if seen.contains(&next) {
                             continue;
                         }
-                        let cost = d + OrderedFloat(self.phys_cost(pev));
+                        let cost = d
+                            + OrderedFloat(self.phys_cost(pev))
+                            + OrderedFloat((self.events.len() - next.idx) as f64); // TODO THIS?
                         q.push_increase(next, -cost);
                     }
                 }
@@ -135,6 +107,7 @@ impl<'a> PathFinder<'a> {
         }
         // Typing all corpus is top priority, then cost to do so.
         // println!("asdf {} {}, {}", best.0 as u128, self.events.len() as u128, cnt);
+        // println!("evs: {:?}", self.events);
 
         let fitness = combine_fitness(0, best.0 as u128, self.events.len() as u128);
         let fitness =

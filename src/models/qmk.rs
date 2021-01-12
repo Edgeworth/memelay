@@ -45,7 +45,7 @@ impl<'a> QmkModel<'a> {
         if kcset.remove(KC::Layer0) {
             layer = Some(0);
         }
-        if kcset.remove(KC::Layer1) {
+        if kcset.remove(KC::Layer1) && self.layout.num_physical() >= 2 {
             layer = Some(1);
         }
         (layer, kcset)
@@ -53,7 +53,7 @@ impl<'a> QmkModel<'a> {
 }
 
 impl<'a> Model for QmkModel<'a> {
-    fn event(&mut self, pev: PhysEv, cnst: &Constants) -> Option<Vec<CountMap<KC>>> {
+    fn event(&mut self, pev: PhysEv, cnst: &Constants) -> Option<Vec<KeyEv>> {
         if !(0..=1).contains(&self.phys.adjust_count(pev.phys, pev.press)) {
             return None; // Don't allow pressing the same physical key multiple times.
         }
@@ -76,7 +76,7 @@ impl<'a> Model for QmkModel<'a> {
 
         if let Some(layer) = layer {
             self.layer = layer;
-            self.idle_count = 0; // Could switching layers as resetting idle.
+            self.idle_count = 0; // Count switching layers as resetting idle.
         }
 
         if self.idle_count > cnst.max_phys_idle {
@@ -95,7 +95,6 @@ impl<'a> Model for QmkModel<'a> {
 mod tests {
     use super::*;
     use crate::models::layout::Layer;
-    use crate::models::tests::kcm;
     use crate::types::KCSet;
     use enumset::enum_set;
     use lazy_static::lazy_static;
@@ -108,6 +107,7 @@ mod tests {
     const CTRL_C: KCSet = enum_set!(KC::C | KC::Ctrl);
     const LAYER0: KCSet = enum_set!(KC::Layer0);
     const LAYER1: KCSet = enum_set!(KC::Layer1);
+
     lazy_static! {
         static ref CNST: Constants = Constants {
             max_mod_pressed: 5,
@@ -123,18 +123,18 @@ mod tests {
     #[test]
     fn regular_letter() {
         let mut m = QmkModel::new(&LAYOUT);
-        assert_eq!(m.event(PhysEv::new(2, true), &CNST).unwrap(), [kcm(C)]);
+        assert_eq!(m.event(PhysEv::new(2, true), &CNST).unwrap(), [KeyEv::press(C)]);
     }
 
     #[test]
     fn switch_layer() {
         let mut m = QmkModel::new(&LAYOUT);
         assert_eq!(m.event(PhysEv::new(3, true), &CNST).unwrap(), []);
-        assert_eq!(m.event(PhysEv::new(1, true), &CNST).unwrap(), [kcm(A)]);
+        assert_eq!(m.event(PhysEv::new(1, true), &CNST).unwrap(), [KeyEv::press(A)]);
         assert_eq!(m.event(PhysEv::new(3, false), &CNST).unwrap(), []);
-        assert_eq!(m.event(PhysEv::new(1, false), &CNST).unwrap(), [kcm(NONE)]);
+        assert_eq!(m.event(PhysEv::new(1, false), &CNST).unwrap(), [KeyEv::release(A)]);
         assert_eq!(m.event(PhysEv::new(2, true), &CNST).unwrap(), []);
         assert_eq!(m.event(PhysEv::new(2, false), &CNST).unwrap(), []);
-        assert_eq!(m.event(PhysEv::new(2, true), &CNST).unwrap(), [kcm(C)]);
+        assert_eq!(m.event(PhysEv::new(2, true), &CNST).unwrap(), [KeyEv::press(C)]);
     }
 }
