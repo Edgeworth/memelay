@@ -119,7 +119,7 @@ impl USModel {
 }
 
 impl Model for USModel {
-    fn event(&mut self, pev: PhysEv, cnst: &Constants) -> Option<Vec<CountMap<KC>>> {
+    fn event(&mut self, pev: PhysEv, cnst: &Constants) -> Option<Vec<KeyEv>> {
         if !(0..=1).contains(&self.phys.adjust_count(pev.phys, pev.press)) {
             return None;
         }

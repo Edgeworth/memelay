@@ -49,7 +49,8 @@ pub fn rand_kcset<R: rand::Rng + ?Sized>(r: &mut R, cnst: &Constants) -> KCSet {
     mods | regs
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Display)]
+#[display(fmt = "KeyEv({:?}, {})", key, press)]
 pub struct KeyEv {
     pub key: KCSet,
     pub press: bool,
@@ -94,6 +95,12 @@ impl PhysEv {
 #[allow(clippy::derive_hash_xor_eq)]
 #[derive(Debug, Ord, PartialOrd, EnumSetType, EnumIter, EnumString, Hash, StrumDisplay)]
 pub enum KC {
+    // Mod - these come first on purpose, to make sure e.g. Ctrl-C is generated as Ctrl then C.
+    Ctrl,
+    Shift,
+    Alt,
+    Super,
+
     // Numbers:
     Num0,
     Num1,
@@ -191,12 +198,6 @@ pub enum KC {
     F10,
     F11,
     F12,
-
-    // Mod:
-    Ctrl,
-    Shift,
-    Alt,
-    Super,
 
     // Layer control:
     Layer0,
