@@ -45,7 +45,7 @@ impl<'a> QmkModel<'a> {
         if kcset.remove(KC::Layer0) {
             layer = Some(0);
         }
-        if kcset.remove(KC::Layer1) && self.layout.num_physical() >= 2 {
+        if kcset.remove(KC::Layer1) && self.layout.layers.len() >= 2 {
             layer = Some(1);
         }
         (layer, kcset)
