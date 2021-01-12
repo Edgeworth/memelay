@@ -1,7 +1,7 @@
 use crate::constants::Constants;
 use crate::ga::util::{combine_cost, combine_fitness};
 use crate::layout_eval::LayoutCfg;
-use crate::models::count_map::CountMap;
+
 use crate::models::layout::Layout;
 use crate::models::qmk::QmkModel;
 use crate::models::us::USModel;
