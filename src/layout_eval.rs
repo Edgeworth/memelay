@@ -116,15 +116,15 @@ impl Evaluator for LayoutEval {
                 0 => {
                     // Mutate random available key.
                     let avail = l.layers[layer_idx].keys.iter_mut().filter(|k| !k.is_empty());
-                    if let Some(key) = avail.choose(&mut r) {
-                        *key = rand_kcset(&mut r, &self.cnst);
+                    if let Some(kcset) = avail.choose(&mut r) {
+                        *kcset = rand_kcset(&mut r, &self.cnst);
                     }
                 }
                 1 => {
                     // Mutate random empty key.
                     let empty = l.layers[layer_idx].keys.iter_mut().filter(|k| k.is_empty());
-                    if let Some(key) = empty.choose(&mut r) {
-                        *key = rand_kcset(&mut r, &self.cnst);
+                    if let Some(kcset) = empty.choose(&mut r) {
+                        *kcset = rand_kcset(&mut r, &self.cnst);
                     }
                 }
                 2 => {
@@ -161,9 +161,7 @@ impl Evaluator for LayoutEval {
             .path_fitness();
         }
         let fitness = shortest_path_cost_avg / self.cnst.batch_num as u128;
-        // println!("DONE: {}", fitness);
-        let fitness = combine_cost(fitness, self.layout_cost(a), 1000);
-        fitness
+        combine_cost(fitness, self.layout_cost(a), 1000)
     }
 
     fn distance(&self, _: &Cfg, a: &Layout, b: &Layout) -> f64 {
