@@ -348,7 +348,7 @@ dependencies = [
  "strum",
  "strum_macros",
  "syn",
- "vec-collections",
+ "vec_map",
 ]
 
 [[package]]
@@ -917,12 +917,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fe0f37c9e8f3c5a4a66ad655a93c74daac4ad00c441533bf5c6e7990bb42604e"
 
 [[package]]
-name = "sorted-iter"
-version = "0.1.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cbe9135ed5fd05813a47006636308dc34f5df43e6be5bf3f76744669248c2c8b"
-
-[[package]]
 name = "strsim"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1094,18 +1088,6 @@ name = "unicode-xid"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f7fe0bb3479651439c9112f72b6c505038574c9fbb575ed1bf3b797fa39dd564"
-
-[[package]]
-name = "vec-collections"
-version = "0.3.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7bdf1ec6bd0e987e21d7225908bceef5dc82e411bdc81449253242bfe9501dd4"
-dependencies = [
- "num-traits",
- "serde",
- "smallvec",
- "sorted-iter",
-]
 
 [[package]]
 name = "vec_map"
