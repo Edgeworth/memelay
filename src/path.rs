@@ -13,7 +13,7 @@ use priority_queue::PriorityQueue;
 use std::collections::HashSet;
 use std::usize;
 
-#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Display)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash, Display)]
 #[display(fmt = "Node, corpus idx {}:\n  qmk: {}", idx, qmk)]
 struct Node<'a> {
     pub qmk: QmkModel<'a>, // Currently have this keyboard state.
@@ -50,13 +50,16 @@ impl<'a> PathFinder<'a> {
         Self { layout_cfg, events, cnst, l }
     }
 
-    fn phys_cost(&self, pev: PhysEv) -> f64 {
-        self.layout_cfg.cost[pev.phys as usize]
+    fn phys_cost(&self, pev: &Vec<PhysEv>) -> f64 {
+        pev.iter().fold(0.0, |c, pev| c + self.layout_cfg.cost[pev.phys as usize])
     }
 
     // Check that |ev| could be produced from Node by consuming corpus operations.
-    fn try_event<'b>(&self, mut n: Node<'b>, pev: PhysEv) -> Option<Node<'b>> {
-        let events_qmk = n.qmk.event(pev, &self.cnst)?;
+    fn try_events<'b>(&self, mut n: Node<'b>, pevs: &Vec<PhysEv>) -> Option<Node<'b>> {
+        let mut events_qmk = Vec::new();
+        for &pev in pevs.iter() {
+            events_qmk.extend(n.qmk.event(pev, &self.cnst)?);
+        }
         for ev in events_qmk.into_iter() {
             if n.idx < self.events.len() && ev != self.events[n.idx] {
                 return None;
@@ -89,19 +92,14 @@ impl<'a> PathFinder<'a> {
                 break;
             }
             // Try pressing and releasing physical keys.
-            for &press in &[true, false] {
-                for i in 0..self.l.num_physical() {
-                    let next = n.clone();
-                    let pev = PhysEv::new(i, press);
-                    if let Some(next) = self.try_event(next, pev) {
-                        if seen.contains(&next) {
-                            continue;
-                        }
-                        let cost = d
-                            + OrderedFloat(self.phys_cost(pev))
-                            + OrderedFloat((self.events.len() - next.idx) as f64); // TODO THIS?
-                        q.push_increase(next, -cost);
+            for pevs in n.qmk.key_ev_edges(self.events[n.idx]).into_iter() {
+                let next = n.clone();
+                if let Some(next) = self.try_events(next, &pevs) {
+                    if seen.contains(&next) {
+                        continue;
                     }
+                    let cost = d + OrderedFloat(self.phys_cost(&pevs));
+                    q.push_increase(next, -cost);
                 }
             }
         }
@@ -110,9 +108,7 @@ impl<'a> PathFinder<'a> {
         // println!("evs: {:?}", self.events);
 
         let fitness = combine_fitness(0, best.0 as u128, self.events.len() as u128);
-        let fitness =
-            combine_cost(fitness, best.1.into_inner() as u128, self.events.len() as u128 * 1000);
-        fitness
+        combine_cost(fitness, best.1.into_inner() as u128, self.events.len() as u128 * 1000)
     }
 }
 
