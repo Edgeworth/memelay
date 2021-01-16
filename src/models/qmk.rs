@@ -184,12 +184,10 @@ mod tests {
     use enumset::enum_set;
     use lazy_static::lazy_static;
 
-    const NONE: KCSet = enum_set!();
     const SUPER: KCSet = enum_set!(KC::Super);
     const CTRL: KCSet = enum_set!(KC::Ctrl);
     const A: KCSet = enum_set!(KC::A);
     const C: KCSet = enum_set!(KC::C);
-    const CTRL_C: KCSet = enum_set!(KC::C | KC::Ctrl);
     const LAYER0: KCSet = enum_set!(KC::Layer0);
     const LAYER1: KCSet = enum_set!(KC::Layer1);
 

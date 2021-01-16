@@ -2,7 +2,9 @@ use crate::constants::Constants;
 use crate::ga::util::{combine_cost, crossover_vec};
 use crate::ga::{Cfg, Evaluator};
 use crate::ingest::{load_corpus, load_layout_cfg};
+use crate::models::compute_kevs;
 use crate::models::layout::Layout;
+use crate::models::us::USModel;
 use crate::path::PathFinder;
 use crate::prelude::*;
 use crate::types::{rand_kcset, Finger, PhysEv};
@@ -147,20 +149,20 @@ impl Evaluator for LayoutEval {
     }
 
     fn fitness(&self, _: &Cfg, a: &Layout) -> u128 {
-        let block_size = self.cnst.batch_size.min(self.corpus.len());
-        let mut shortest_path_cost_avg = 0;
+        let mut path_cost_mean = 0;
         let mut r = rand::thread_rng();
+        let block_size = self.cnst.batch_size.min(self.corpus.len());
+        let start_idx = r.gen_range(0..=(self.corpus.len() - block_size));
         for _ in 0..self.cnst.batch_num {
-            let start_idx = r.gen_range(0..=(self.corpus.len() - block_size));
-            shortest_path_cost_avg += PathFinder::new(
-                &self.layout_cfg,
+            let kevs = compute_kevs(
+                USModel::new(),
                 &self.corpus[start_idx..(start_idx + block_size)],
                 &self.cnst,
-                a,
-            )
-            .path_fitness();
+            );
+            path_cost_mean +=
+                PathFinder::new(&self.layout_cfg, &kevs, &self.cnst, a).path_fitness();
         }
-        let fitness = shortest_path_cost_avg / self.cnst.batch_num as u128;
+        let fitness = path_cost_mean / self.cnst.batch_num as u128;
         combine_cost(fitness, self.layout_cost(a), 1000)
     }
 

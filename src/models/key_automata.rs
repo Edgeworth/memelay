@@ -11,6 +11,12 @@ pub struct KeyAutomata {
     kcm: CountMap<KC>,
 }
 
+impl Default for KeyAutomata {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl KeyAutomata {
     pub fn new() -> Self {
         Self { kcm: CountMap::new() }
