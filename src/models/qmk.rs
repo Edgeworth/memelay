@@ -7,13 +7,15 @@ use crate::types::{KCSet, KCSetExt, KeyEv, PhysEv, KC};
 use derive_more::Display;
 use enumset::enum_set;
 use smallvec::SmallVec;
+use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
+use std::hash::{Hash, Hasher};
 use vec_collections::{VecMap, VecSet};
 
 type LayerAdjMap = VecMap<[(usize, HashMap<usize, SmallVec<[PhysEv; 8]>>); 8]>;
 
 // TODO: model multiple active layers.
-#[derive(Debug, Clone, Eq, PartialEq, Display)]
+#[derive(Debug, Clone, Display)]
 #[display(fmt = "layer {}, phys {}, keys {}", layer, phys, ks)]
 pub struct QmkModel<'a> {
     layout: &'a Layout,
@@ -24,16 +26,24 @@ pub struct QmkModel<'a> {
     ks: KeyAutomata,
     idle_count: usize,
     layer_adj: LayerAdjMap, // How to get from layer a -> b.
+    hash_state: DefaultHasher,
+}
+
+impl Eq for QmkModel<'_> {}
+
+impl PartialEq for QmkModel<'_> {
+    fn eq(&self, o: &Self) -> bool {
+        self.layout == o.layout
+            && self.phys == o.phys
+            && self.cached_key == o.cached_key
+            && self.ks == o.ks
+            && self.idle_count == o.idle_count
+    }
 }
 
 impl std::hash::Hash for QmkModel<'_> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.phys.hash(state);
-        self.cached_key.hash(state);
-        self.cached_key.hash(state);
-        self.layer.hash(state);
-        self.ks.hash(state);
-        self.idle_count.hash(state);
+        self.hash_state.finish().hash(state);
     }
 }
 
@@ -91,6 +101,7 @@ impl<'a> QmkModel<'a> {
             ks: KeyAutomata::new(),
             idle_count: 0,
             layer_adj: Self::compute_layer_adj(layout),
+            hash_state: DefaultHasher::new(),
         }
     }
 
@@ -142,6 +153,8 @@ impl<'a> QmkModel<'a> {
 
 impl<'a> Model for QmkModel<'a> {
     fn event(&mut self, pev: PhysEv, cnst: &Constants) -> Option<SmallVec<[KeyEv; 4]>> {
+        pev.hash(&mut self.hash_state);
+
         if !(0..=1).contains(&self.phys.adjust_count(pev.phys, pev.press)) {
             return None; // Don't allow pressing the same physical key multiple times.
         }
