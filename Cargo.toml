@@ -25,7 +25,7 @@ structopt = "*"
 strum = "*"
 strum_macros = "*"
 syn = "=1.0.57"
-vec-collections = "*"
+vec_map = "*"
 
 [dev-dependencies]
 criterion = {version = "*", features = ["real_blackbox"]}

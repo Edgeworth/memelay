@@ -6,22 +6,36 @@ use crate::models::qmk::QmkModel;
 use crate::models::Model;
 use crate::types::{KeyEv, PhysEv};
 use derive_more::Display;
-use ordered_float::OrderedFloat;
+use ordered_float::NotNan;
 use priority_queue::PriorityQueue;
 use smallvec::SmallVec;
 use std::collections::HashSet;
 use std::usize;
 
-#[derive(Debug, Clone, Eq, PartialEq, Hash, Display)]
+#[derive(Debug, Clone, Eq, Display)]
 #[display(fmt = "Node(idx({}),  qmk({}))", idx, qmk)]
 struct Node<'a> {
     pub qmk: QmkModel<'a>, // Currently have this keyboard state.
     pub idx: usize, // Processed this much of the corpus (transformed to countmaps of keycodes).
+    pub cost: NotNan<f64>,
+}
+
+impl std::hash::Hash for Node<'_> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.qmk.hash(state);
+        self.idx.hash(state);
+    }
+}
+
+impl PartialEq for Node<'_> {
+    fn eq(&self, o: &Self) -> bool {
+        self.idx == o.idx && self.qmk == o.qmk
+    }
 }
 
 impl<'a> Node<'a> {
     pub fn new(layout: &'a Layout) -> Self {
-        Self { qmk: QmkModel::new(layout), idx: 0 }
+        Self { qmk: QmkModel::new(layout), idx: 0, cost: NotNan::default() }
     }
 }
 
@@ -64,21 +78,20 @@ impl<'a> PathFinder<'a> {
     }
 
     pub fn path_fitness(&self) -> u128 {
-        let mut q: PriorityQueue<Node<'_>, OrderedFloat<f64>> = PriorityQueue::new();
+        let mut q: PriorityQueue<Node<'_>, NotNan<f64>> = PriorityQueue::new();
         let mut seen: HashSet<Node<'_>> = HashSet::new();
-        let mut best = (0, OrderedFloat(0.0));
+        let mut best = (0, NotNan::default());
 
         let st = Node::new(self.l);
-        q.push(st.clone(), OrderedFloat(0.0));
+        q.push(st.clone(), NotNan::default());
         let mut cnt = 0;
-        while let Some((n, d)) = q.pop() {
-            let d = -d;
+        while let Some((n, _pri)) = q.pop() {
             seen.insert(n.clone());
             cnt += 1;
 
             // println!(
-            //     "cost: {}, dijk: {}, seen: {}, get to: {}",
-            //     -d,
+            //     "pri: {}, dijk: {}, seen: {}, get to: {}",
+            //     pri,
             //     n,
             //     seen.len(),
             //     self.kevs
@@ -87,8 +100,8 @@ impl<'a> PathFinder<'a> {
             //         .unwrap_or_else(|| "done".to_owned())
             // );
             // Look for getting furthest through corpus, then for lowest cost.
-            if n.idx > best.0 || (n.idx == best.0 && d < best.1) {
-                best = (n.idx, d)
+            if n.idx > best.0 || (n.idx == best.0 && n.cost < best.1) {
+                best = (n.idx, n.cost)
             }
             if n.idx >= self.kevs.len() {
                 break;
@@ -97,17 +110,20 @@ impl<'a> PathFinder<'a> {
             for pevs in n.qmk.key_ev_edges(self.kevs[n.idx]).into_iter() {
                 // println!("  try edges: {:?}", pevs);
                 let next = n.clone();
-                if let Some(next) = self.try_pevs(next, &pevs) {
+                if let Some(mut next) = self.try_pevs(next, &pevs) {
                     if seen.contains(&next) {
                         continue;
                     }
-                    let cost = d + OrderedFloat(self.phys_cost(&pevs));
-                    q.push_increase(next, -cost);
+                    next.cost += NotNan::new(self.phys_cost(&pevs)).unwrap();
+                    let pri = next.cost;
+                    // let pri =
+                    // next.cost + NotNan::new(self.kevs.len() as f64 - next.idx as f64).unwrap();
+                    q.push_increase(next, -pri);
                 }
             }
         }
         // Typing all corpus is top priority, then cost to do so.
-        // println!("asdf {} {}, {}", best.0 as u128, self.kevs.len() as u128, cnt);
+        // println!("asdf len {}, cost {}, tot ev {}, seen {}", best.0, best.1, self.kevs.len(), cnt);
 
         let fitness = combine_fitness(0, best.0 as u128, self.kevs.len() as u128);
         combine_cost(fitness, best.1.into_inner() as u128, self.kevs.len() as u128 * 1000)

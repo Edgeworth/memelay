@@ -5,28 +5,30 @@ use crate::models::layout::Layout;
 use crate::models::Model;
 use crate::types::{KCSet, KCSetExt, KeyEv, PhysEv, KC};
 use derive_more::Display;
-use enumset::enum_set;
 use smallvec::SmallVec;
-use std::collections::hash_map::DefaultHasher;
-use std::collections::HashMap;
-use std::hash::{Hash, Hasher};
-use vec_collections::{VecMap, VecSet};
+use vec_map::VecMap;
 
-type LayerAdjMap = VecMap<[(usize, HashMap<usize, SmallVec<[PhysEv; 8]>>); 8]>;
+type LayerAdjMap = VecMap<VecMap<SmallVec<[PhysEv; 8]>>>;
 
 // TODO: model multiple active layers.
 #[derive(Debug, Clone, Display)]
-#[display(fmt = "layer {}, phys {}, keys {}", layer, phys, ks)]
+#[display(
+    fmt = "layer {}, idle {}, phys {}, cached {:?}, ks {}",
+    layer,
+    idle_count,
+    phys,
+    cached_key,
+    ks
+)]
 pub struct QmkModel<'a> {
     layout: &'a Layout,
     phys: CountMap<usize>, // Holds # of times physical key pressed.
     // Holds KCSet initially used when a physical key was pressed. Needed for layers.
-    cached_key: VecMap<[(usize, KCSet); 8]>,
+    cached_key: VecMap<KCSet>,
     layer: usize, // Current active layer.
     ks: KeyAutomata,
     idle_count: usize,
     layer_adj: LayerAdjMap, // How to get from layer a -> b.
-    hash_state: DefaultHasher,
 }
 
 impl Eq for QmkModel<'_> {}
@@ -36,6 +38,7 @@ impl PartialEq for QmkModel<'_> {
         self.layout == o.layout
             && self.phys == o.phys
             && self.cached_key == o.cached_key
+            && self.layer == o.layer
             && self.ks == o.ks
             && self.idle_count == o.idle_count
     }
@@ -43,24 +46,29 @@ impl PartialEq for QmkModel<'_> {
 
 impl std::hash::Hash for QmkModel<'_> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.hash_state.finish().hash(state);
+        self.layout.hash(state);
+        self.phys.hash(state);
+        self.cached_key.hash(state);
+        self.layer.hash(state);
+        self.ks.hash(state);
+        self.idle_count.hash(state);
     }
 }
 
 struct LayerDfs<'a> {
     layout: &'a Layout,
     path: SmallVec<[PhysEv; 8]>,
-    layer_adj: HashMap<usize, SmallVec<[PhysEv; 8]>>,
-    seen: VecSet<[usize; 8]>,
+    layer_adj: VecMap<SmallVec<[PhysEv; 8]>>,
+    seen: VecMap<()>,
 }
 
 impl<'a> LayerDfs<'a> {
     fn new(layout: &'a Layout) -> Self {
-        Self { layout, path: SmallVec::new(), layer_adj: HashMap::new(), seen: VecSet::empty() }
+        Self { layout, path: SmallVec::new(), layer_adj: VecMap::new(), seen: VecMap::new() }
     }
 
     fn dfs(&mut self, layer: usize) {
-        if !self.seen.insert(layer) {
+        if self.seen.insert(layer, ()).is_some() {
             return;
         }
         // TODO: Use minimum cost path to get between layers - need to run dijkstra.
@@ -83,7 +91,7 @@ impl<'a> LayerDfs<'a> {
 
 impl<'a> QmkModel<'a> {
     fn compute_layer_adj(l: &Layout) -> LayerAdjMap {
-        let mut layer_adj = VecMap::empty();
+        let mut layer_adj = VecMap::new();
         for layer in 0..l.layers.len() {
             let mut dfs = LayerDfs::new(l);
             dfs.dfs(layer);
@@ -96,12 +104,11 @@ impl<'a> QmkModel<'a> {
         Self {
             layout,
             phys: CountMap::new(),
-            cached_key: VecMap::empty(),
+            cached_key: VecMap::new(),
             layer: 0,
             ks: KeyAutomata::new(),
             idle_count: 0,
             layer_adj: Self::compute_layer_adj(layout),
-            hash_state: DefaultHasher::new(),
         }
     }
 
@@ -117,7 +124,7 @@ impl<'a> QmkModel<'a> {
                         v.push(pev);
                         edges.push(v);
                     } else if let Some(adj) =
-                        self.layer_adj.get(&self.layer).and_then(|adj| adj.get(&phys))
+                        self.layer_adj.get(self.layer).and_then(|adj| adj.get(phys))
                     {
                         let mut pevs = adj.clone();
                         pevs.push(pev);
@@ -135,8 +142,7 @@ impl<'a> QmkModel<'a> {
             self.cached_key.insert(pev.phys, kcset);
             kcset
         } else {
-            // TODO: Implement remove in upstream crate.
-            self.cached_key.insert(pev.phys, enum_set!()).unwrap()
+            self.cached_key.remove(pev.phys).unwrap()
         };
         let mut layer = None;
         // Filter layer stuff here, since it is never sent, just handled by QMK.
@@ -153,8 +159,6 @@ impl<'a> QmkModel<'a> {
 
 impl<'a> Model for QmkModel<'a> {
     fn event(&mut self, pev: PhysEv, cnst: &Constants) -> Option<SmallVec<[KeyEv; 4]>> {
-        pev.hash(&mut self.hash_state);
-
         if !(0..=1).contains(&self.phys.adjust_count(pev.phys, pev.press)) {
             return None; // Don't allow pressing the same physical key multiple times.
         }
