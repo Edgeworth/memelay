@@ -1,5 +1,5 @@
 use crate::constants::Constants;
-use crate::ga::util::{combine_cost, crossover_vec};
+use crate::ga::util::{combine_cost, combine_fitness, crossover_vec};
 use crate::ga::{Cfg, Evaluator};
 use crate::ingest::{load_corpus, load_layout_cfg};
 use crate::models::compute_kevs;
@@ -16,7 +16,7 @@ use rand_distr::{Distribution, WeightedAliasIndex};
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct LayoutCfg {
     pub layout: String,
-    pub cost: Vec<f64>,
+    pub cost: Vec<u64>,
     pub fing: Vec<Finger>,
 }
 
@@ -159,8 +159,10 @@ impl Evaluator for LayoutEval {
                 &self.corpus[start_idx..(start_idx + block_size)],
                 &self.cnst,
             );
-            path_cost_mean +=
-                PathFinder::new(&self.layout_cfg, &kevs, &self.cnst, a).path_fitness();
+            let res = PathFinder::new(&self.layout_cfg, &kevs, &self.cnst, a).path();
+            let fitness = combine_fitness(0, res.kevs_found as u128, kevs.len() as u128);
+            let fitness = combine_cost(fitness, res.cost as u128, kevs.len() as u128 * 1000000);
+            path_cost_mean += fitness;
         }
         let fitness = path_cost_mean / self.cnst.batch_num as u128;
         combine_cost(fitness, self.layout_cost(a), 1000)
