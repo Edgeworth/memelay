@@ -76,16 +76,16 @@ impl<'a> PathFinder<'a> {
             seen.insert(n.clone());
             cnt += 1;
 
-            println!(
-                "cost: {}, dijk: {}, seen: {}, get to: {}",
-                -d,
-                n,
-                seen.len(),
-                self.kevs
-                    .get(n.idx)
-                    .map(|kev| kev.to_string())
-                    .unwrap_or_else(|| "done".to_owned())
-            );
+            // println!(
+            //     "cost: {}, dijk: {}, seen: {}, get to: {}",
+            //     -d,
+            //     n,
+            //     seen.len(),
+            //     self.kevs
+            //         .get(n.idx)
+            //         .map(|kev| kev.to_string())
+            //         .unwrap_or_else(|| "done".to_owned())
+            // );
             // Look for getting furthest through corpus, then for lowest cost.
             if n.idx > best.0 || (n.idx == best.0 && d < best.1) {
                 best = (n.idx, d)
@@ -95,7 +95,7 @@ impl<'a> PathFinder<'a> {
             }
             // Try pressing and releasing physical keys.
             for pevs in n.qmk.key_ev_edges(self.kevs[n.idx]).into_iter() {
-                println!("  try edges: {:?}", pevs);
+                // println!("  try edges: {:?}", pevs);
                 let next = n.clone();
                 if let Some(next) = self.try_pevs(next, &pevs) {
                     if seen.contains(&next) {
@@ -107,7 +107,7 @@ impl<'a> PathFinder<'a> {
             }
         }
         // Typing all corpus is top priority, then cost to do so.
-        println!("asdf {} {}, {}", best.0 as u128, self.kevs.len() as u128, cnt);
+        // println!("asdf {} {}, {}", best.0 as u128, self.kevs.len() as u128, cnt);
 
         let fitness = combine_fitness(0, best.0 as u128, self.kevs.len() as u128);
         combine_cost(fitness, best.1.into_inner() as u128, self.kevs.len() as u128 * 1000)

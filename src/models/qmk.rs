@@ -99,7 +99,7 @@ impl<'a> QmkModel<'a> {
         for (lid, layer) in self.layout.layers.iter().enumerate() {
             for (phys, &kcset) in layer.keys.iter().enumerate() {
                 // Only try pressing this key if it makes progress to |kev| without pressing other stuff.
-                if kev.kcset.is_superset(kcset) {
+                if kev.kcset.is_superset(kcset) && !kcset.is_empty() {
                     let pev = PhysEv::new(phys, kev.press);
                     if lid == self.layer {
                         let mut v = SmallVec::new();
@@ -187,6 +187,7 @@ mod tests {
     use enumset::enum_set;
     use lazy_static::lazy_static;
 
+    const NONE: KCSet = enum_set!();
     const SUPER: KCSet = enum_set!(KC::Super);
     const CTRL: KCSet = enum_set!(KC::Ctrl);
     const A: KCSet = enum_set!(KC::A);
@@ -251,6 +252,17 @@ mod tests {
         assert_eq!(
             m.key_ev_edges(KeyEv::new(C, false)),
             SmallVec::from_buf([SmallVec::from_buf([PhysEv::new(2, false)])])
+        );
+    }
+    #[test]
+    fn kev_edges_does_not_use_none_keys() {
+        let layout = Layout::new()
+            .with_layer(Layer::new(&[SUPER, CTRL, C, LAYER1, NONE]))
+            .with_layer(Layer::new(&[CTRL, A, LAYER0]));
+        let m = QmkModel::new(&layout);
+        assert_eq!(
+            m.key_ev_edges(KeyEv::new(C, true)),
+            SmallVec::from_buf([SmallVec::from_buf([PhysEv::new(2, true)])])
         );
     }
 }
