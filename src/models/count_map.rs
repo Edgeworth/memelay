@@ -1,8 +1,7 @@
 use derive_more::Display;
+use smallvec::SmallVec;
 use std::fmt;
 use std::slice::Iter;
-
-use crate::types::KC;
 
 fn press_to_count(press: bool) -> i32 {
     if press {
@@ -15,22 +14,12 @@ fn press_to_count(press: bool) -> i32 {
 #[derive(Debug, Clone, Default, Ord, PartialOrd, Eq, PartialEq, Hash, Display)]
 #[display(fmt = "{:?}", c)]
 pub struct CountMap<T: Copy + PartialEq + Ord + fmt::Debug> {
-    c: Vec<(T, i32)>,
+    c: SmallVec<[(T, i32); 8]>,
 }
 
 impl<T: Copy + PartialEq + Ord + fmt::Debug> CountMap<T> {
     pub fn new() -> Self {
-        Self { c: Vec::new() }
-    }
-
-    pub fn from_vec(mut c: Vec<(T, i32)>) -> Self {
-        c.sort();
-        c.dedup();
-        let c = c.into_iter().filter(|x| x.1 > 0).collect::<Vec<_>>();
-        if c.iter().any(|x| x.1 < 0) {
-            panic!("can't have negative count");
-        }
-        Self { c }
+        Self { c: SmallVec::new() }
     }
 
     pub fn get_count(&self, k: T) -> i32 {
@@ -74,15 +63,5 @@ impl<T: Copy + PartialEq + Ord + fmt::Debug> CountMap<T> {
             }
         }
         true
-    }
-}
-
-impl CountMap<KC> {
-    pub fn mods(&self) -> CountMap<KC> {
-        CountMap::from_vec(self.c.iter().copied().filter(|x| x.0.is_mod()).collect())
-    }
-
-    pub fn regular(&self) -> CountMap<KC> {
-        CountMap::from_vec(self.c.iter().copied().filter(|x| !x.0.is_mod()).collect())
     }
 }

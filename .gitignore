@@ -3,3 +3,4 @@ apikeys.json
 .idea/
 /.cargo
 vis.json
+perf.data*

@@ -6,19 +6,20 @@ use crate::models::Model;
 use crate::types::{KCSet, KCSetExt, KeyEv, PhysEv, KC};
 use derive_more::Display;
 use enumset::enum_set;
+use smallvec::SmallVec;
 use std::collections::HashMap;
 use vec_collections::{VecMap, VecSet};
 
-type LayerAdjMap = VecMap<[(usize, HashMap<usize, Vec<PhysEv>>); 10]>;
+type LayerAdjMap = VecMap<[(usize, HashMap<usize, SmallVec<[PhysEv; 8]>>); 8]>;
 
 // TODO: model multiple active layers.
 #[derive(Debug, Clone, Eq, PartialEq, Display)]
-#[display(fmt = "layer: {}, phys: {}, key state: {}", layer, phys, ks)]
+#[display(fmt = "layer {}, phys {}, keys {}", layer, phys, ks)]
 pub struct QmkModel<'a> {
     layout: &'a Layout,
     phys: CountMap<usize>, // Holds # of times physical key pressed.
     // Holds KCSet initially used when a physical key was pressed. Needed for layers.
-    cached_key: VecMap<[(usize, KCSet); 10]>,
+    cached_key: VecMap<[(usize, KCSet); 8]>,
     layer: usize, // Current active layer.
     ks: KeyAutomata,
     idle_count: usize,
@@ -38,14 +39,14 @@ impl std::hash::Hash for QmkModel<'_> {
 
 struct LayerDfs<'a> {
     layout: &'a Layout,
-    path: Vec<PhysEv>,
-    layer_adj: HashMap<usize, Vec<PhysEv>>,
-    seen: VecSet<[usize; 10]>,
+    path: SmallVec<[PhysEv; 8]>,
+    layer_adj: HashMap<usize, SmallVec<[PhysEv; 8]>>,
+    seen: VecSet<[usize; 8]>,
 }
 
 impl<'a> LayerDfs<'a> {
     fn new(layout: &'a Layout) -> Self {
-        Self { layout, path: Vec::new(), layer_adj: HashMap::new(), seen: VecSet::empty() }
+        Self { layout, path: SmallVec::new(), layer_adj: HashMap::new(), seen: VecSet::empty() }
     }
 
     fn dfs(&mut self, layer: usize) {
@@ -93,15 +94,17 @@ impl<'a> QmkModel<'a> {
         }
     }
 
-    pub fn key_ev_edges(&self, kev: KeyEv) -> Vec<Vec<PhysEv>> {
-        let mut edges = Vec::new();
+    pub fn key_ev_edges(&self, kev: KeyEv) -> SmallVec<[SmallVec<[PhysEv; 8]>; 8]> {
+        let mut edges = SmallVec::new();
         for (lid, layer) in self.layout.layers.iter().enumerate() {
             for (phys, &kcset) in layer.keys.iter().enumerate() {
                 // Only try pressing this key if it makes progress to |kev| without pressing other stuff.
                 if kev.kcset.is_superset(kcset) {
                     let pev = PhysEv::new(phys, kev.press);
                     if lid == self.layer {
-                        edges.push(vec![pev]);
+                        let mut v = SmallVec::new();
+                        v.push(pev);
+                        edges.push(v);
                     } else if let Some(adj) =
                         self.layer_adj.get(&self.layer).and_then(|adj| adj.get(&phys))
                     {
@@ -138,7 +141,7 @@ impl<'a> QmkModel<'a> {
 }
 
 impl<'a> Model for QmkModel<'a> {
-    fn event(&mut self, pev: PhysEv, cnst: &Constants) -> Option<Vec<KeyEv>> {
+    fn event(&mut self, pev: PhysEv, cnst: &Constants) -> Option<SmallVec<[KeyEv; 4]>> {
         if !(0..=1).contains(&self.phys.adjust_count(pev.phys, pev.press)) {
             return None; // Don't allow pressing the same physical key multiple times.
         }
@@ -206,30 +209,48 @@ mod tests {
     #[test]
     fn regular_letter() {
         let mut m = QmkModel::new(&LAYOUT);
-        assert_eq!(m.event(PhysEv::new(2, true), &CNST).unwrap(), [KeyEv::press(C)]);
+        assert_eq!(
+            m.event(PhysEv::new(2, true), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::press(C)])
+        );
     }
 
     #[test]
     fn switch_layer() {
         let mut m = QmkModel::new(&LAYOUT);
-        assert_eq!(m.event(PhysEv::new(3, true), &CNST).unwrap(), []);
-        assert_eq!(m.event(PhysEv::new(1, true), &CNST).unwrap(), [KeyEv::press(A)]);
-        assert_eq!(m.event(PhysEv::new(3, false), &CNST).unwrap(), []);
-        assert_eq!(m.event(PhysEv::new(1, false), &CNST).unwrap(), [KeyEv::release(A)]);
-        assert_eq!(m.event(PhysEv::new(2, true), &CNST).unwrap(), []);
-        assert_eq!(m.event(PhysEv::new(2, false), &CNST).unwrap(), []);
-        assert_eq!(m.event(PhysEv::new(2, true), &CNST).unwrap(), [KeyEv::press(C)]);
+        assert_eq!(m.event(PhysEv::new(3, true), &CNST).unwrap(), SmallVec::from_buf([]));
+        assert_eq!(
+            m.event(PhysEv::new(1, true), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::press(A)])
+        );
+        assert_eq!(m.event(PhysEv::new(3, false), &CNST).unwrap(), SmallVec::from_buf([]));
+        assert_eq!(
+            m.event(PhysEv::new(1, false), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::release(A)])
+        );
+        assert_eq!(m.event(PhysEv::new(2, true), &CNST).unwrap(), SmallVec::from_buf([]));
+        assert_eq!(m.event(PhysEv::new(2, false), &CNST).unwrap(), SmallVec::from_buf([]));
+        assert_eq!(
+            m.event(PhysEv::new(2, true), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::press(C)])
+        );
     }
 
     #[test]
     fn kev_edges() {
         let m = QmkModel::new(&LAYOUT);
-        assert_eq!(m.key_ev_edges(KeyEv::new(C, true)), [[PhysEv::new(2, true)]]);
+        assert_eq!(
+            m.key_ev_edges(KeyEv::new(C, true)),
+            SmallVec::from_buf([SmallVec::from_buf([PhysEv::new(2, true)])])
+        );
         assert_eq!(
             m.key_ev_edges(KeyEv::new(A, true)),
-            [[PhysEv::new(3, true), PhysEv::new(1, true)]]
+            SmallVec::from_buf([SmallVec::from_buf([PhysEv::new(3, true), PhysEv::new(1, true)])])
         );
         // May return invalid edges however.
-        assert_eq!(m.key_ev_edges(KeyEv::new(C, false)), [[PhysEv::new(2, false)]]);
+        assert_eq!(
+            m.key_ev_edges(KeyEv::new(C, false)),
+            SmallVec::from_buf([SmallVec::from_buf([PhysEv::new(2, false)])])
+        );
     }
 }

@@ -3,7 +3,6 @@ use crate::models::count_map::CountMap;
 use crate::types::{rand_kcset, KCSet, KCSetExt};
 use derive_more::Display;
 use enumset::enum_set;
-use rand::seq::IteratorRandom;
 
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Display)]
 #[display(fmt = "{:?}", keys)]
@@ -26,22 +25,18 @@ impl Layer {
     }
 
     pub fn normalise(&mut self, cnst: &Constants) {
-        let mut r = rand::thread_rng();
-        let mods =
-            self.keys.iter_mut().filter(|kcset| !kcset.mods().is_empty()).collect::<Vec<_>>();
-        // Remove excess mod keys.
-        let remove_count = mods.len() as i32 - cnst.max_phys_mod_per_layer as i32;
-        if remove_count > 0 {
-            let to_remove = mods.into_iter().choose_multiple(&mut r, remove_count as usize);
-            for kcset in to_remove {
-                kcset.remove_all(kcset.mods());
-            }
-        }
-
-        // Remove same keys.
+        // Remove same keys and excess mod keys.
         let mut cm: CountMap<KCSet> = CountMap::new();
         let mut keys = Vec::new();
-        for &kcset in self.keys.iter() {
+        let mut mod_count = 0;
+        for mut kcset in self.keys.iter().copied() {
+            let mods = kcset.mods();
+            if !mods.is_empty() {
+                mod_count += 1;
+                if mod_count > cnst.max_phys_mod_per_layer {
+                    kcset.remove_all(mods);
+                }
+            }
             if cm.adjust_count(kcset, true) <= cnst.max_phys_duplicate_per_layer as i32 {
                 keys.push(kcset);
             } else {

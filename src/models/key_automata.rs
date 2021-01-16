@@ -3,6 +3,7 @@ use crate::models::count_map::CountMap;
 use crate::types::{KeyEv, KC};
 use derive_more::Display;
 use enumset::enum_set;
+use smallvec::SmallVec;
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Display)]
 #[display(fmt = "count: {}", kcm)]
@@ -26,8 +27,8 @@ impl KeyAutomata {
         &self.kcm
     }
 
-    pub fn event(&mut self, kev: KeyEv, cnst: &Constants) -> Option<Vec<KeyEv>> {
-        let mut evs = Vec::new();
+    pub fn event(&mut self, kev: KeyEv, cnst: &Constants) -> Option<SmallVec<[KeyEv; 4]>> {
+        let mut evs = SmallVec::new();
 
         for kc in kev.kcset {
             let count = self.kcm.adjust_count(kc, kev.press);
@@ -62,44 +63,98 @@ mod tests {
     #[test]
     fn regular_then_mod_then_release() {
         let mut ks = KeyAutomata::new();
-        assert_eq!(ks.event(KeyEv::press(C), &CNST).unwrap(), [KeyEv::press(C)]);
-        assert_eq!(ks.event(KeyEv::press(SUPER), &CNST).unwrap(), [KeyEv::press(SUPER)]);
-        assert_eq!(ks.event(KeyEv::release(C), &CNST).unwrap(), [KeyEv::release(C)]);
-        assert_eq!(ks.event(KeyEv::release(SUPER), &CNST).unwrap(), [KeyEv::release(SUPER)]);
+        assert_eq!(
+            ks.event(KeyEv::press(C), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::press(C)])
+        );
+        assert_eq!(
+            ks.event(KeyEv::press(SUPER), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::press(SUPER)])
+        );
+        assert_eq!(
+            ks.event(KeyEv::release(C), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::release(C)])
+        );
+        assert_eq!(
+            ks.event(KeyEv::release(SUPER), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::release(SUPER)])
+        );
     }
 
     #[test]
     fn regular_letter() {
         let mut ks = KeyAutomata::new();
-        assert_eq!(ks.event(KeyEv::press(C), &CNST).unwrap(), [KeyEv::press(C)]);
-        assert_eq!(ks.event(KeyEv::release(C), &CNST).unwrap(), [KeyEv::release(C)]);
+        assert_eq!(
+            ks.event(KeyEv::press(C), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::press(C)])
+        );
+        assert_eq!(
+            ks.event(KeyEv::release(C), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::release(C)])
+        );
     }
 
     #[test]
     fn multiple_taps_separate() {
         let mut ks = KeyAutomata::new();
-        assert_eq!(ks.event(KeyEv::press(C), &CNST).unwrap(), [KeyEv::press(C)]);
-        assert_eq!(ks.event(KeyEv::release(C), &CNST).unwrap(), [KeyEv::release(C)]);
-        assert_eq!(ks.event(KeyEv::press(C), &CNST).unwrap(), [KeyEv::press(C)]);
-        assert_eq!(ks.event(KeyEv::release(C), &CNST).unwrap(), [KeyEv::release(C)]);
+        assert_eq!(
+            ks.event(KeyEv::press(C), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::press(C)])
+        );
+        assert_eq!(
+            ks.event(KeyEv::release(C), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::release(C)])
+        );
+        assert_eq!(
+            ks.event(KeyEv::press(C), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::press(C)])
+        );
+        assert_eq!(
+            ks.event(KeyEv::release(C), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::release(C)])
+        );
     }
 
     #[test]
     fn multiple_taps_interleaved() {
         let mut ks = KeyAutomata::new();
-        assert_eq!(ks.event(KeyEv::press(C), &CNST).unwrap(), [KeyEv::press(C)]);
-        assert_eq!(ks.event(KeyEv::press(C), &CNST).unwrap(), [KeyEv::press(C)]);
-        assert_eq!(ks.event(KeyEv::release(C), &CNST).unwrap(), [KeyEv::release(C)]);
-        assert_eq!(ks.event(KeyEv::release(C), &CNST).unwrap(), [KeyEv::release(C)]);
+        assert_eq!(
+            ks.event(KeyEv::press(C), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::press(C)])
+        );
+        assert_eq!(
+            ks.event(KeyEv::press(C), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::press(C)])
+        );
+        assert_eq!(
+            ks.event(KeyEv::release(C), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::release(C)])
+        );
+        assert_eq!(
+            ks.event(KeyEv::release(C), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::release(C)])
+        );
     }
 
     #[test]
     fn ctrl_c_split() {
         let mut ks = KeyAutomata::new();
-        assert_eq!(ks.event(KeyEv::press(CTRL), &CNST).unwrap(), [KeyEv::press(CTRL)]);
-        assert_eq!(ks.event(KeyEv::press(C), &CNST).unwrap(), [KeyEv::press(C)]);
-        assert_eq!(ks.event(KeyEv::release(C), &CNST).unwrap(), [KeyEv::release(C)]);
-        assert_eq!(ks.event(KeyEv::release(CTRL), &CNST).unwrap(), [KeyEv::release(CTRL)]);
+        assert_eq!(
+            ks.event(KeyEv::press(CTRL), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::press(CTRL)])
+        );
+        assert_eq!(
+            ks.event(KeyEv::press(C), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::press(C)])
+        );
+        assert_eq!(
+            ks.event(KeyEv::release(C), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::release(C)])
+        );
+        assert_eq!(
+            ks.event(KeyEv::release(CTRL), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::release(CTRL)])
+        );
     }
 
     #[test]
@@ -107,11 +162,11 @@ mod tests {
         let mut ks = KeyAutomata::new();
         assert_eq!(
             ks.event(KeyEv::press(CTRL_C), &CNST).unwrap(),
-            [KeyEv::press(CTRL), KeyEv::press(C)]
+            SmallVec::from_buf([KeyEv::press(CTRL), KeyEv::press(C)])
         );
         assert_eq!(
             ks.event(KeyEv::release(CTRL_C), &CNST).unwrap(),
-            [KeyEv::release(CTRL), KeyEv::release(C)]
+            SmallVec::from_buf([KeyEv::release(CTRL), KeyEv::release(C)])
         );
     }
 
@@ -119,8 +174,14 @@ mod tests {
     #[test]
     fn super_only() {
         let mut ks = KeyAutomata::new();
-        assert_eq!(ks.event(KeyEv::press(SUPER), &CNST).unwrap(), [KeyEv::press(SUPER)]);
-        assert_eq!(ks.event(KeyEv::release(SUPER), &CNST).unwrap(), [KeyEv::release(SUPER)]);
+        assert_eq!(
+            ks.event(KeyEv::press(SUPER), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::press(SUPER)])
+        );
+        assert_eq!(
+            ks.event(KeyEv::release(SUPER), &CNST).unwrap(),
+            SmallVec::from_buf([KeyEv::release(SUPER)])
+        );
     }
 
     #[test]

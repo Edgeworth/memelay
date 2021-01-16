@@ -8,11 +8,12 @@ use crate::types::{KeyEv, PhysEv};
 use derive_more::Display;
 use ordered_float::OrderedFloat;
 use priority_queue::PriorityQueue;
+use smallvec::SmallVec;
 use std::collections::HashSet;
 use std::usize;
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash, Display)]
-#[display(fmt = "Node, corpus idx {}:\n  qmk: {}", idx, qmk)]
+#[display(fmt = "Node(idx({}),  qmk({}))", idx, qmk)]
 struct Node<'a> {
     pub qmk: QmkModel<'a>, // Currently have this keyboard state.
     pub idx: usize, // Processed this much of the corpus (transformed to countmaps of keycodes).
@@ -48,7 +49,7 @@ impl<'a> PathFinder<'a> {
 
     // Check that |ev| could be produced from Node by consuming corpus operations.
     fn try_pevs<'b>(&self, mut n: Node<'b>, pevs: &[PhysEv]) -> Option<Node<'b>> {
-        let mut kevs_qmk = Vec::new();
+        let mut kevs_qmk = SmallVec::<[KeyEv; 4]>::new();
         for &pev in pevs.iter() {
             kevs_qmk.extend(n.qmk.event(pev, &self.cnst)?);
         }
@@ -75,7 +76,16 @@ impl<'a> PathFinder<'a> {
             seen.insert(n.clone());
             cnt += 1;
 
-            // println!("cost: {}, dijk: {}, seen: {}", -d, n, seen.len());
+            println!(
+                "cost: {}, dijk: {}, seen: {}, get to: {}",
+                -d,
+                n,
+                seen.len(),
+                self.kevs
+                    .get(n.idx)
+                    .map(|kev| kev.to_string())
+                    .unwrap_or_else(|| "done".to_owned())
+            );
             // Look for getting furthest through corpus, then for lowest cost.
             if n.idx > best.0 || (n.idx == best.0 && d < best.1) {
                 best = (n.idx, d)
@@ -85,6 +95,7 @@ impl<'a> PathFinder<'a> {
             }
             // Try pressing and releasing physical keys.
             for pevs in n.qmk.key_ev_edges(self.kevs[n.idx]).into_iter() {
+                println!("  try edges: {:?}", pevs);
                 let next = n.clone();
                 if let Some(next) = self.try_pevs(next, &pevs) {
                     if seen.contains(&next) {
@@ -96,8 +107,7 @@ impl<'a> PathFinder<'a> {
             }
         }
         // Typing all corpus is top priority, then cost to do so.
-        // println!("asdf {} {}, {}", best.0 as u128, self.events.len() as u128, cnt);
-        // println!("evs: {:?}", self.events);
+        println!("asdf {} {}, {}", best.0 as u128, self.kevs.len() as u128, cnt);
 
         let fitness = combine_fitness(0, best.0 as u128, self.kevs.len() as u128);
         combine_cost(fitness, best.1.into_inner() as u128, self.kevs.len() as u128 * 1000)

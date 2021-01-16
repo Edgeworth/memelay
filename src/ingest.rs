@@ -35,7 +35,7 @@ pub fn load_layout<P: AsRef<Path>>(layout_path: P) -> Result<Layout> {
             let mut kcset = enum_set!();
             for kc in item.split('+') {
                 if kc != "-" {
-                    kcset |= KC::from_str(kc)?;
+                    kcset |= KC::from_str(kc).wrap_err(eyre!("could not find {}", kc))?;
                 }
             }
             keys.push(kcset);
