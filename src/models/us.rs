@@ -108,6 +108,12 @@ pub struct USModel {
     ks: KeyAutomata,
 }
 
+impl Default for USModel {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl USModel {
     pub fn new() -> Self {
         Self { layout: &US_LAYOUT, phys: CountMap::new(), ks: KeyAutomata::new() }

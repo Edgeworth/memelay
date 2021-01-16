@@ -21,38 +21,39 @@ use crate::prelude::*;
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
-mod constants;
-mod ga;
-mod ingest;
-mod layout_eval;
-mod models;
-mod path;
+pub mod constants;
+pub mod ga;
+pub mod ingest;
+pub mod layout_eval;
+pub mod models;
+pub mod path;
 pub mod prelude;
-mod types;
+pub mod types;
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "hodlr", about = "Hodlr CLI")]
 pub struct Args {
     #[structopt(
         long,
-        default_value = "moonlander.cfg",
+        default_value = "data/moonlander.cfg",
         parse(from_os_str),
         help = "Config file describing target layout and costs"
     )]
-    cfg_path: PathBuf,
+    pub cfg_path: PathBuf,
 
     #[structopt(
         long,
+        default_value = "data/bench.data",
         parse(from_os_str),
         help = "Corpus file describing typing data to optimise to"
     )]
-    corpus_path: PathBuf,
+    pub corpus_path: PathBuf,
 
     #[structopt(short, long, parse(from_os_str), help = "Evaluate a given layout")]
-    eval_layout: Option<PathBuf>,
+    pub eval_layout: Option<PathBuf>,
 
     #[structopt(flatten)]
-    cnst: Constants,
+    pub cnst: Constants,
 }
 
 pub fn eval_layout<P: AsRef<Path>>(eval: LayoutEval, cfg: Cfg, p: P) -> Result<()> {

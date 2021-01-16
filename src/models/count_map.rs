@@ -12,7 +12,7 @@ fn press_to_count(press: bool) -> i32 {
     }
 }
 
-#[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Display)]
+#[derive(Debug, Clone, Default, Ord, PartialOrd, Eq, PartialEq, Hash, Display)]
 #[display(fmt = "{:?}", c)]
 pub struct CountMap<T: Copy + PartialEq + Ord + fmt::Debug> {
     c: Vec<(T, i32)>,
