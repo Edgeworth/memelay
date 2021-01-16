@@ -15,6 +15,7 @@ pub struct Constants {
     pub batch_num: usize,
 
     // Runtime search restrictions:
+    // TODO: Can remove these since we always output a keyev ?
     #[structopt(
         long,
         default_value = "4",
