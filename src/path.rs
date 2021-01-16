@@ -1,12 +1,10 @@
 use crate::constants::Constants;
 use crate::ga::util::{combine_cost, combine_fitness};
 use crate::layout_eval::LayoutCfg;
-
 use crate::models::layout::Layout;
 use crate::models::qmk::QmkModel;
-use crate::models::us::USModel;
 use crate::models::Model;
-use crate::types::{KCSetExt, KeyEv, PhysEv, KC};
+use crate::types::{KeyEv, PhysEv};
 use derive_more::Display;
 use ordered_float::OrderedFloat;
 use priority_queue::PriorityQueue;
@@ -29,7 +27,7 @@ impl<'a> Node<'a> {
 #[derive(Debug, Clone, PartialEq)]
 pub struct PathFinder<'a> {
     layout_cfg: &'a LayoutCfg,
-    events: Vec<KeyEv>,
+    kevs: &'a [KeyEv],
     cnst: &'a Constants,
     l: &'a Layout,
 }
@@ -37,31 +35,25 @@ pub struct PathFinder<'a> {
 impl<'a> PathFinder<'a> {
     pub fn new(
         layout_cfg: &'a LayoutCfg,
-        corpus: &'a [PhysEv],
+        kevs: &'a [KeyEv],
         cnst: &'a Constants,
         l: &'a Layout,
     ) -> Self {
-        let mut events = Vec::new();
-        let mut us = USModel::new();
-        for &pev in corpus.iter() {
-            // If we get a stray release which causes US model to fail, ignore and skip it.
-            events.extend(us.event(pev, cnst).unwrap_or_default());
-        }
-        Self { layout_cfg, events, cnst, l }
+        Self { layout_cfg, kevs, cnst, l }
     }
 
-    fn phys_cost(&self, pev: &Vec<PhysEv>) -> f64 {
+    fn phys_cost(&self, pev: &[PhysEv]) -> f64 {
         pev.iter().fold(0.0, |c, pev| c + self.layout_cfg.cost[pev.phys as usize])
     }
 
     // Check that |ev| could be produced from Node by consuming corpus operations.
-    fn try_events<'b>(&self, mut n: Node<'b>, pevs: &Vec<PhysEv>) -> Option<Node<'b>> {
-        let mut events_qmk = Vec::new();
+    fn try_pevs<'b>(&self, mut n: Node<'b>, pevs: &[PhysEv]) -> Option<Node<'b>> {
+        let mut kevs_qmk = Vec::new();
         for &pev in pevs.iter() {
-            events_qmk.extend(n.qmk.event(pev, &self.cnst)?);
+            kevs_qmk.extend(n.qmk.event(pev, &self.cnst)?);
         }
-        for ev in events_qmk.into_iter() {
-            if n.idx < self.events.len() && ev != self.events[n.idx] {
+        for ev in kevs_qmk.into_iter() {
+            if n.idx < self.kevs.len() && ev != self.kevs[n.idx] {
                 return None;
             }
             n.idx += 1;
@@ -88,13 +80,13 @@ impl<'a> PathFinder<'a> {
             if n.idx > best.0 || (n.idx == best.0 && d < best.1) {
                 best = (n.idx, d)
             }
-            if n.idx >= self.events.len() {
+            if n.idx >= self.kevs.len() {
                 break;
             }
             // Try pressing and releasing physical keys.
-            for pevs in n.qmk.key_ev_edges(self.events[n.idx]).into_iter() {
+            for pevs in n.qmk.key_ev_edges(self.kevs[n.idx]).into_iter() {
                 let next = n.clone();
-                if let Some(next) = self.try_events(next, &pevs) {
+                if let Some(next) = self.try_pevs(next, &pevs) {
                     if seen.contains(&next) {
                         continue;
                     }
@@ -107,8 +99,8 @@ impl<'a> PathFinder<'a> {
         // println!("asdf {} {}, {}", best.0 as u128, self.events.len() as u128, cnt);
         // println!("evs: {:?}", self.events);
 
-        let fitness = combine_fitness(0, best.0 as u128, self.events.len() as u128);
-        combine_cost(fitness, best.1.into_inner() as u128, self.events.len() as u128 * 1000)
+        let fitness = combine_fitness(0, best.0 as u128, self.kevs.len() as u128);
+        combine_cost(fitness, best.1.into_inner() as u128, self.kevs.len() as u128 * 1000)
     }
 }
 

@@ -5,7 +5,7 @@ release:
 	RUST_BACKTRACE=1 RUST_LOG=info cargo run --release
 
 test:
-	RUST_BACKTRACE=1 cargo test --workspace --all-features --all-targets  -- --nocapture
+	RUST_BACKTRACE=1 cargo test --workspace --all-features --all-targets
 
 fix:
 	cargo fix --workspace --all-features --all-targets --edition-idioms

@@ -52,7 +52,7 @@ impl Layer {
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[derive(Debug, Clone, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct Layout {
     pub layers: Vec<Layer>,
 }

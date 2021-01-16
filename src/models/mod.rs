@@ -15,3 +15,12 @@ pub trait Model {
     // Return the countmap of keys currently pressed.
     fn kc_counts(&self) -> &CountMap<KC>;
 }
+
+pub fn compute_kevs<T: Model>(mut model: T, pevs: &[PhysEv], cnst: &Constants) -> Vec<KeyEv> {
+    let mut kevs = Vec::new();
+    for &pev in pevs.iter() {
+        // If we get a stray release which causes model to fail, ignore and skip it.
+        kevs.extend(model.event(pev, cnst).unwrap_or_default());
+    }
+    kevs
+}
