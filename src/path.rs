@@ -1,12 +1,10 @@
 use crate::constants::Constants;
-use crate::ga::util::{combine_cost, combine_fitness};
 use crate::layout_eval::LayoutCfg;
 use crate::models::layout::Layout;
 use crate::models::qmk::QmkModel;
 use crate::models::Model;
 use crate::types::{KeyEv, PhysEv};
 use derive_more::Display;
-use ordered_float::NotNan;
 use priority_queue::PriorityQueue;
 use smallvec::SmallVec;
 use std::collections::HashSet;
@@ -17,7 +15,7 @@ use std::usize;
 struct Node<'a> {
     pub qmk: QmkModel<'a>, // Currently have this keyboard state.
     pub idx: usize, // Processed this much of the corpus (transformed to countmaps of keycodes).
-    pub cost: NotNan<f64>,
+    pub cost: u64,
 }
 
 impl std::hash::Hash for Node<'_> {
@@ -35,8 +33,13 @@ impl PartialEq for Node<'_> {
 
 impl<'a> Node<'a> {
     pub fn new(layout: &'a Layout) -> Self {
-        Self { qmk: QmkModel::new(layout), idx: 0, cost: NotNan::default() }
+        Self { qmk: QmkModel::new(layout), idx: 0, cost: 0 }
     }
+}
+
+pub struct PathResult {
+    pub kevs_found: usize,
+    pub cost: u64,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -57,8 +60,8 @@ impl<'a> PathFinder<'a> {
         Self { layout_cfg, kevs, cnst, l }
     }
 
-    fn phys_cost(&self, pev: &[PhysEv]) -> f64 {
-        pev.iter().fold(0.0, |c, pev| c + self.layout_cfg.cost[pev.phys as usize])
+    fn phys_cost(&self, pev: &[PhysEv]) -> u64 {
+        pev.iter().fold(0, |c, pev| c + self.layout_cfg.cost[pev.phys as usize])
     }
 
     // Check that |ev| could be produced from Node by consuming corpus operations.
@@ -77,13 +80,13 @@ impl<'a> PathFinder<'a> {
         Some(n)
     }
 
-    pub fn path_fitness(&self) -> u128 {
-        let mut q: PriorityQueue<Node<'_>, NotNan<f64>> = PriorityQueue::new();
+    pub fn path(&self) -> PathResult {
+        let mut q: PriorityQueue<Node<'_>, i64> = PriorityQueue::new();
         let mut seen: HashSet<Node<'_>> = HashSet::new();
-        let mut best = (0, NotNan::default());
+        let mut best = (0, 0);
 
         let st = Node::new(self.l);
-        q.push(st.clone(), NotNan::default());
+        q.push(st.clone(), 0);
         let mut cnt = 0;
         while let Some((n, _pri)) = q.pop() {
             seen.insert(n.clone());
@@ -114,19 +117,17 @@ impl<'a> PathFinder<'a> {
                     if seen.contains(&next) {
                         continue;
                     }
-                    next.cost += NotNan::new(self.phys_cost(&pevs)).unwrap();
+                    next.cost += self.phys_cost(&pevs);
                     let pri = next.cost;
                     // let pri =
                     // next.cost + NotNan::new(self.kevs.len() as f64 - next.idx as f64).unwrap();
-                    q.push_increase(next, -pri);
+                    q.push_increase(next, -(pri as i64));
                 }
             }
         }
         // Typing all corpus is top priority, then cost to do so.
         // println!("asdf len {}, cost {}, tot ev {}, seen {}", best.0, best.1, self.kevs.len(), cnt);
-
-        let fitness = combine_fitness(0, best.0 as u128, self.kevs.len() as u128);
-        combine_cost(fitness, best.1.into_inner() as u128, self.kevs.len() as u128 * 1000)
+        PathResult { kevs_found: best.0, cost: best.1 }
     }
 }
 

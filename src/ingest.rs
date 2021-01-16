@@ -77,7 +77,7 @@ pub fn load_layout_cfg<P: AsRef<Path>>(cfg_path: P) -> Result<LayoutCfg> {
                     continue;
                 }
                 match state {
-                    State::Cost => cost.push(filtered.parse::<f64>().unwrap()),
+                    State::Cost => cost.push(filtered.parse::<u64>().unwrap()),
                     State::Finger => fing.push(Finger::from_str(&filtered).unwrap()),
                     State::Layout => {}
                 };

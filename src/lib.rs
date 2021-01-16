@@ -16,7 +16,6 @@ use crate::ga::runner::{Generation, Runner};
 use crate::ga::{Cfg, Evaluator};
 use crate::ingest::load_layout;
 use crate::layout_eval::LayoutEval;
-use crate::models::layout::Layout;
 use crate::prelude::*;
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
@@ -65,9 +64,9 @@ pub fn eval_layout<P: AsRef<Path>>(eval: LayoutEval, cfg: Cfg, p: P) -> Result<(
 }
 
 pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
-    let initial = (0..cfg.pop_size)
-        .map(|_| Layout::rand_with_size(eval.layout_cfg.num_physical(), 2, &eval.cnst))
-        .collect();
+    // Start from a base with all keys available.
+    let initial = load_layout("data/all_keys.layout")?;
+    let initial = (0..cfg.pop_size).map(|_| initial.clone()).collect();
     let mut runner = Runner::new(eval.clone(), cfg, Generation::from_states(initial));
 
     let mut best;

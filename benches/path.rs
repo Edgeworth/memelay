@@ -5,7 +5,7 @@ use designer::layout_eval::LayoutCfg;
 use designer::models::compute_kevs;
 use designer::models::layout::Layout;
 use designer::models::us::USModel;
-use designer::path::PathFinder;
+use designer::path::{PathFinder, PathResult};
 use designer::types::KeyEv;
 
 struct PathFinderCfg<'a> {
@@ -15,8 +15,8 @@ struct PathFinderCfg<'a> {
     l: &'a Layout,
 }
 
-fn compute_path(cfg: &PathFinderCfg<'_>) -> u128 {
-    PathFinder::new(cfg.layout_cfg, cfg.kevs, cfg.cnst, cfg.l).path_fitness()
+fn compute_path(cfg: &PathFinderCfg<'_>) -> PathResult {
+    PathFinder::new(cfg.layout_cfg, cfg.kevs, cfg.cnst, cfg.l).path()
     // panic!("asdf")
 }
 
