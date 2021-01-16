@@ -343,6 +343,7 @@ dependencies = [
  "rand_distr",
  "rayon",
  "serde",
+ "smallvec",
  "structopt",
  "strum",
  "strum_macros",

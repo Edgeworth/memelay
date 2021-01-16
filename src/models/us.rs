@@ -7,6 +7,7 @@ use crate::types::{KCSet, KeyEv, PhysEv, KC};
 use derive_more::Display;
 use enumset::enum_set;
 use lazy_static::lazy_static;
+use smallvec::SmallVec;
 
 lazy_static! {
     pub static ref US_LAYER: Layer = Layer::new(&[
@@ -125,7 +126,7 @@ impl USModel {
 }
 
 impl Model for USModel {
-    fn event(&mut self, pev: PhysEv, cnst: &Constants) -> Option<Vec<KeyEv>> {
+    fn event(&mut self, pev: PhysEv, cnst: &Constants) -> Option<SmallVec<[KeyEv; 4]>> {
         if !(0..=1).contains(&self.phys.adjust_count(pev.phys, pev.press)) {
             return None;
         }

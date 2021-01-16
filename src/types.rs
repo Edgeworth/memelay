@@ -3,6 +3,7 @@ use derive_more::Display;
 use enumset::{enum_set, EnumSet, EnumSetType};
 use rand::seq::IteratorRandom;
 use rand_distr::{Distribution, WeightedAliasIndex};
+use smallvec::SmallVec;
 use strum::IntoEnumIterator;
 use strum_macros::{Display as StrumDisplay, EnumIter, EnumString};
 
@@ -47,8 +48,8 @@ pub fn rand_kcset<R: rand::Rng + ?Sized>(r: &mut R, cnst: &Constants) -> KCSet {
     let reg_idx = WeightedAliasIndex::new(cnst.num_reg_assigned_weights.clone()).unwrap();
     let num_mod = mod_idx.sample(r);
     let num_reg = reg_idx.sample(r);
-    let mods = KC::iter().filter(|k| k.is_mod()).collect::<Vec<_>>();
-    let regs = KC::iter().filter(|k| !k.is_mod()).collect::<Vec<_>>();
+    let mods = KC::iter().filter(|k| k.is_mod()).collect::<SmallVec<[KC; 4]>>();
+    let regs = KC::iter().filter(|k| !k.is_mod()).collect::<SmallVec<[KC; 2]>>();
     let mods = mods.iter().choose_multiple(r, num_mod).iter().fold(enum_set!(), |a, &&b| a | b);
     let regs = regs.iter().choose_multiple(r, num_reg).iter().fold(enum_set!(), |a, &&b| a | b);
     mods | regs
