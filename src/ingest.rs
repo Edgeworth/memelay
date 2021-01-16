@@ -100,7 +100,7 @@ pub fn load_corpus<P: AsRef<Path>>(corpus_path: P) -> Result<Vec<PhysEv>> {
             return Err(eyre!("weird corpus line: {}", i));
         }
         let (kc, pressed) = (items[0], items[1] == "1");
-        let key = KCSet::from(match kc {
+        let kcset = KCSet::from(match kc {
             "0" => KC::Num0,
             "1" => KC::Num1,
             "2" => KC::Num2,
@@ -189,7 +189,7 @@ pub fn load_corpus<P: AsRef<Path>>(corpus_path: P) -> Result<Vec<PhysEv>> {
             "RSHIFT" => KC::Shift,
             _ => return Err(eyre!("unrecognised corpus key {}", kc)),
         });
-        let index = US_LAYER.keys.iter().position(|&x| x == key).unwrap();
+        let index = US_LAYER.keys.iter().position(|&x| x == kcset).unwrap();
         corpus.push(PhysEv::new(index, pressed));
     }
     Ok(corpus)

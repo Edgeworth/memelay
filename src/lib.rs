@@ -7,7 +7,8 @@
     type_alias_impl_trait,
     partition_point,
     bool_to_option,
-    map_first_last
+    map_first_last,
+    option_unwrap_none
 )]
 
 use crate::constants::Constants;

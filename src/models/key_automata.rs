@@ -23,7 +23,7 @@ impl KeyAutomata {
     pub fn event(&mut self, kev: KeyEv, cnst: &Constants) -> Option<Vec<KeyEv>> {
         let mut evs = Vec::new();
 
-        for kc in kev.key {
+        for kc in kev.kcset {
             let count = self.kcm.adjust_count(kc, kev.press);
             if kc.is_mod() && count > cnst.max_mod_pressed as i32 {
                 return None;

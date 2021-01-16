@@ -18,11 +18,20 @@ priority-queue = "*"
 rand = "*"
 rand_distr = "*"
 rayon = "*"
+# Pin to this version until criterion.rs updates.
+serde = {version = "=1.0.118", features = ["derive"]}
 structopt = "*"
 strum = "*"
 strum_macros = "*"
 syn = "=1.0.57"
-vec_map = "*"
+vec-collections = "*"
+
+[dev-dependencies]
+criterion = {version = "*", features = ["real_blackbox"]}
+
+[[bench]]
+harness = false
+name = "path"
 
 [profile.release]
 debug = 1 # line tables only

@@ -23,6 +23,7 @@ pub enum Finger {
 pub trait KCSetExt {
     fn reg(&self) -> KCSet;
     fn mods(&self) -> KCSet;
+    fn layers(&self) -> KCSet;
 }
 
 pub type KCSet = EnumSet<KC>;
@@ -34,6 +35,10 @@ impl KCSetExt for KCSet {
 
     fn mods(&self) -> KCSet {
         self.iter().filter(|x| x.is_mod()).collect()
+    }
+
+    fn layers(&self) -> KCSet {
+        self.iter().filter(|x| x.is_layer()).collect()
     }
 }
 
@@ -50,23 +55,23 @@ pub fn rand_kcset<R: rand::Rng + ?Sized>(r: &mut R, cnst: &Constants) -> KCSet {
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Display)]
-#[display(fmt = "KeyEv({:?}, {})", key, press)]
+#[display(fmt = "KeyEv({:?}, {})", kcset, press)]
 pub struct KeyEv {
-    pub key: KCSet,
+    pub kcset: KCSet,
     pub press: bool,
 }
 
 impl KeyEv {
-    pub fn new(key: KCSet, press: bool) -> Self {
-        Self { key, press }
+    pub fn new(kcset: KCSet, press: bool) -> Self {
+        Self { kcset, press }
     }
 
-    pub fn press(key: KCSet) -> Self {
-        Self::new(key, true)
+    pub fn press(kcset: KCSet) -> Self {
+        Self::new(kcset, true)
     }
 
-    pub fn release(key: KCSet) -> Self {
-        Self::new(key, false)
+    pub fn release(kcset: KCSet) -> Self {
+        Self::new(kcset, false)
     }
 }
 
@@ -207,5 +212,17 @@ pub enum KC {
 impl KC {
     pub fn is_mod(&self) -> bool {
         [KC::Ctrl, KC::Shift, KC::Alt, KC::Super].contains(self)
+    }
+
+    pub fn is_layer(&self) -> bool {
+        self.layer_num().is_some()
+    }
+
+    pub fn layer_num(&self) -> Option<usize> {
+        match self {
+            KC::Layer0 => Some(0),
+            KC::Layer1 => Some(1),
+            _ => None,
+        }
     }
 }
