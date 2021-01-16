@@ -16,8 +16,8 @@ struct PathFinderCfg<'a> {
 }
 
 fn compute_path(cfg: &PathFinderCfg<'_>) -> u128 {
-    PathFinder::new(cfg.layout_cfg, cfg.kevs, cfg.cnst, cfg.l).path_fitness();
-    panic!("asdf")
+    PathFinder::new(cfg.layout_cfg, cfg.kevs, cfg.cnst, cfg.l).path_fitness()
+    // panic!("asdf")
 }
 
 fn path(c: &mut Criterion) {
