@@ -20,6 +20,7 @@ rand_distr = "*"
 rayon = "*"
 # Pin to this version until criterion.rs updates.
 serde = {version = "=1.0.118", features = ["derive"]}
+smallvec = "*"
 structopt = "*"
 strum = "*"
 strum_macros = "*"
