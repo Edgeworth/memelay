@@ -1,12 +1,11 @@
-use rand_distr::{Distribution, WeightedAliasIndex};
-
-use crate::prelude::*;
 use crate::{Cfg, Evaluator};
+use rand_distr::{Distribution, WeightedAliasIndex};
+use rayon::prelude::*;
 
 #[derive(Debug, Clone, PartialOrd, PartialEq)]
 pub struct Individual<E: Evaluator> {
-    pub state: E::T,
-    pub fitness: E::F,
+    pub state: E::State,
+    pub fitness: E::Fitness,
     pub species: usize,
 }
 
@@ -15,7 +14,7 @@ pub struct Generation<E: Evaluator> {
 }
 
 impl<E: Evaluator> Generation<E> {
-    pub fn from_states(states: Vec<E::T>) -> Self {
+    pub fn from_states(states: Vec<E::State>) -> Self {
         let mems = states
             .into_iter()
             .map(|state| Individual { state, fitness: Default::default(), species: 0 })
@@ -54,8 +53,9 @@ impl<E: Evaluator> Generation<E> {
                         .unwrap();
                 let a = &self.mems[idx.sample(&mut r)];
                 let b = &self.mems[idx.sample(&mut r)];
-                eval.reproduce(cfg, &a.state, &b.state)
+                eval.crossover(cfg, &a.state, &b.state).into_iter()
             })
+            .flatten_iter()
             .collect::<Vec<_>>();
         new_states.extend(survivors.into_iter().map(|mem| mem.state));
         Self::from_states(new_states)

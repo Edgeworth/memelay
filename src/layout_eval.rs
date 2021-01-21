@@ -4,14 +4,16 @@ use crate::models::compute_kevs;
 use crate::models::layout::Layout;
 use crate::models::us::USModel;
 use crate::path::PathFinder;
-use crate::prelude::*;
 use crate::types::{rand_kcset, Finger, PhysEv};
 use crate::Args;
-use ga::util::{combine_cost, combine_fitness, crossover_vec};
+use eyre::Result;
+use ga::util::{combine_cost, combine_fitness, crossover_kpx};
 use ga::{Cfg, Evaluator};
 use rand::prelude::IteratorRandom;
 use rand::Rng;
 use rand_distr::{Distribution, WeightedAliasIndex};
+use smallvec::smallvec;
+use smallvec::SmallVec;
 
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct LayoutCfg {
@@ -78,77 +80,78 @@ impl LayoutEval {
 }
 
 impl Evaluator for LayoutEval {
-    type T = Layout;
-    type F = u128;
+    type State = Layout;
+    type Fitness = u128;
 
-    fn reproduce(&self, cfg: &Cfg, a: &Layout, b: &Layout) -> Layout {
+    fn crossover(&self, _: &Cfg, s1: &Layout, s2: &Layout) -> SmallVec<[Layout; 2]> {
         let mut r = rand::thread_rng();
-        let layer_idx = r.gen_range(0..a.layers.len());
-        let key_idx = r.gen_range(0..a.layers[layer_idx].keys.len());
-        let layer_idx2 = r.gen_range(0..a.layers.len());
-        let key_idx2 = r.gen_range(0..a.layers[layer_idx2].keys.len());
-
-        let mut l = if r.gen::<f64>() < cfg.xover_rate {
-            let idx = WeightedAliasIndex::new(self.cnst.crossover_strat_weights.clone()).unwrap();
-            let mut l = Layout::new();
-
-            match idx.sample(&mut r) {
-                0 => {
-                    // Crossover on layer level.
-                    let crosspoint = r.gen_range(0..a.layers.len());
-                    l.layers = crossover_vec(&a.layers, &b.layers, crosspoint);
-                }
-                1 => {
-                    // Crossover on keys level;
-                    l.layers = a.layers.clone();
-                    l.layers[layer_idx].keys = crossover_vec(
-                        &a.layers[layer_idx].keys,
-                        &b.layers[layer_idx].keys,
-                        key_idx,
-                    );
-                }
-                _ => panic!("unknown crossover strategy"),
+        let lidx = r.gen_range(0..s1.layers.len());
+        let kidx = r.gen_range(0..s1.layers[lidx].keys.len());
+        let mut c1 = s1.clone();
+        let mut c2 = s2.clone();
+        let idx = WeightedAliasIndex::new(self.cnst.crossover_strat_weights.clone()).unwrap();
+        match idx.sample(&mut r) {
+            0 => {
+                // Crossover on layer level.
+                let xpoint = r.gen_range(0..s1.layers.len());
+                (c1.layers, c2.layers) =
+                    crossover_kpx(s1.layers.clone(), s2.layers.clone(), &[xpoint]);
             }
-            l
-        } else {
-            let idx = WeightedAliasIndex::new(self.cnst.mutate_strat_weights.clone()).unwrap();
-            let mut l = a.clone();
-
-            match idx.sample(&mut r) {
-                0 => {
-                    // Mutate random available key.
-                    let avail = l.layers[layer_idx].keys.iter_mut().filter(|k| !k.is_empty());
-                    if let Some(kcset) = avail.choose(&mut r) {
-                        *kcset = rand_kcset(&mut r, &self.cnst);
-                    }
-                }
-                1 => {
-                    // Mutate random empty key.
-                    let empty = l.layers[layer_idx].keys.iter_mut().filter(|k| k.is_empty());
-                    if let Some(kcset) = empty.choose(&mut r) {
-                        *kcset = rand_kcset(&mut r, &self.cnst);
-                    }
-                }
-                2 => {
-                    // Swap random layer.
-                    let swap_idx = r.gen_range(0..a.layers.len());
-                    l.layers.swap(layer_idx, swap_idx);
-                }
-                3 => {
-                    // Swap random key
-                    let tmp = l.layers[layer_idx].keys[key_idx];
-                    l.layers[layer_idx].keys[key_idx] = l.layers[layer_idx2].keys[key_idx2];
-                    l.layers[layer_idx2].keys[key_idx2] = tmp;
-                }
-                _ => panic!("unknown mutation strategy"),
+            1 => {
+                // Crossover on keys level;
+                (c1.layers[lidx].keys, c2.layers[lidx].keys) = crossover_kpx(
+                    s1.layers[lidx].keys.clone(),
+                    s2.layers[lidx].keys.clone(),
+                    &[kidx],
+                );
             }
-            l
+            _ => panic!("unknown crossover strategy"),
         };
-        l.normalise(&self.cnst);
-        l
+        c1.normalise(&self.cnst);
+        c2.normalise(&self.cnst);
+        smallvec![c1, c2]
     }
 
-    fn fitness(&self, _: &Cfg, a: &Layout) -> u128 {
+    fn mutate(&self, _: &Cfg, s: &mut Layout) {
+        let mut r = rand::thread_rng();
+        let lidx = r.gen_range(0..s.layers.len());
+        let kidx = r.gen_range(0..s.layers[lidx].keys.len());
+        let lidx2 = r.gen_range(0..s.layers.len());
+        let kidx2 = r.gen_range(0..s.layers[lidx2].keys.len());
+
+        let idx = WeightedAliasIndex::new(self.cnst.mutate_strat_weights.clone()).unwrap();
+        match idx.sample(&mut r) {
+            0 => {
+                // Mutate random available key.
+                let avail = s.layers[lidx].keys.iter_mut().filter(|k| !k.is_empty());
+                if let Some(kcset) = avail.choose(&mut r) {
+                    *kcset = rand_kcset(&mut r, &self.cnst);
+                }
+            }
+            1 => {
+                // Mutate random empty key.
+                let empty = s.layers[lidx].keys.iter_mut().filter(|k| k.is_empty());
+                if let Some(kcset) = empty.choose(&mut r) {
+                    *kcset = rand_kcset(&mut r, &self.cnst);
+                }
+            }
+            2 => {
+                // Swap random layer.
+                let swap_idx = r.gen_range(0..s.layers.len());
+                s.layers.swap(lidx, swap_idx);
+            }
+            3 => {
+                // Swap random key
+                let tmp = s.layers[lidx].keys[kidx];
+                s.layers[lidx].keys[kidx] = s.layers[lidx2].keys[kidx2];
+                s.layers[lidx2].keys[kidx2] = tmp;
+            }
+            _ => panic!("unknown mutation strategy"),
+        }
+        s.normalise(&self.cnst);
+    }
+
+    fn fitness(&self, _: &Cfg, s: &Layout) -> u128 {
         let mut path_cost_mean = 0;
         let mut r = rand::thread_rng();
         let block_size = self.cnst.batch_size.min(self.corpus.len());
@@ -159,24 +162,24 @@ impl Evaluator for LayoutEval {
                 &self.corpus[start_idx..(start_idx + block_size)],
                 &self.cnst,
             );
-            let res = PathFinder::new(&self.layout_cfg, &kevs, &self.cnst, a).path();
+            let res = PathFinder::new(&self.layout_cfg, &kevs, &self.cnst, s).path();
             let fitness = combine_fitness(0, res.kevs_found as u128, kevs.len() as u128);
             let fitness = combine_cost(fitness, res.cost as u128, kevs.len() as u128 * 1000000);
             path_cost_mean += fitness;
         }
         let fitness = path_cost_mean / self.cnst.batch_num as u128;
-        combine_cost(fitness, self.layout_cost(a), 1000)
+        combine_cost(fitness, self.layout_cost(s), 1000)
     }
 
-    fn distance(&self, _: &Cfg, a: &Layout, b: &Layout) -> f64 {
+    fn distance(&self, _: &Cfg, s1: &Layout, s2: &Layout) -> f64 {
         let mut dist = 0.0;
-        let layer_min = a.layers.len().min(b.layers.len());
-        let layer_max = a.layers.len().max(b.layers.len());
+        let layer_min = s1.layers.len().min(s2.layers.len());
+        let layer_max = s1.layers.len().max(s2.layers.len());
         // Different # layers is a big difference.
         dist += ((layer_max - layer_min) * self.layout_cfg.num_physical()) as f64;
         for i in 0..layer_min {
-            for j in 0..a.layers[i].keys.len() {
-                if a.layers[i].keys[j] != b.layers[i].keys[j] {
+            for j in 0..s1.layers[i].keys.len() {
+                if s1.layers[i].keys[j] != s2.layers[i].keys[j] {
                     dist += 1.0;
                 }
             }
