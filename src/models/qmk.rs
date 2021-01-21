@@ -82,7 +82,9 @@ impl<'a> LayerDfs<'a> {
                 let l = layer.layer_num().unwrap();
                 // TODO: Layer transition types, momentary etc.
                 self.path.push(PhysEv::new(phys, true));
+                self.path.push(PhysEv::new(phys, false));
                 self.dfs(l);
+                self.path.pop();
                 self.path.pop();
             }
         }
@@ -124,7 +126,7 @@ impl<'a> QmkModel<'a> {
                         v.push(pev);
                         edges.push(v);
                     } else if let Some(adj) =
-                        self.layer_adj.get(self.layer).and_then(|adj| adj.get(phys))
+                        self.layer_adj.get(self.layer).and_then(|adj| adj.get(lid))
                     {
                         let mut pevs = adj.clone();
                         pevs.push(pev);
@@ -221,7 +223,7 @@ mod tests {
         };
         static ref LAYOUT: Layout = Layout::new()
             .with_layer(Layer::new(&[SUPER, CTRL, C, LAYER1]))
-            .with_layer(Layer::new(&[CTRL, A, LAYER0]));
+            .with_layer(Layer::new(&[CTRL, NONE, A, LAYER0]));
     }
 
     #[test]
@@ -238,16 +240,16 @@ mod tests {
         let mut m = QmkModel::new(&LAYOUT);
         assert_eq!(m.event(PhysEv::new(3, true), &CNST).unwrap(), SmallVec::from_buf([]));
         assert_eq!(
-            m.event(PhysEv::new(1, true), &CNST).unwrap(),
+            m.event(PhysEv::new(2, true), &CNST).unwrap(),
             SmallVec::from_buf([KeyEv::press(A)])
         );
         assert_eq!(m.event(PhysEv::new(3, false), &CNST).unwrap(), SmallVec::from_buf([]));
         assert_eq!(
-            m.event(PhysEv::new(1, false), &CNST).unwrap(),
+            m.event(PhysEv::new(2, false), &CNST).unwrap(),
             SmallVec::from_buf([KeyEv::release(A)])
         );
-        assert_eq!(m.event(PhysEv::new(2, true), &CNST).unwrap(), SmallVec::from_buf([]));
-        assert_eq!(m.event(PhysEv::new(2, false), &CNST).unwrap(), SmallVec::from_buf([]));
+        assert_eq!(m.event(PhysEv::new(3, true), &CNST).unwrap(), SmallVec::from_buf([]));
+        assert_eq!(m.event(PhysEv::new(3, false), &CNST).unwrap(), SmallVec::from_buf([]));
         assert_eq!(
             m.event(PhysEv::new(2, true), &CNST).unwrap(),
             SmallVec::from_buf([KeyEv::press(C)])
@@ -263,7 +265,11 @@ mod tests {
         );
         assert_eq!(
             m.key_ev_edges(KeyEv::new(A, true)),
-            SmallVec::from_buf([SmallVec::from_buf([PhysEv::new(3, true), PhysEv::new(1, true)])])
+            SmallVec::from_buf([SmallVec::from_buf([
+                PhysEv::new(3, true),
+                PhysEv::new(3, false),
+                PhysEv::new(2, true)
+            ])])
         );
         // May return invalid edges however.
         assert_eq!(
@@ -275,7 +281,7 @@ mod tests {
     fn kev_edges_does_not_use_none_keys() {
         let layout = Layout::new()
             .with_layer(Layer::new(&[SUPER, CTRL, C, LAYER1, NONE]))
-            .with_layer(Layer::new(&[CTRL, A, LAYER0]));
+            .with_layer(Layer::new(&[CTRL, NONE, A, LAYER0]));
         let m = QmkModel::new(&layout);
         assert_eq!(
             m.key_ev_edges(KeyEv::new(C, true)),
