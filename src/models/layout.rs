@@ -66,6 +66,10 @@ impl Layout {
         Self { layers: vec![] }
     }
 
+    pub fn from_layers(layers: &[Layer]) -> Self {
+        Self { layers: layers.to_vec() }
+    }
+
     pub fn rand_with_size(size: usize, num_layers: usize, cnst: &Constants) -> Self {
         let mut l = Layout::new();
         for _ in 0..num_layers {

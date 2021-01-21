@@ -13,3 +13,13 @@ pretty_env_logger = "*"
 rand = "*"
 rand_distr = "*"
 rayon = "*"
+smallvec = "*"
+# Pin to this version until criterion.rs updates.
+serde = {version = "=1.0.118", features = ["derive"]}
+
+[dev-dependencies]
+criterion = {version = "*", features = ["real_blackbox"]}
+
+[[bench]]
+harness = false
+name = "ga"

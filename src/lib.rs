@@ -8,13 +8,14 @@
     partition_point,
     bool_to_option,
     map_first_last,
-    option_unwrap_none
+    option_unwrap_none,
+    destructuring_assignment
 )]
 
 use crate::constants::Constants;
 use crate::ingest::load_layout;
 use crate::layout_eval::LayoutEval;
-use crate::prelude::*;
+use eyre::Result;
 use ga::runner::{Generation, Runner};
 use ga::{Cfg, Evaluator};
 use std::path::{Path, PathBuf};
@@ -25,7 +26,6 @@ pub mod ingest;
 pub mod layout_eval;
 pub mod models;
 pub mod path;
-pub mod prelude;
 pub mod types;
 
 #[derive(Debug, StructOpt)]

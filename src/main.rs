@@ -1,4 +1,5 @@
-use designer::{prelude::*, run};
+use designer::run;
+use eyre::Result;
 
 fn main() -> Result<()> {
     pretty_env_logger::init_timed();
