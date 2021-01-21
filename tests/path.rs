@@ -3,7 +3,7 @@ use designer::ingest::{load_corpus, load_layout, load_layout_cfg};
 use designer::models::compute_kevs;
 use designer::models::us::USModel;
 use designer::path::PathFinder;
-use designer::prelude::*;
+use eyre::Result;
 
 #[test]
 fn test_all_keys_can_path() -> Result<()> {

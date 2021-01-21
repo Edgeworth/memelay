@@ -414,6 +414,7 @@ name = "ga"
 version = "0.1.0"
 dependencies = [
  "color-eyre",
+ "criterion",
  "derive_more",
  "eyre",
  "log",
@@ -421,6 +422,8 @@ dependencies = [
  "rand",
  "rand_distr",
  "rayon",
+ "serde",
+ "smallvec",
 ]
 
 [[package]]

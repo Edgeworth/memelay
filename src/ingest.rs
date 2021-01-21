@@ -1,10 +1,11 @@
-use enumset::enum_set;
-
 use crate::layout_eval::LayoutCfg;
 use crate::models::layout::{Layer, Layout};
 use crate::models::us::US_LAYER;
-use crate::prelude::*;
 use crate::types::{Finger, KCSet, PhysEv, KC};
+use enumset::enum_set;
+use eyre::eyre;
+use eyre::Result;
+use eyre::WrapErr;
 use std::fs;
 use std::path::Path;
 use std::str::FromStr;
