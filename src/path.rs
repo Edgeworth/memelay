@@ -94,7 +94,7 @@ impl<'a> PathFinder<'a> {
 
             // println!(
             //     "pri: {}, dijk: {}, seen: {}, get to: {}",
-            //     pri,
+            //     _pri,
             //     n,
             //     seen.len(),
             //     self.kevs
