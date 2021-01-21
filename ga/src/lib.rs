@@ -1,5 +1,19 @@
+#![warn(rust_2018_idioms, clippy::all)]
+#![feature(
+    const_fn,
+    option_result_contains,
+    trait_alias,
+    iterator_fold_self,
+    type_alias_impl_trait,
+    partition_point,
+    bool_to_option,
+    map_first_last,
+    option_unwrap_none
+)]
+
 use rand_distr::weighted_alias::AliasableWeight;
 
+mod prelude;
 pub mod runner;
 pub mod util;
 
