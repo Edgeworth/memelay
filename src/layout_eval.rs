@@ -1,6 +1,4 @@
 use crate::constants::Constants;
-use crate::ga::util::{combine_cost, combine_fitness, crossover_vec};
-use crate::ga::{Cfg, Evaluator};
 use crate::ingest::{load_corpus, load_layout_cfg};
 use crate::models::compute_kevs;
 use crate::models::layout::Layout;
@@ -9,6 +7,8 @@ use crate::path::PathFinder;
 use crate::prelude::*;
 use crate::types::{rand_kcset, Finger, PhysEv};
 use crate::Args;
+use ga::util::{combine_cost, combine_fitness, crossover_vec};
+use ga::{Cfg, Evaluator};
 use rand::prelude::IteratorRandom;
 use rand::Rng;
 use rand_distr::{Distribution, WeightedAliasIndex};

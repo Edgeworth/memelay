@@ -1,7 +1,7 @@
 use rand_distr::{Distribution, WeightedAliasIndex};
 
-use crate::ga::{Cfg, Evaluator};
 use crate::prelude::*;
+use crate::{Cfg, Evaluator};
 
 #[derive(Debug, Clone, PartialOrd, PartialEq)]
 pub struct Individual<E: Evaluator> {

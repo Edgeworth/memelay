@@ -12,16 +12,15 @@
 )]
 
 use crate::constants::Constants;
-use crate::ga::runner::{Generation, Runner};
-use crate::ga::{Cfg, Evaluator};
 use crate::ingest::load_layout;
 use crate::layout_eval::LayoutEval;
 use crate::prelude::*;
+use ga::runner::{Generation, Runner};
+use ga::{Cfg, Evaluator};
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
 pub mod constants;
-pub mod ga;
 pub mod ingest;
 pub mod layout_eval;
 pub mod models;
