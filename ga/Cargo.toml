@@ -1,0 +1,15 @@
+[package]
+authors = ["Eliot Courtney <edgeworth.dev@gmail.com>"]
+edition = "2018"
+name = "ga"
+version = "0.1.0"
+
+[dependencies]
+color-eyre = "*"
+derive_more = "*"
+eyre = "*"
+log = "*"
+pretty_env_logger = "*"
+rand = "*"
+rand_distr = "*"
+rayon = "*"

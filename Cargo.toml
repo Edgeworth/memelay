@@ -4,12 +4,16 @@ edition = "2018"
 name = "designer"
 version = "0.1.0"
 
+[workspace]
+members = ["ga"]
+
 [dependencies]
 color-eyre = "*"
 colored = "*"
 derive_more = "*"
 enumset = "*"
 eyre = "*"
+ga = {path = "./ga"}
 lazy_static = "*"
 log = "*"
 ordered-float = "*"
