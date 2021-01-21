@@ -1,6 +1,8 @@
 use crate::{Cfg, Evaluator};
+use rand::Rng;
 use rand_distr::{Distribution, WeightedAliasIndex};
 use rayon::prelude::*;
+use smallvec::smallvec;
 
 #[derive(Debug, Clone, PartialOrd, PartialEq)]
 pub struct Individual<E: Evaluator> {
@@ -52,8 +54,14 @@ impl<E: Evaluator> Generation<E> {
                     WeightedAliasIndex::new(self.mems.iter().map(|mem| mem.fitness).collect())
                         .unwrap();
                 let a = &self.mems[idx.sample(&mut r)];
-                let b = &self.mems[idx.sample(&mut r)];
-                eval.crossover(cfg, &a.state, &b.state).into_iter()
+                if r.gen::<f64>() < cfg.crossover_rate {
+                    let b = &self.mems[idx.sample(&mut r)];
+                    eval.crossover(cfg, &a.state, &b.state).into_iter()
+                } else {
+                    let mut s = a.state.clone();
+                    eval.mutate(cfg, &mut s);
+                    smallvec![s].into_iter()
+                }
             })
             .flatten_iter()
             .collect::<Vec<_>>();
