@@ -35,7 +35,7 @@ pub trait Evaluator: Send + Sync + Clone {
 
 #[derive(Debug, Clone, PartialOrd, PartialEq)]
 pub struct Cfg {
-    pub xover_rate: f64,
+    pub crossover_rate: f64,
     pub pop_size: usize,
     pub top_prop: f64,
 }

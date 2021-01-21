@@ -1,6 +1,19 @@
+use rand::prelude::IteratorRandom;
 use rand::Rng;
 use smallvec::SmallVec;
 use std::iter::{FromIterator, Iterator};
+
+pub fn crossover_kpx_rand<O: FromIterator<T::Item>, T: IntoIterator, R: Rng>(
+    s1: T,
+    s2: T,
+    k: usize,
+    r: &mut R,
+) -> (O, O) {
+    let s1: Vec<_> = s1.into_iter().collect();
+    let s2: Vec<_> = s2.into_iter().collect();
+    let xpoints = (0..s1.len()).choose_multiple(r, k);
+    crossover_kpx(s1, s2, &xpoints)
+}
 
 // K-point crossover.
 pub fn crossover_kpx<O: FromIterator<T::Item>, T: IntoIterator>(
@@ -49,6 +62,38 @@ pub fn crossover_ux<O: FromIterator<T::Item>, T: IntoIterator, R: Rng>(
 }
 
 // Mutation:
+// Replaces a random value in |s| with |v|.
+pub fn replace_rand<O: FromIterator<T::Item>, T: IntoIterator, R: Rng>(
+    s: T,
+    v: T::Item,
+    r: &mut R,
+) -> O {
+    let mut o: Vec<_> = s.into_iter().collect();
+    if let Some(ov) = o.iter_mut().choose(r) {
+        *ov = v;
+    }
+    o.into_iter().collect()
+}
+
+// Calculating fitnesses:
+pub fn count_different<V: PartialEq, A: IntoIterator<Item = V>, B: IntoIterator<Item = V>>(
+    s1: A,
+    s2: B,
+) -> usize {
+    let mut s1 = s1.into_iter();
+    let mut s2 = s2.into_iter();
+    let mut count = 0;
+    loop {
+        let v1 = s1.next();
+        let v2 = s2.next();
+        if v1.is_none() && v2.is_none() {
+            return count;
+        }
+        if v1 != v2 {
+            count += 1;
+        }
+    }
+}
 
 // Combining fitnesses:
 pub fn combine_fitness(cur_fitness: u128, next: u128, max_next: u128) -> u128 {
@@ -65,9 +110,8 @@ pub fn combine_cost(cur_fitness: u128, next: u128, max_next: u128) -> u128 {
 
 #[cfg(test)]
 mod tests {
-    use rand::rngs::mock::StepRng;
-
     use super::*;
+    use rand::rngs::mock::StepRng;
 
     #[test]
     fn test_crossover_kpx() {
@@ -88,5 +132,13 @@ mod tests {
             crossover_ux("abcd".chars(), "wxyz".chars(), &mut r),
             ("axcz".to_string(), "wbyd".to_string())
         );
+    }
+
+    #[test]
+    fn test_count_different() {
+        assert_eq!(count_different(&[1], &[1]), 0);
+        assert_eq!(count_different(&[1], &[2]), 1);
+        assert_eq!(count_different(&[1], &[1, 2]), 1);
+        assert_eq!(count_different(&[1, 2], &[1]), 1);
     }
 }
