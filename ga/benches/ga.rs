@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use ga::runner::{Generation, Runner};
-use ga::util::{crossover_kpx_rand, replace_rand};
+use ga::util::{count_different, crossover_kpx_rand, replace_rand};
 use ga::{Cfg, Evaluator};
 use rand::Rng;
 use rand_distr::Alphanumeric;
@@ -35,8 +35,8 @@ impl Evaluator for BenchEval {
         *s = replace_rand(s.chars(), r.sample(Alphanumeric) as char, &mut r);
     }
 
-    fn fitness(&self, _: &ga::Cfg, _s: &State) -> f64 {
-        todo!()
+    fn fitness(&self, _: &ga::Cfg, s: &State) -> f64 {
+        (self.target.len() - count_different(s.chars(), self.target.chars())) as f64 + 1.0
     }
 
     fn distance(&self, _: &ga::Cfg, _s1: &State, _s3: &State) -> f64 {
@@ -55,6 +55,7 @@ fn evolve(target: &str) -> usize {
     loop {
         runs += 1;
         let best = runner.run_iter();
+        // TODO: WHy is this slow?
         println!("Generation: {} score: {:.3?}", runs, best.fitness);
         if best.state == target {
             return runs;
