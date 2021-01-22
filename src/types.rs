@@ -3,6 +3,7 @@ use derive_more::Display;
 use enumset::{enum_set, EnumSet, EnumSetType};
 use ga::util::sus;
 use rand::seq::IteratorRandom;
+use rand::Rng;
 use smallvec::SmallVec;
 use strum::IntoEnumIterator;
 use strum_macros::{Display as StrumDisplay, EnumIter, EnumString};
@@ -43,7 +44,7 @@ impl KCSetExt for KCSet {
     }
 }
 
-pub fn rand_kcset<R: rand::Rng>(cnst: &Constants, r: &mut R) -> KCSet {
+pub fn rand_kcset<R: Rng + ?Sized>(cnst: &Constants, r: &mut R) -> KCSet {
     let num_mod = sus(&cnst.num_mod_assigned_weights, 1, r)[0];
     let num_reg = sus(&cnst.num_reg_assigned_weights, 1, r)[0];
     let mods = KC::iter().filter(|k| k.is_mod()).collect::<SmallVec<[KC; 4]>>();

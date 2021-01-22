@@ -1,4 +1,4 @@
-use num_traits::{Num, NumCast, ToPrimitive, Zero};
+use num_traits::{NumCast, ToPrimitive};
 use rand::prelude::IteratorRandom;
 use rand::Rng;
 use smallvec::SmallVec;
@@ -6,7 +6,7 @@ use std::borrow::Borrow;
 use std::iter::{FromIterator, Iterator};
 
 // Random point K-point crossover.
-pub fn crossover_kpx_rand<O: FromIterator<T::Item>, T: IntoIterator, R: Rng>(
+pub fn crossover_kpx_rand<O: FromIterator<T::Item>, T: IntoIterator, R: Rng + ?Sized>(
     s1: T,
     s2: T,
     k: usize,
@@ -42,7 +42,7 @@ pub fn crossover_kpx<O: FromIterator<T::Item>, T: IntoIterator>(
 }
 
 // Uniform crossover.
-pub fn crossover_ux<O: FromIterator<T::Item>, T: IntoIterator, R: Rng>(
+pub fn crossover_ux<O: FromIterator<T::Item>, T: IntoIterator, R: Rng + ?Sized>(
     s1: T,
     s2: T,
     r: &mut R,
@@ -65,7 +65,7 @@ pub fn crossover_ux<O: FromIterator<T::Item>, T: IntoIterator, R: Rng>(
 
 // Mutation:
 // Replaces a random value in |s| with |v|.
-pub fn replace_rand<O: FromIterator<T::Item>, T: IntoIterator, R: Rng>(
+pub fn replace_rand<O: FromIterator<T::Item>, T: IntoIterator, R: Rng + ?Sized>(
     s: T,
     v: T::Item,
     r: &mut R,
@@ -98,7 +98,7 @@ pub fn count_different<V: PartialEq, A: IntoIterator<Item = V>, B: IntoIterator<
 }
 
 // Stochastic universal sampling
-pub fn sus<'a, V: 'a + Copy + ToPrimitive, T: IntoIterator<Item = &'a V>, R: Rng>(
+pub fn sus<'a, V: 'a + Copy + ToPrimitive, T: IntoIterator<Item = &'a V>, R: Rng + ?Sized>(
     w: T,
     k: usize,
     r: &mut R,
