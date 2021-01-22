@@ -97,7 +97,29 @@ pub fn count_different<V: PartialEq, A: IntoIterator<Item = V>, B: IntoIterator<
     }
 }
 
-// Stochastic universal sampling
+// Roulette wheel selection:
+pub fn rws<'a, V: 'a + Copy + ToPrimitive, T: IntoIterator<Item = &'a V>, R: Rng + ?Sized>(
+    w: T,
+    r: &mut R,
+) -> Option<usize> {
+    let w = w.into_iter().map(|v| NumCast::from(*v.borrow()).unwrap()).collect::<Vec<f64>>();
+    let sum = w.iter().fold(0.0, |a, b| a + b);
+    if sum == 0.0 {
+        return None;
+    }
+
+    let cursor = r.gen_range(0.0..sum);
+    let mut cursum = 0.0;
+    for (i, v) in w.iter().enumerate() {
+        cursum += v;
+        if cursum >= cursor {
+            return Some(i);
+        }
+    }
+    None
+}
+
+// Stochastic universal sampling:
 pub fn sus<'a, V: 'a + Copy + ToPrimitive, T: IntoIterator<Item = &'a V>, R: Rng + ?Sized>(
     w: T,
     k: usize,
@@ -169,6 +191,14 @@ mod tests {
         assert_eq!(count_different(&[1], &[2]), 1);
         assert_eq!(count_different(&[1], &[1, 2]), 1);
         assert_eq!(count_different(&[1, 2], &[1]), 1);
+    }
+
+    #[test]
+    fn test_rws() {
+        let mut r = StepRng::new(1 << 31, 1 << 31);
+        assert_eq!(rws::<u32, _, _>(&[], &mut r), None);
+        assert_eq!(rws(&[1], &mut r), Some(0));
+        assert_eq!(rws(&[0, 1], &mut r), Some(1));
     }
 
     #[test]
