@@ -107,7 +107,7 @@ fn ga() {
     let metrics: &[(&'static str, MetricFn)] = &[
         ("num runs", Box::new(|r| r.num_runs as f64)),
         ("mean fitness", Box::new(|r| r.last_gen.mean_fitness().unwrap())),
-        ("diversity", Box::new(|r| r.last_gen.mean_fitness().unwrap())),
+        ("dupes", Box::new(|r| r.last_gen.num_dup() as f64)),
     ];
     for (metric, f) in metrics.iter() {
         let mut g = c.benchmark_group(format!("ga {}", metric));

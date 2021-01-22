@@ -42,6 +42,13 @@ impl<E: Evaluator> Generation<E> {
         )
     }
 
+    pub fn num_dup(&self) -> usize {
+        let mut mems_copy = self.mems.iter().map(|v| &v.state).cloned().collect::<Vec<_>>();
+        mems_copy.par_sort_unstable();
+        mems_copy.dedup();
+        self.mems.len() - mems_copy.len()
+    }
+
     pub fn individuals(&self) -> &[Individual<E>] {
         &self.mems
     }
@@ -51,7 +58,7 @@ impl<E: Evaluator> Generation<E> {
             let f = eval.fitness(cfg, &mem.state);
             mem.fitness = f;
         });
-        self.mems.par_sort_by(|a, b| b.fitness.partial_cmp(&a.fitness).unwrap());
+        self.mems.par_sort_unstable_by(|a, b| b.fitness.partial_cmp(&a.fitness).unwrap());
     }
 
     fn get_top_proportion(&self, prop: f64) -> Vec<E::State> {
