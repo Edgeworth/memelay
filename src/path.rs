@@ -133,7 +133,6 @@ impl<'a> PathFinder<'a> {
 
 #[cfg(test)]
 mod tests {
-
     #[test]
     fn path_fitness() {}
 }
