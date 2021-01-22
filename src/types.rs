@@ -1,7 +1,7 @@
 use crate::constants::Constants;
 use derive_more::Display;
 use enumset::{enum_set, EnumSet, EnumSetType};
-use ga::util::sus;
+use ga::util::rws;
 use rand::seq::IteratorRandom;
 use rand::Rng;
 use smallvec::SmallVec;
@@ -45,8 +45,8 @@ impl KCSetExt for KCSet {
 }
 
 pub fn rand_kcset<R: Rng + ?Sized>(cnst: &Constants, r: &mut R) -> KCSet {
-    let num_mod = sus(&cnst.num_mod_assigned_weights, 1, r)[0];
-    let num_reg = sus(&cnst.num_reg_assigned_weights, 1, r)[0];
+    let num_mod = rws(&cnst.num_mod_assigned_weights, r).unwrap();
+    let num_reg = rws(&cnst.num_reg_assigned_weights, r).unwrap();
     let mods = KC::iter().filter(|k| k.is_mod()).collect::<SmallVec<[KC; 4]>>();
     let regs = KC::iter().filter(|k| !k.is_mod()).collect::<SmallVec<[KC; 2]>>();
     let mods = mods.iter().choose_multiple(r, num_mod).iter().fold(enum_set!(), |a, &&b| a | b);
