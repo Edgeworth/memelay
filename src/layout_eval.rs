@@ -12,8 +12,7 @@ use ga::{Cfg, Evaluator};
 use rand::prelude::IteratorRandom;
 use rand::Rng;
 use rand_distr::{Distribution, WeightedAliasIndex};
-use smallvec::smallvec;
-use smallvec::SmallVec;
+use smallvec::{smallvec, SmallVec};
 
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct LayoutCfg {

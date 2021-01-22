@@ -26,8 +26,9 @@ smallvec = "*"
 structopt = "*"
 strum = "*"
 strum_macros = "*"
-syn = "=1.0.57"
 vec_map = "*"
+# Pin to this version until enumset updates.
+syn = "=1.0.57"
 # Pin to this version until criterion.rs updates.
 serde = {version = "=1.0.118", features = ["derive"]}
 

@@ -4,8 +4,7 @@ use ga::util::{count_different, crossover_kpx_rand, replace_rand};
 use ga::{Cfg, Evaluator};
 use rand::Rng;
 use rand_distr::Alphanumeric;
-use smallvec::smallvec;
-use smallvec::SmallVec;
+use smallvec::{smallvec, SmallVec};
 
 type State = String;
 

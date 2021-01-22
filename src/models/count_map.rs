@@ -4,11 +4,7 @@ use std::fmt;
 use std::slice::Iter;
 
 fn press_to_count(press: bool) -> i32 {
-    if press {
-        1
-    } else {
-        -1
-    }
+    if press { 1 } else { -1 }
 }
 
 #[derive(Debug, Clone, Default, Ord, PartialOrd, Eq, PartialEq, Hash, Display)]

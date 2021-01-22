@@ -24,16 +24,20 @@ impl<E: Evaluator> Generation<E> {
         Self { mems }
     }
 
+    pub fn get_best(&self) -> Individual<E> {
+        self.mems[0].clone()
+    }
+
+    pub fn mean_fitness(&self) -> E::Fitness {
+        self.mems.iter().map(|v| v.fitness).fold_first(|a, b| a + b) / ()
+    }
+
     fn evaluate(&mut self, cfg: &Cfg, eval: &E) {
         self.mems.par_iter_mut().for_each(|mem| {
             let f = eval.fitness(cfg, &mem.state);
             mem.fitness = f;
         });
         self.mems.par_sort_by(|a, b| b.fitness.partial_cmp(&a.fitness).unwrap());
-    }
-
-    fn get_best(&self) -> Individual<E> {
-        self.mems[0].clone()
     }
 
     fn get_top_proportion(&self, prop: f64) -> Vec<Individual<E>> {
@@ -70,6 +74,10 @@ impl<E: Evaluator> Generation<E> {
     }
 }
 
+pub struct RunResult<E: Evaluator> {
+    gen: Generation<E>,
+}
+
 pub struct Runner<E: Evaluator> {
     eval: E,
     cfg: Cfg,
@@ -81,10 +89,11 @@ impl<E: Evaluator> Runner<E> {
         Self { eval, cfg, gen }
     }
 
-    pub fn run_iter(&mut self) -> Individual<E> {
+    pub fn run_iter(&mut self) -> RunResult<E> {
         self.gen.evaluate(&self.cfg, &self.eval);
-        let best = self.gen.get_best();
-        self.gen = self.gen.create_next_gen(&self.eval, &self.cfg);
-        best
+        let next_gen = self.gen.create_next_gen(&self.eval, &self.cfg);
+        let res = RunResult { gen: self.gen };
+        self.gen = next_gen;
+        res
     }
 }
