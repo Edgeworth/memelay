@@ -12,6 +12,7 @@
     array_windows
 )]
 
+use num_traits::{Num, NumCast};
 use rand_distr::weighted_alias::AliasableWeight;
 use smallvec::SmallVec;
 
@@ -20,7 +21,15 @@ pub mod util;
 
 pub trait Evaluator: Send + Sync + Clone {
     type State: Clone + Send + Sync;
-    type Fitness: Copy + Clone + Send + Sync + Default + PartialOrd + AliasableWeight;
+    type Fitness: Copy
+        + Clone
+        + Send
+        + Sync
+        + Default
+        + PartialOrd
+        + Num
+        + NumCast
+        + AliasableWeight;
 
     fn crossover(
         &self,
