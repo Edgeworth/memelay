@@ -5,6 +5,12 @@ use rand::Rng;
 use rayon::prelude::*;
 use smallvec::smallvec;
 
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum SelectionMethod {
+    StochasticUniformSampling,
+    RouletteWheel,
+}
+
 #[derive(Debug, Clone, PartialOrd, PartialEq)]
 pub struct Individual<E: Evaluator> {
     pub state: E::State,
