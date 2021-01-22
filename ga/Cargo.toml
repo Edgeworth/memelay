@@ -12,7 +12,6 @@ log = "*"
 num-traits = "*"
 pretty_env_logger = "*"
 rand = "*"
-rand_distr = "*"
 rayon = "*"
 smallvec = "*"
 # Pin to this version until criterion.rs updates.

@@ -15,6 +15,7 @@
 use num_traits::{Num, NumCast, ToPrimitive};
 use smallvec::SmallVec;
 
+pub mod distributions;
 pub mod runner;
 pub mod util;
 
