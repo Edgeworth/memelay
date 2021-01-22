@@ -23,7 +23,7 @@ pub mod runner;
 pub mod util;
 
 pub trait Evaluator: Send + Sync + Clone {
-    type State: Clone + Send + Sync;
+    type State: Clone + Send + Sync + Ord + PartialOrd + PartialEq;
     type Fitness: Copy + Clone + Send + Sync + Default + PartialOrd + Num + NumCast + ToPrimitive;
 
     fn crossover(
