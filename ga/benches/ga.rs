@@ -1,4 +1,5 @@
 use crate::measurement::F64Measurement;
+use criterion::measurement::Measurement;
 use criterion::Criterion;
 use ga::distributions::PrintableAscii;
 use ga::runner::{Generation, Runner};
@@ -80,8 +81,8 @@ fn evolve(target: &str) -> EvolveResult {
 
 type MetricFn = Box<dyn Fn(EvolveResult) -> f64>;
 
-fn bench_evolve(
-    c: &mut Criterion<F64Measurement>,
+fn bench_evolve<M: 'static + Measurement>(
+    c: &mut Criterion<M>,
     metric: &'static str,
     value: Rc<RefCell<f64>>,
     f: &dyn Fn(EvolveResult) -> f64,
@@ -107,6 +108,10 @@ fn ga() {
             .with_measurement(F64Measurement::new(Rc::clone(&value)));
         bench_evolve(&mut c, metric, value, f);
     }
+
+    let value = Rc::new(RefCell::new(0.0));
+    let mut c = Criterion::default().configure_from_args();
+    bench_evolve(&mut c, "time", value, &|_| 0.0);
 }
 
 fn main() {
