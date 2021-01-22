@@ -418,6 +418,7 @@ dependencies = [
  "derive_more",
  "eyre",
  "log",
+ "num-traits",
  "pretty_env_logger",
  "rand",
  "rand_distr",

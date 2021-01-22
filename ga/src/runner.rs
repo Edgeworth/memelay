@@ -1,4 +1,5 @@
 use crate::{Cfg, Evaluator};
+use num_traits::NumCast;
 use rand::Rng;
 use rand_distr::{Distribution, WeightedAliasIndex};
 use rayon::prelude::*;
@@ -28,8 +29,11 @@ impl<E: Evaluator> Generation<E> {
         self.mems[0].clone()
     }
 
-    pub fn mean_fitness(&self) -> E::Fitness {
-        self.mems.iter().map(|v| v.fitness).fold_first(|a, b| a + b) / ()
+    pub fn mean_fitness(&self) -> Option<E::Fitness> {
+        Some(
+            self.mems.iter().map(|v| v.fitness).fold_first(|a, b| a + b)?
+                / NumCast::from(self.mems.len())?,
+        )
     }
 
     fn evaluate(&mut self, cfg: &Cfg, eval: &E) {
@@ -75,7 +79,7 @@ impl<E: Evaluator> Generation<E> {
 }
 
 pub struct RunResult<E: Evaluator> {
-    gen: Generation<E>,
+    pub gen: Generation<E>,
 }
 
 pub struct Runner<E: Evaluator> {
@@ -91,9 +95,8 @@ impl<E: Evaluator> Runner<E> {
 
     pub fn run_iter(&mut self) -> RunResult<E> {
         self.gen.evaluate(&self.cfg, &self.eval);
-        let next_gen = self.gen.create_next_gen(&self.eval, &self.cfg);
-        let res = RunResult { gen: self.gen };
-        self.gen = next_gen;
-        res
+        let mut gen = self.gen.create_next_gen(&self.eval, &self.cfg);
+        std::mem::swap(&mut gen, &mut self.gen);
+        RunResult { gen }
     }
 }
