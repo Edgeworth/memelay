@@ -53,10 +53,10 @@ fn evolve(target: &str) -> usize {
     let mut runs = 0;
     loop {
         runs += 1;
-        let best = runner.run_iter();
+        let res = runner.run_iter();
         // TODO: WHy is this slow?
-        println!("Generation: {} score: {:.3?}", runs, best.fitness);
-        if best.state == target {
+        println!("Generation: {} score: {:.3?}", runs, res.gen.get_best().fitness);
+        if res.gen.get_best().state == target {
             return runs;
         }
     }
