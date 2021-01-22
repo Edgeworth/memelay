@@ -1,5 +1,5 @@
-use crate::runner::SelectionMethod;
-use crate::runner::SelectionMethod::StochasticUniformSampling;
+use crate::generation::SelectionMethod;
+use crate::generation::SelectionMethod::StochasticUniformSampling;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Cfg {
