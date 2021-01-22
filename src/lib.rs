@@ -16,8 +16,9 @@ use crate::constants::Constants;
 use crate::ingest::load_layout;
 use crate::layout_eval::LayoutEval;
 use eyre::Result;
+use ga::cfg::Cfg;
 use ga::runner::{Generation, Runner};
-use ga::{Cfg, Evaluator};
+use ga::Evaluator;
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
@@ -90,7 +91,7 @@ pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
 pub fn run() -> Result<()> {
     let args = Args::from_args();
     let eval = LayoutEval::from_args(&args)?;
-    let cfg = Cfg { crossover_rate: 0.3, pop_size: eval.cnst.pop_size, top_prop: 0.1 };
+    let cfg = Cfg::new(eval.cnst.pop_size);
 
     if let Some(p) = args.eval_layout {
         eval_layout(eval, cfg, p)?;
