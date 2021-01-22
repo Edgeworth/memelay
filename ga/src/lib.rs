@@ -12,9 +12,11 @@
     array_windows
 )]
 
+use crate::cfg::Cfg;
 use num_traits::{Num, NumCast, ToPrimitive};
 use smallvec::SmallVec;
 
+pub mod cfg;
 pub mod distributions;
 pub mod runner;
 pub mod util;
@@ -32,11 +34,4 @@ pub trait Evaluator: Send + Sync + Clone {
     fn mutate(&self, cfg: &Cfg, s: &mut Self::State);
     fn fitness(&self, cfg: &Cfg, s: &Self::State) -> Self::Fitness;
     fn distance(&self, cfg: &Cfg, s1: &Self::State, s2: &Self::State) -> f64;
-}
-
-#[derive(Debug, Clone, PartialOrd, PartialEq)]
-pub struct Cfg {
-    pub crossover_rate: f64,
-    pub pop_size: usize,
-    pub top_prop: f64,
 }
