@@ -18,6 +18,7 @@ use smallvec::SmallVec;
 
 pub mod cfg;
 pub mod distributions;
+pub mod generation;
 pub mod runner;
 pub mod util;
 

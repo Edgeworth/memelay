@@ -3,8 +3,8 @@ use criterion::measurement::Measurement;
 use criterion::{BenchmarkGroup, Criterion};
 use ga::cfg::Cfg;
 use ga::distributions::PrintableAscii;
-use ga::runner::SelectionMethod::{RouletteWheel, StochasticUniformSampling};
-use ga::runner::{Generation, Runner};
+use ga::generation::Generation;
+use ga::runner::Runner;
 use ga::util::{count_different, crossover_kpx_rand, replace_rand};
 use ga::Evaluator;
 use rand::Rng;
@@ -83,15 +83,12 @@ fn evolve(target: &str, cfg: Cfg) -> EvolveResult {
 type MetricFn = Box<dyn Fn(EvolveResult) -> f64>;
 
 fn bench_evolve<M: 'static + Measurement>(
+    base_cfg: Cfg,
     g: &mut BenchmarkGroup<'_, M>,
     value: Rc<RefCell<f64>>,
     f: &dyn Fn(EvolveResult) -> f64,
 ) {
-    const POP: usize = 100;
-    for (name, cfg) in &[
-        ("sus", Cfg::new(POP).with_selection_method(StochasticUniformSampling)),
-        ("rws", Cfg::new(POP).with_selection_method(RouletteWheel)),
-    ] {
+    for (name, cfg) in &[("100 pop", base_cfg)] {
         g.bench_with_input(*name, cfg, |b, &cfg| {
             b.iter(|| {
                 let r = evolve("hello world!", cfg);
@@ -102,6 +99,7 @@ fn bench_evolve<M: 'static + Measurement>(
 }
 
 fn ga() {
+    let base_cfg = Cfg::new(100);
     let value = Rc::new(RefCell::new(0.0));
     let mut c = Criterion::default()
         .configure_from_args()
@@ -109,16 +107,17 @@ fn ga() {
     let metrics: &[(&'static str, MetricFn)] = &[
         ("num runs", Box::new(|r| r.num_runs as f64)),
         ("mean fitness", Box::new(|r| r.last_gen.mean_fitness().unwrap())),
+        ("diversity", Box::new(|r| r.last_gen.mean_fitness().unwrap())),
     ];
     for (metric, f) in metrics.iter() {
         let mut g = c.benchmark_group(format!("ga {}", metric));
-        bench_evolve(&mut g, Rc::clone(&value), f);
+        bench_evolve(base_cfg, &mut g, Rc::clone(&value), f);
         g.finish();
     }
 
     let mut c = Criterion::default().configure_from_args();
     let mut g = c.benchmark_group("ga time");
-    bench_evolve(&mut g, value, &|_| 0.0);
+    bench_evolve(base_cfg, &mut g, value, &|_| 0.0);
     g.finish();
 }
 
