@@ -1,8 +1,11 @@
+use num_traits::{Num, NumCast, ToPrimitive, Zero};
 use rand::prelude::IteratorRandom;
 use rand::Rng;
 use smallvec::SmallVec;
+use std::borrow::Borrow;
 use std::iter::{FromIterator, Iterator};
 
+// Random point K-point crossover.
 pub fn crossover_kpx_rand<O: FromIterator<T::Item>, T: IntoIterator, R: Rng>(
     s1: T,
     s2: T,
@@ -39,7 +42,6 @@ pub fn crossover_kpx<O: FromIterator<T::Item>, T: IntoIterator>(
 }
 
 // Uniform crossover.
-// pub fn crossover_ux
 pub fn crossover_ux<O: FromIterator<T::Item>, T: IntoIterator, R: Rng>(
     s1: T,
     s2: T,
@@ -95,6 +97,33 @@ pub fn count_different<V: PartialEq, A: IntoIterator<Item = V>, B: IntoIterator<
     }
 }
 
+// Stochastic universal sampling
+pub fn sus<'a, V: 'a + Copy + ToPrimitive, T: IntoIterator<Item = &'a V>, R: Rng>(
+    w: T,
+    k: usize,
+    r: &mut R,
+) -> Vec<usize> {
+    let w = w.into_iter().map(|v| NumCast::from(*v.borrow()).unwrap()).collect::<Vec<f64>>();
+    let sum = w.iter().fold(0.0, |a, b| a + b);
+    if k == 0 || sum == 0.0 {
+        return vec![];
+    }
+    let step = sum / k as f64;
+    let mut idxs = Vec::new();
+    let mut idx = 0;
+    let mut cursum = 0.0;
+    let mut cursor = r.gen_range(0.0..step);
+    for _ in 0..k {
+        while cursum + w[idx] < cursor {
+            cursum += w[idx];
+            idx += 1;
+        }
+        idxs.push(idx);
+        cursor += step;
+    }
+    idxs
+}
+
 // Combining fitnesses:
 pub fn combine_fitness(cur_fitness: u128, next: u128, max_next: u128) -> u128 {
     let mut unit = 1;
@@ -140,5 +169,18 @@ mod tests {
         assert_eq!(count_different(&[1], &[2]), 1);
         assert_eq!(count_different(&[1], &[1, 2]), 1);
         assert_eq!(count_different(&[1, 2], &[1]), 1);
+    }
+
+    #[test]
+    fn test_sus() {
+        let mut r = StepRng::new(1 << 31, 1 << 31);
+        assert_eq!(sus::<u32, _, _>(&[], 0, &mut r), []);
+        assert_eq!(sus::<u32, _, _>(&[], 1, &mut r), []);
+        assert_eq!(sus(&[1], 0, &mut r), []);
+        assert_eq!(sus(&[1], 1, &mut r), [0]);
+        assert_eq!(sus(&[1], 1, &mut r), [0]);
+        assert_eq!(sus(&[1, 1], 1, &mut r), [0]);
+        assert_eq!(sus(&[1, 1], 2, &mut r), [0, 1]);
+        assert_eq!(sus(&[1, 2], 3, &mut r), [0, 1, 1]);
     }
 }

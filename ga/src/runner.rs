@@ -1,7 +1,7 @@
+use crate::util::sus;
 use crate::{Cfg, Evaluator};
 use num_traits::NumCast;
 use rand::Rng;
-use rand_distr::{Distribution, WeightedAliasIndex};
 use rayon::prelude::*;
 use smallvec::smallvec;
 
@@ -58,12 +58,10 @@ impl<E: Evaluator> Generation<E> {
             .into_par_iter()
             .map(|_| {
                 let mut r = rand::thread_rng();
-                let idx =
-                    WeightedAliasIndex::new(self.mems.iter().map(|mem| mem.fitness).collect())
-                        .unwrap();
-                let a = &self.mems[idx.sample(&mut r)];
+                let idxs = sus(self.mems.iter().map(|v| &v.fitness), 2, &mut r);
+                let a = &self.mems[idxs[0]];
                 if r.gen::<f64>() < cfg.crossover_rate {
-                    let b = &self.mems[idx.sample(&mut r)];
+                    let b = &self.mems[idxs[1]];
                     eval.crossover(cfg, &a.state, &b.state).into_iter()
                 } else {
                     let mut s = a.state.clone();
