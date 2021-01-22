@@ -70,7 +70,7 @@ pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
 
     let mut best;
     for i in 0..eval.cnst.runs {
-        best = runner.run_iter().gen.get_best();
+        best = runner.run_iter().gen.best();
         println!("Generation: {} score: {:.3?}", i, best.fitness);
         if i % 10 == 0 {
             println!("{}", eval.layout_cfg.format(&best.state));

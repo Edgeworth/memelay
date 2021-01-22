@@ -25,7 +25,7 @@ impl<E: Evaluator> Generation<E> {
         Self { mems }
     }
 
-    pub fn get_best(&self) -> Individual<E> {
+    pub fn best(&self) -> Individual<E> {
         self.mems[0].clone()
     }
 
@@ -36,6 +36,10 @@ impl<E: Evaluator> Generation<E> {
         )
     }
 
+    pub fn individuals(&self) -> &[Individual<E>] {
+        &self.mems
+    }
+
     fn evaluate(&mut self, cfg: &Cfg, eval: &E) {
         self.mems.par_iter_mut().for_each(|mem| {
             let f = eval.fitness(cfg, &mem.state);
@@ -44,17 +48,17 @@ impl<E: Evaluator> Generation<E> {
         self.mems.par_sort_by(|a, b| b.fitness.partial_cmp(&a.fitness).unwrap());
     }
 
-    fn get_top_proportion(&self, prop: f64) -> Vec<Individual<E>> {
+    fn get_top_proportion(&self, prop: f64) -> Vec<E::State> {
         let num = self.mems.len() as f64 * prop;
-        self.mems.iter().cloned().take(num as usize).collect()
+        self.mems.iter().map(|v| &v.state).cloned().take(num as usize).collect()
     }
 
     fn create_next_gen(&self, eval: &E, cfg: &Cfg) -> Generation<E> {
         // Pick survivors:
-        let survivors = self.get_top_proportion(cfg.top_prop);
-
+        let mut new_states = self.get_top_proportion(cfg.top_prop);
+        let remaining = cfg.pop_size - new_states.len();
         // Reproduce:
-        let mut new_states = (survivors.len()..self.mems.len())
+        let reproduced = (0..remaining)
             .into_par_iter()
             .map(|_| {
                 let mut r = rand::thread_rng();
@@ -71,7 +75,7 @@ impl<E: Evaluator> Generation<E> {
             })
             .flatten_iter()
             .collect::<Vec<_>>();
-        new_states.extend(survivors.into_iter().map(|mem| mem.state));
+        new_states.extend(reproduced.into_iter().take(remaining));
         Self::from_states(new_states)
     }
 }
