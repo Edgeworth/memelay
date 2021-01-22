@@ -7,11 +7,10 @@ use crate::path::PathFinder;
 use crate::types::{rand_kcset, Finger, PhysEv};
 use crate::Args;
 use eyre::Result;
-use ga::util::{combine_cost, combine_fitness, crossover_kpx};
+use ga::util::{combine_cost, combine_fitness, crossover_kpx, sus};
 use ga::{Cfg, Evaluator};
 use rand::prelude::IteratorRandom;
 use rand::Rng;
-use rand_distr::{Distribution, WeightedAliasIndex};
 use smallvec::{smallvec, SmallVec};
 
 #[derive(Debug, Clone, Default, PartialEq)]
@@ -88,8 +87,7 @@ impl Evaluator for LayoutEval {
         let kidx = r.gen_range(0..s1.layers[lidx].keys.len());
         let mut c1 = s1.clone();
         let mut c2 = s2.clone();
-        let idx = WeightedAliasIndex::new(self.cnst.crossover_strat_weights.clone()).unwrap();
-        match idx.sample(&mut r) {
+        match sus(&self.cnst.crossover_strat_weights, 1, &mut r)[0] {
             0 => {
                 // Crossover on layer level.
                 let xpoint = r.gen_range(0..s1.layers.len());
@@ -118,20 +116,19 @@ impl Evaluator for LayoutEval {
         let lidx2 = r.gen_range(0..s.layers.len());
         let kidx2 = r.gen_range(0..s.layers[lidx2].keys.len());
 
-        let idx = WeightedAliasIndex::new(self.cnst.mutate_strat_weights.clone()).unwrap();
-        match idx.sample(&mut r) {
+        match sus(&self.cnst.mutate_strat_weights, 1, &mut r)[0] {
             0 => {
                 // Mutate random available key.
                 let avail = s.layers[lidx].keys.iter_mut().filter(|k| !k.is_empty());
                 if let Some(kcset) = avail.choose(&mut r) {
-                    *kcset = rand_kcset(&mut r, &self.cnst);
+                    *kcset = rand_kcset(&self.cnst, &mut r);
                 }
             }
             1 => {
                 // Mutate random empty key.
                 let empty = s.layers[lidx].keys.iter_mut().filter(|k| k.is_empty());
                 if let Some(kcset) = empty.choose(&mut r) {
-                    *kcset = rand_kcset(&mut r, &self.cnst);
+                    *kcset = rand_kcset(&self.cnst, &mut r);
                 }
             }
             2 => {
