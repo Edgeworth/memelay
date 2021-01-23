@@ -1,4 +1,4 @@
-use crate::util::{multi_rws, rws, sus};
+use crate::util::{multi_rws, sus};
 use crate::{Cfg, Evaluator};
 use num_traits::NumCast;
 use rand::Rng;
@@ -42,6 +42,17 @@ impl<E: Evaluator> Generation<E> {
         )
     }
 
+    pub fn mean_distance(&self, cfg: &Cfg, eval: &E) -> f64 {
+        let mut dist = 0.0;
+        let n = self.mems.len();
+        for i in 0..n {
+            for j in (i + 1)..n {
+                dist += eval.distance(cfg, &self.mems[i].state, &self.mems[j].state);
+            }
+        }
+        2.0 * dist / (n * (n - 1)) as f64
+    }
+
     pub fn num_dup(&self) -> usize {
         let mut mems_copy = self.mems.iter().map(|v| &v.state).cloned().collect::<Vec<_>>();
         mems_copy.par_sort_unstable();
@@ -75,7 +86,7 @@ impl<E: Evaluator> Generation<E> {
         }
     }
 
-    pub fn create_next_gen(&self, eval: &E, cfg: &Cfg) -> Generation<E> {
+    pub fn create_next_gen(&self, cfg: &Cfg, eval: &E) -> Generation<E> {
         // Pick survivors:
         let mut new_states = self.get_top_proportion(cfg.top_prop);
         let remaining = cfg.pop_size - new_states.len();
