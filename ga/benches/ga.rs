@@ -3,7 +3,7 @@ use criterion::measurement::Measurement;
 use criterion::{BenchmarkGroup, Criterion};
 use ga::cfg::Cfg;
 use ga::distributions::PrintableAscii;
-use ga::generation::Generation;
+use ga::generation::{Generation, SelectionMethod};
 use ga::runner::Runner;
 use ga::util::{count_different, crossover_kpx_rand, replace_rand};
 use ga::Evaluator;
@@ -99,7 +99,7 @@ fn bench_evolve<M: 'static + Measurement>(
 }
 
 fn ga() {
-    let base_cfg = Cfg::new(100);
+    let base_cfg = Cfg::new(100).with_selection_method(SelectionMethod::StochasticUniformSampling);
     let value = Rc::new(RefCell::new(0.0));
     let mut c = Criterion::default()
         .configure_from_args()
