@@ -1,23 +1,10 @@
 use std::iter::Iterator;
 
 // Calculating fitnesses:
-pub fn count_different<V: PartialEq, A: IntoIterator<Item = V>, B: IntoIterator<Item = V>>(
-    s1: A,
-    s2: B,
-) -> usize {
-    let mut s1 = s1.into_iter();
-    let mut s2 = s2.into_iter();
-    let mut count = 0;
-    loop {
-        let v1 = s1.next();
-        let v2 = s2.next();
-        if v1.is_none() && v2.is_none() {
-            return count;
-        }
-        if v1 != v2 {
-            count += 1;
-        }
-    }
+pub fn count_different<T: PartialEq>(s1: &[T], s2: &[T]) -> usize {
+    let min = s1.len().min(s2.len());
+    let max = s1.len().max(s2.len());
+    (0..min).map(|i| if s1[i] != s2[i] { 1 } else { 0 }).fold(max - min, |a, b| a + b)
 }
 
 // Combining fitnesses:
