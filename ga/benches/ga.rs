@@ -3,9 +3,11 @@ use criterion::measurement::Measurement;
 use criterion::{BenchmarkGroup, Criterion};
 use ga::cfg::Cfg;
 use ga::distributions::PrintableAscii;
-use ga::generation::{Generation, SelectionMethod};
+use ga::generation::{Generation, Selection};
+use ga::operators::crossover::crossover_kpx_rand;
+use ga::operators::fitness::count_different;
+use ga::operators::mutation::mutate_iter;
 use ga::runner::{RunResult, Runner, Stats};
-use ga::util::{count_different, crossover_kpx_rand, mutate_iter};
 use ga::Evaluator;
 use rand::Rng;
 use smallvec::{smallvec, SmallVec};
@@ -99,7 +101,7 @@ fn ga() {
         ("mean dist", Box::new(|r| r.mean_distance)),
     ];
 
-    let base_cfg = Cfg::new(100).with_selection_method(SelectionMethod::StochasticUniformSampling);
+    let base_cfg = Cfg::new(100).with_selection(Selection::Sus);
     for (metric, f) in metrics.iter() {
         let mut g = c.benchmark_group(format!("ga {}", metric));
         bench_evolve(base_cfg, &mut g, Rc::clone(&value), f);

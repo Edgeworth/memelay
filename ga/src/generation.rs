@@ -1,4 +1,4 @@
-use crate::util::{multi_rws, sus};
+use crate::operators::sampling::{multi_rws, sus};
 use crate::{Cfg, Evaluator};
 use num_traits::NumCast;
 use rand::Rng;
@@ -6,9 +6,9 @@ use rayon::prelude::*;
 use smallvec::SmallVec;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub enum SelectionMethod {
-    StochasticUniformSampling,
-    RouletteWheel,
+pub enum Selection {
+    Sus,
+    Roulette,
 }
 
 #[derive(Debug, Clone, PartialOrd, PartialEq)]
@@ -78,9 +78,9 @@ impl<E: Evaluator> Generation<E> {
     fn selection(&self, cfg: &Cfg) -> SmallVec<[E::State; 2]> {
         let mut r = rand::thread_rng();
         let fitnesses = self.mems.iter().map(|v| &v.fitness);
-        let idxs = match cfg.selection_method {
-            SelectionMethod::StochasticUniformSampling => sus(fitnesses, 2, &mut r),
-            SelectionMethod::RouletteWheel => multi_rws(fitnesses, 2, &mut r),
+        let idxs = match cfg.selection {
+            Selection::Sus => sus(fitnesses, 2, &mut r),
+            Selection::Roulette => multi_rws(fitnesses, 2, &mut r),
         };
         idxs.iter().map(|&i| &self.mems[i].state).cloned().collect()
     }
