@@ -32,6 +32,7 @@ pub trait Evaluator: Send + Sync + Clone {
         s1: &Self::State,
         s2: &Self::State,
     ) -> SmallVec<[Self::State; 2]>;
+    // Implementations should look at Cfg::mutation_rate to mutate.
     fn mutate(&self, cfg: &Cfg, s: &mut Self::State);
     fn fitness(&self, cfg: &Cfg, s: &Self::State) -> Self::Fitness;
     fn distance(&self, cfg: &Cfg, s1: &Self::State, s2: &Self::State) -> f64;

@@ -3,7 +3,8 @@ use crate::{Cfg, Evaluator};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Stats<E: Evaluator> {
-    pub mean_fitness: Option<E::Fitness>,
+    pub best_fitness: E::Fitness,
+    pub mean_fitness: E::Fitness,
     pub num_dup: usize,
     pub mean_distance: f64,
 }
@@ -29,6 +30,7 @@ impl<E: Evaluator> Runner<E> {
         let mut stats = None;
         if compute_stats {
             stats = Some(Stats {
+                best_fitness: self.gen.best().fitness,
                 mean_fitness: self.gen.mean_fitness(),
                 num_dup: self.gen.num_dup(),
                 mean_distance: self.gen.mean_distance(&self.cfg, &self.eval),
