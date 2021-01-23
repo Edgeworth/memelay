@@ -19,8 +19,9 @@ use smallvec::SmallVec;
 pub mod cfg;
 pub mod distributions;
 pub mod generation;
+pub mod niching;
+pub mod operators;
 pub mod runner;
-pub mod util;
 
 pub trait Evaluator: Send + Sync + Clone {
     type State: Clone + Send + Sync + Ord + PartialOrd + PartialEq;
