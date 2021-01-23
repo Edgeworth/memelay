@@ -22,4 +22,8 @@ criterion = {version = "*", features = ["real_blackbox"]}
 
 [[bench]]
 harness = false
-name = "ga"
+name = "target_string"
+
+[[bench]]
+harness = false
+name = "knapsack"
