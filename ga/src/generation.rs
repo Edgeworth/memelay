@@ -1,4 +1,4 @@
-use crate::util::sus;
+use crate::util::{multi_rws, rws, sus};
 use crate::{Cfg, Evaluator};
 use num_traits::NumCast;
 use rand::Rng;
@@ -66,6 +66,15 @@ impl<E: Evaluator> Generation<E> {
         self.mems.iter().map(|v| &v.state).cloned().take(num as usize).collect()
     }
 
+    fn selection(&self, cfg: &Cfg) -> Vec<usize> {
+        let mut r = rand::thread_rng();
+        let fitnesses = self.mems.iter().map(|v| &v.fitness);
+        match cfg.selection_method {
+            SelectionMethod::StochasticUniformSampling => sus(fitnesses, 2, &mut r),
+            SelectionMethod::RouletteWheel => multi_rws(fitnesses, 2, &mut r),
+        }
+    }
+
     pub fn create_next_gen(&self, eval: &E, cfg: &Cfg) -> Generation<E> {
         // Pick survivors:
         let mut new_states = self.get_top_proportion(cfg.top_prop);
@@ -75,7 +84,7 @@ impl<E: Evaluator> Generation<E> {
             .into_par_iter()
             .map(|_| {
                 let mut r = rand::thread_rng();
-                let idxs = sus(self.mems.iter().map(|v| &v.fitness), 2, &mut r);
+                let idxs = self.selection(cfg);
                 let a = &self.mems[idxs[0]];
                 if r.gen::<f64>() < cfg.crossover_rate {
                     let b = &self.mems[idxs[1]];
