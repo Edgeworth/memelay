@@ -4,13 +4,12 @@ Current fitnesses for selection don't change probabilities that much for actual 
 multi-objective optimization - currently just does weird fitness combinations
 
 ## Selection strategies
-SUS based on fitness
-look for maximally different parent
+1. SUS based on fitness
+2. Look for maximally different parent
 
 ## Diversity
 Adaptive mutation rate based on diversity => this is thought to be bad
 
-some sort of entropy based diversity measure?
 
 ## Niching
 See https://arxiv.org/pdf/1508.05342.pdf
@@ -32,6 +31,7 @@ Problem: Evolving string to hello world - seems bad, improve
 1. Number of runs to convergence
 2. Mean fitness of last generation
 3. Number of duplicate states in last generation
+4. Some sort of entropy based diversity measure?
 
 ## Findings
 Stochastic Universal Selection vs Roulette Wheel Selection:
