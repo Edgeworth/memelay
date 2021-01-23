@@ -7,6 +7,17 @@ multi-objective optimization - currently just does weird fitness combinations
 1. SUS based on fitness
 2. Look for maximally different parent
 
+## Crossover strategies
+1. k-point crossover
+2. Uniform crossover
+
+## Mutation strategies
+1. Single replacement - randomly replace a single bit
+2. Random resetting (not implemented) - randomly reset a state
+3. Swap mutation (not implemented) - randomly swap two bits
+4. Scramble mutation (not implemented) - scramble a substring
+5. Inversion mutation (not implemented) - invert a substring
+
 ## Diversity
 Adaptive mutation rate based on diversity => this is thought to be bad
 
@@ -28,10 +39,10 @@ crowding
 ## Measures
 Problem: Evolving string to hello world - seems bad, improve
 
-1. Number of runs to convergence
+1. Best fitness of last generation
 2. Mean fitness of last generation
 3. Number of duplicate states in last generation
-4. Some sort of entropy based diversity measure?
+4. Mean distance between states
 
 ## Findings
 Stochastic Universal Selection vs Roulette Wheel Selection:

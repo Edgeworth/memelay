@@ -8,7 +8,9 @@ use crate::types::{rand_kcset, Finger, PhysEv};
 use crate::Args;
 use eyre::Result;
 use ga::cfg::Cfg;
-use ga::util::{combine_cost, combine_fitness, crossover_kpx, rws};
+use ga::operators::crossover::crossover_kpx;
+use ga::operators::fitness::{combine_cost, combine_fitness};
+use ga::operators::sampling::rws;
 use ga::Evaluator;
 use rand::prelude::IteratorRandom;
 use rand::Rng;
@@ -161,6 +163,7 @@ impl Evaluator for LayoutEval {
                 &self.cnst,
             );
             let res = PathFinder::new(&self.layout_cfg, &kevs, &self.cnst, s).path();
+            // TODO: Combining fitness like this is probably not good.
             let fitness = combine_fitness(0, res.kevs_found as u128, kevs.len() as u128);
             let fitness = combine_cost(fitness, res.cost as u128, kevs.len() as u128 * 1000000);
             path_cost_mean += fitness;
