@@ -77,6 +77,16 @@ pub fn replace_rand<O: FromIterator<T::Item>, T: IntoIterator, R: Rng + ?Sized>(
     o.into_iter().collect()
 }
 
+// Mutates with the given rate.
+pub fn mutate_iter<O: FromIterator<T::Item>, T: IntoIterator, R: Rng + ?Sized>(
+    s: T,
+    rate: f64,
+    f: impl Fn(&mut R) -> T::Item,
+    r: &mut R,
+) -> O {
+    s.into_iter().map(|v| if r.gen::<f64>() < rate { f(r) } else { v }).collect()
+}
+
 // Calculating fitnesses:
 pub fn count_different<V: PartialEq, A: IntoIterator<Item = V>, B: IntoIterator<Item = V>>(
     s1: A,

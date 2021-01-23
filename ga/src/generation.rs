@@ -3,7 +3,7 @@ use crate::{Cfg, Evaluator};
 use num_traits::NumCast;
 use rand::Rng;
 use rayon::prelude::*;
-use smallvec::smallvec;
+use smallvec::SmallVec;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum SelectionMethod {
@@ -35,11 +35,9 @@ impl<E: Evaluator> Generation<E> {
         self.mems[0].clone()
     }
 
-    pub fn mean_fitness(&self) -> Option<E::Fitness> {
-        Some(
-            self.mems.iter().map(|v| v.fitness).fold_first(|a, b| a + b)?
-                / NumCast::from(self.mems.len())?,
-        )
+    pub fn mean_fitness(&self) -> E::Fitness {
+        self.mems.iter().map(|v| v.fitness).fold_first(|a, b| a + b).unwrap()
+            / NumCast::from(self.mems.len()).unwrap()
     }
 
     pub fn mean_distance(&self, cfg: &Cfg, eval: &E) -> f64 {
@@ -77,13 +75,14 @@ impl<E: Evaluator> Generation<E> {
         self.mems.iter().map(|v| &v.state).cloned().take(num as usize).collect()
     }
 
-    fn selection(&self, cfg: &Cfg) -> Vec<usize> {
+    fn selection(&self, cfg: &Cfg) -> SmallVec<[E::State; 2]> {
         let mut r = rand::thread_rng();
         let fitnesses = self.mems.iter().map(|v| &v.fitness);
-        match cfg.selection_method {
+        let idxs = match cfg.selection_method {
             SelectionMethod::StochasticUniformSampling => sus(fitnesses, 2, &mut r),
             SelectionMethod::RouletteWheel => multi_rws(fitnesses, 2, &mut r),
-        }
+        };
+        idxs.iter().map(|&i| &self.mems[i].state).cloned().collect()
     }
 
     pub fn create_next_gen(&self, cfg: &Cfg, eval: &E) -> Generation<E> {
@@ -95,16 +94,14 @@ impl<E: Evaluator> Generation<E> {
             .into_par_iter()
             .map(|_| {
                 let mut r = rand::thread_rng();
-                let idxs = self.selection(cfg);
-                let a = &self.mems[idxs[0]];
+                let mut states = self.selection(cfg);
                 if r.gen::<f64>() < cfg.crossover_rate {
-                    let b = &self.mems[idxs[1]];
-                    eval.crossover(cfg, &a.state, &b.state).into_iter()
-                } else {
-                    let mut s = a.state.clone();
-                    eval.mutate(cfg, &mut s);
-                    smallvec![s].into_iter()
+                    states = eval.crossover(cfg, &states[0], &states[1]);
                 }
+                for s in states.iter_mut() {
+                    eval.mutate(cfg, s);
+                }
+                states.into_iter()
             })
             .flatten_iter()
             .collect::<Vec<_>>();

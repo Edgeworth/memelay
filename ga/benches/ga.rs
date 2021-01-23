@@ -5,7 +5,7 @@ use ga::cfg::Cfg;
 use ga::distributions::PrintableAscii;
 use ga::generation::{Generation, SelectionMethod};
 use ga::runner::{RunResult, Runner, Stats};
-use ga::util::{count_different, crossover_kpx_rand, replace_rand};
+use ga::util::{count_different, crossover_kpx_rand, mutate_iter};
 use ga::Evaluator;
 use rand::Rng;
 use smallvec::{smallvec, SmallVec};
@@ -38,9 +38,9 @@ impl Evaluator for BenchEval {
         smallvec![c1, c2]
     }
 
-    fn mutate(&self, _: &Cfg, s: &mut State) {
+    fn mutate(&self, cfg: &Cfg, s: &mut State) {
         let mut r = rand::thread_rng();
-        *s = replace_rand(s.chars(), r.sample(PrintableAscii), &mut r);
+        *s = mutate_iter(s.chars(), cfg.mutation_rate, |r| r.sample(PrintableAscii), &mut r);
     }
 
     fn fitness(&self, _: &Cfg, s: &State) -> f64 {
@@ -74,8 +74,8 @@ fn bench_evolve<M: 'static + Measurement>(
     f: &dyn Fn(Stats<BenchEval>) -> f64,
 ) {
     let cfgs = [("100 pop", base_cfg)];
-    let cfgs =
-        cfgs.iter().map(|&(name, cfg)| (name, cfg.with_crossover_rate(0.1))).collect::<Vec<_>>();
+    // let cfgs =
+    //     cfgs.iter().map(|&(name, cfg)| (name, cfg.with_crossover_rate(0.1))).collect::<Vec<_>>();
     for (name, cfg) in cfgs.iter() {
         g.bench_with_input(*name, cfg, |b, &cfg| {
             b.iter(|| {
@@ -93,7 +93,8 @@ fn ga() {
         .warm_up_time(Duration::new(0, 1)) // Don't need warm-up time for non-time measurement.
         .with_measurement(F64Measurement::new(Rc::clone(&value)));
     let metrics: &[(&'static str, MetricFn)] = &[
-        ("mean fitness", Box::new(|r| r.mean_fitness.unwrap())),
+        ("best fitness", Box::new(|r| r.best_fitness)),
+        ("mean fitness", Box::new(|r| r.mean_fitness)),
         ("dupes", Box::new(|r| r.num_dup as f64)),
         ("mean dist", Box::new(|r| r.mean_distance)),
     ];
