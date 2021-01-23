@@ -14,7 +14,6 @@ use ga::operators::sampling::rws;
 use ga::Evaluator;
 use rand::prelude::IteratorRandom;
 use rand::Rng;
-use smallvec::{smallvec, SmallVec};
 
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct LayoutCfg {
@@ -84,32 +83,25 @@ impl Evaluator for LayoutEval {
     type State = Layout;
     type Fitness = u128;
 
-    fn crossover(&self, _: &Cfg, s1: &Layout, s2: &Layout) -> SmallVec<[Layout; 2]> {
+    fn crossover(&self, _: &Cfg, s1: &mut Layout, s2: &mut Layout) {
         let mut r = rand::thread_rng();
         let lidx = r.gen_range(0..s1.layers.len());
         let kidx = r.gen_range(0..s1.layers[lidx].keys.len());
-        let mut c1 = s1.clone();
-        let mut c2 = s2.clone();
+        // TODO: Update crossovers here.
         match rws(&self.cnst.crossover_strat_weights, &mut r).unwrap() {
             0 => {
                 // Crossover on layer level.
                 let xpoint = r.gen_range(0..s1.layers.len());
-                (c1.layers, c2.layers) =
-                    crossover_kpx(s1.layers.clone(), s2.layers.clone(), &[xpoint]);
+                crossover_kpx(&mut s1.layers, &mut s2.layers, &[xpoint]);
             }
             1 => {
                 // Crossover on keys level;
-                (c1.layers[lidx].keys, c2.layers[lidx].keys) = crossover_kpx(
-                    s1.layers[lidx].keys.clone(),
-                    s2.layers[lidx].keys.clone(),
-                    &[kidx],
-                );
+                crossover_kpx(&mut s1.layers[lidx].keys, &mut s2.layers[lidx].keys, &[kidx]);
             }
             _ => panic!("unknown crossover strategy"),
         };
-        c1.normalise(&self.cnst);
-        c2.normalise(&self.cnst);
-        smallvec![c1, c2]
+        s1.normalise(&self.cnst);
+        s2.normalise(&self.cnst);
     }
 
     fn mutate(&self, _: &Cfg, s: &mut Layout) {

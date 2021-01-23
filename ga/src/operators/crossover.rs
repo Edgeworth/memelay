@@ -1,89 +1,67 @@
 use rand::prelude::IteratorRandom;
 use rand::Rng;
 use smallvec::SmallVec;
-use std::iter::{FromIterator, Iterator};
 
 // Random point K-point crossover.
-pub fn crossover_kpx_rand<O: FromIterator<T::Item>, T: IntoIterator, R: Rng + ?Sized>(
-    s1: T,
-    s2: T,
-    k: usize,
-    r: &mut R,
-) -> (O, O) {
-    let s1: Vec<_> = s1.into_iter().collect();
-    let s2: Vec<_> = s2.into_iter().collect();
+pub fn crossover_kpx_rand<T, R: Rng + ?Sized>(s1: &mut [T], s2: &mut [T], k: usize, r: &mut R) {
     let xpoints = (0..s1.len()).choose_multiple(r, k);
     crossover_kpx(s1, s2, &xpoints)
 }
 
 // K-point crossover.
-pub fn crossover_kpx<O: FromIterator<T::Item>, T: IntoIterator>(
-    s1: T,
-    s2: T,
-    xpoints: &[usize],
-) -> (O, O) {
-    let mut s1 = s1.into_iter();
-    let mut s2 = s2.into_iter();
-    let mut o1 = Vec::new();
-    let mut o2 = Vec::new();
+pub fn crossover_kpx<T>(s1: &mut [T], s2: &mut [T], xpoints: &[usize]) {
     let mut xpoints: SmallVec<[usize; 4]> = SmallVec::from_slice(xpoints);
-    xpoints.push(0);
+    let min = s1.len().min(s2.len());
+    xpoints.push(min);
     xpoints.sort_unstable();
-    for [prev, cur] in xpoints.array_windows::<2>() {
-        o1.extend(s1.by_ref().take(cur - prev));
-        o2.extend(s2.by_ref().take(cur - prev));
-        std::mem::swap(&mut s1, &mut s2);
+    for &[st, en] in xpoints.array_chunks::<2>() {
+        for i in st..en {
+            std::mem::swap(&mut s1[i], &mut s2[i]);
+        }
     }
-    o1.extend(s1);
-    o2.extend(s2);
-    (o1.into_iter().collect(), o2.into_iter().collect())
 }
 
 // Uniform crossover.
-pub fn crossover_ux<O: FromIterator<T::Item>, T: IntoIterator, R: Rng + ?Sized>(
-    s1: T,
-    s2: T,
-    r: &mut R,
-) -> (O, O) {
-    let s1 = s1.into_iter();
-    let s2 = s2.into_iter();
-    let mut o1 = Vec::new();
-    let mut o2 = Vec::new();
-    for (v1, v2) in s1.zip(s2) {
+pub fn crossover_ux<T, R: Rng + ?Sized>(s1: &mut [T], s2: &mut [T], r: &mut R) {
+    let min = s1.len().min(s2.len());
+    for i in 0..min {
         if r.gen::<bool>() {
-            o1.push(v1);
-            o2.push(v2);
-        } else {
-            o1.push(v2);
-            o2.push(v1);
+            std::mem::swap(&mut s1[i], &mut s2[i]);
         }
     }
-    (o1.into_iter().collect(), o2.into_iter().collect())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::operators::initial::{str_to_vec, vec_to_str};
     use rand::rngs::mock::StepRng;
 
     #[test]
-    fn test_crossover_kpx() {
-        assert_eq!(
-            crossover_kpx("abcd".chars(), "wxyz".chars(), &[3]),
-            ("abcz".to_string(), "wxyd".to_string())
-        );
-        assert_eq!(
-            crossover_kpx("abcd".chars(), "wxyz".chars(), &[1, 2]),
-            ("axcd".to_string(), "wbyz".to_string())
-        );
+    fn test_crossover_1px() {
+        let mut a = str_to_vec("abcd");
+        let mut b = str_to_vec("wxyz");
+        crossover_kpx(&mut a, &mut b, &[3]);
+        assert_eq!(vec_to_str(&a), "abcz");
+        assert_eq!(vec_to_str(&b), "wxyd");
+    }
+
+    #[test]
+    fn test_crossover_2px() {
+        let mut a = str_to_vec("abcd");
+        let mut b = str_to_vec("wxyz");
+        crossover_kpx(&mut a, &mut b, &[1, 2]);
+        assert_eq!(vec_to_str(&a), "axcd");
+        assert_eq!(vec_to_str(&b), "wbyz");
     }
 
     #[test]
     fn test_crossover_ux() {
         let mut r = StepRng::new(1 << 31, 1 << 31);
-        assert_eq!(
-            crossover_ux("abcd".chars(), "wxyz".chars(), &mut r),
-            ("axcz".to_string(), "wbyd".to_string())
-        );
+        let mut a = str_to_vec("abcd");
+        let mut b = str_to_vec("wxyz");
+        crossover_ux(&mut a, &mut b, &mut r);
+        assert_eq!(vec_to_str(&a), "wbyd");
+        assert_eq!(vec_to_str(&b), "axcz");
     }
 }

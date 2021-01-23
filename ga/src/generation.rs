@@ -3,7 +3,6 @@ use crate::{Cfg, Evaluator};
 use num_traits::NumCast;
 use rand::Rng;
 use rayon::prelude::*;
-use smallvec::SmallVec;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Selection {
@@ -24,6 +23,9 @@ pub struct Generation<E: Evaluator> {
 
 impl<E: Evaluator> Generation<E> {
     pub fn from_states(states: Vec<E::State>) -> Self {
+        if states.is_empty() {
+            panic!("Generation must not be empty");
+        }
         let mems = states
             .into_iter()
             .map(|state| Individual { state, fitness: Default::default(), species: 0 })
@@ -75,14 +77,14 @@ impl<E: Evaluator> Generation<E> {
         self.mems.iter().map(|v| &v.state).cloned().take(num as usize).collect()
     }
 
-    fn selection(&self, cfg: &Cfg) -> SmallVec<[E::State; 2]> {
+    fn selection(&self, cfg: &Cfg) -> (E::State, E::State) {
         let mut r = rand::thread_rng();
         let fitnesses = self.mems.iter().map(|v| &v.fitness);
         let idxs = match cfg.selection {
             Selection::Sus => sus(fitnesses, 2, &mut r),
             Selection::Roulette => multi_rws(fitnesses, 2, &mut r),
         };
-        idxs.iter().map(|&i| &self.mems[i].state).cloned().collect()
+        (self.mems[idxs[0]].state.clone(), self.mems[idxs[1]].state.clone())
     }
 
     pub fn create_next_gen(&self, cfg: &Cfg, eval: &E) -> Generation<E> {
@@ -94,14 +96,13 @@ impl<E: Evaluator> Generation<E> {
             .into_par_iter()
             .map(|_| {
                 let mut r = rand::thread_rng();
-                let mut states = self.selection(cfg);
+                let (mut a, mut b) = self.selection(cfg);
                 if r.gen::<f64>() < cfg.crossover_rate {
-                    states = eval.crossover(cfg, &states[0], &states[1]);
+                    eval.crossover(cfg, &mut a, &mut b);
                 }
-                for s in states.iter_mut() {
-                    eval.mutate(cfg, s);
-                }
-                states.into_iter()
+                eval.mutate(cfg, &mut a);
+                eval.mutate(cfg, &mut b);
+                vec![a, b].into_iter()
             })
             .flatten_iter()
             .collect::<Vec<_>>();
