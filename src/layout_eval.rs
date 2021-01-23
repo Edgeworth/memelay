@@ -111,6 +111,7 @@ impl Evaluator for LayoutEval {
     }
 
     fn mutate(&self, _: &Cfg, s: &mut Layout) {
+        // TODO: Use mutation rate.
         let mut r = rand::thread_rng();
         let lidx = r.gen_range(0..s.layers.len());
         let kidx = r.gen_range(0..s.layers[lidx].keys.len());
