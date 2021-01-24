@@ -4,8 +4,7 @@ Current fitnesses for selection don't change probabilities that much for actual 
 multi-objective optimization - currently just does weird fitness combinations
 
 ## To implement:
-1. shared fitness niching
-2. self-adaptive mutation rate
+1. self-adaptive mutation rate
 
 ## Selection strategies
 1. SUS based on fitness
@@ -18,6 +17,11 @@ multi-objective optimization - currently just does weird fitness combinations
 ## Crossover strategies
 1. k-point crossover
 2. Uniform crossover
+3. Partially mapped crossover (not implemented)
+4. Edge crossover (not implemented)
+5. Order crossover (not implemented)
+6. Cycle crossover (not implemented)
+
 
 ## Mutation strategies
 1. Single replacement - randomly replace a single gene
@@ -33,23 +37,10 @@ multi-objective optimization - currently just does weird fitness combinations
 ## Diversity
 Adaptive mutation rate based on diversity => this is thought to be bad
 
-
 ## Niching
 1. No niching
 2. Shared fitness with species target
-
-See https://arxiv.org/pdf/1508.05342.pdf
-
-Island model GAs - migration between
-
-Fitness sharing
-fitness points shared with neighbours within a certain radius -> can create species and dynamically
-adjust distance
-
-sequential fitness sharing - see http://www.cse.cuhk.edu.hk/~ksleung/download_papers/Adaptive_population_%20App_Soft_Comp_2011.pdf
-
-
-crowding
+3. Crowding (not implemented - shared fitness generally better)
 
 ## Measures
 1. Best fitness of last generation
