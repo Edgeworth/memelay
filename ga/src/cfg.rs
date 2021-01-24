@@ -25,10 +25,22 @@ pub enum Species {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
+pub enum Mutation {
+    Fixed(f64),    // Fixed with given rate.
+    Adaptive(f64), // Adaptive with given learning rate.
+}
+
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum Crossover {
+    Fixed(f64),    // Fixed with given rate.
+    Adaptive(f64), // Adaptive with given learning rate.
+}
+
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Cfg {
-    pub crossover_rate: f64,
-    pub mutation_rate: f64, // Mutation rate per bit / basic block.
     pub pop_size: usize,
+    pub crossover: Crossover,
+    pub mutation: Mutation, // Mutation rate per bit / basic block.
     pub survival: Survival,
     pub selection: Selection,
     pub niching: Niching,
@@ -38,9 +50,9 @@ pub struct Cfg {
 impl Cfg {
     pub fn new(pop_size: usize) -> Self {
         Self {
-            crossover_rate: 0.7,
-            mutation_rate: 0.1,
             pop_size,
+            crossover: Crossover::Fixed(0.7),
+            mutation: Mutation::Fixed(0.1),
             survival: Survival::TopProportion(0.1),
             selection: Selection::Sus,
             niching: Niching::None,
@@ -52,12 +64,12 @@ impl Cfg {
         Self { pop_size, ..self }
     }
 
-    pub fn with_crossover_rate(self, crossover_rate: f64) -> Self {
-        Self { crossover_rate, ..self }
+    pub fn with_crossover(self, crossover: Crossover) -> Self {
+        Self { crossover, ..self }
     }
 
-    pub fn with_mutation_rate(self, mutation_rate: f64) -> Self {
-        Self { mutation_rate, ..self }
+    pub fn with_mutation(self, mutation: Mutation) -> Self {
+        Self { mutation, ..self }
     }
 
     pub fn with_survival(self, survival: Survival) -> Self {

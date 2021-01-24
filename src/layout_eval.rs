@@ -78,7 +78,7 @@ impl LayoutEval {
 }
 
 impl Evaluator for LayoutEval {
-    type State = Layout;
+    type Genome = Layout;
 
     fn crossover(&self, s1: &mut Layout, s2: &mut Layout) {
         let mut r = rand::thread_rng();

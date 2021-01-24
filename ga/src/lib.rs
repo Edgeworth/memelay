@@ -14,6 +14,7 @@
 )]
 
 use crate::cfg::Cfg;
+use crate::gen::Params;
 use std::fmt;
 
 pub mod cfg;
@@ -22,12 +23,14 @@ pub mod gen;
 pub mod ops;
 pub mod runner;
 
-pub trait Evaluator: Send + Sync + Clone {
-    type State: fmt::Debug + Clone + Send + Sync + Ord + PartialOrd + PartialEq;
+pub type State<E: Evaluator> = (E::Genome, Params);
 
-    fn crossover(&self, s1: &mut Self::State, s2: &mut Self::State);
+pub trait Evaluator: Send + Sync + Clone {
+    type Genome: fmt::Debug + Clone + Send + Sync + Ord + PartialOrd + PartialEq;
+
+    fn crossover(&self, s1: &mut Self::Genome, s2: &mut Self::Genome);
     // Implementations should look at Cfg::mutation_rate to mutate.
-    fn mutate(&self, s: &mut Self::State, rate: f64);
-    fn fitness(&self, s: &Self::State) -> f64;
-    fn distance(&self, s1: &Self::State, s2: &Self::State) -> f64;
+    fn mutate(&self, s: &mut Self::Genome, rate: f64);
+    fn fitness(&self, s: &Self::Genome) -> f64;
+    fn distance(&self, s1: &Self::Genome, s2: &Self::Genome) -> f64;
 }
