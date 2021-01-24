@@ -60,11 +60,18 @@ impl Evaluator for Knapsack {
 fn main() {
     const NUM_ITEMS: usize = 100;
     const MAX_W: f64 = 100.0;
-    common::runner::run("knapsack", &|cfg| {
+    let base_cfg = Cfg::new(100).with_mutation_rate(1.0 / NUM_ITEMS as f64);
+    common::runner::run("knapsack", base_cfg, &|cfg| {
         let mut r = rand::thread_rng();
         let initial = rand_vec(cfg.pop_size, || rand_vec(NUM_ITEMS, || r.gen::<bool>()));
         let gen = Generation::from_states(initial);
-        let items = rand_vec(NUM_ITEMS, || (r.gen_range(0.0..MAX_W), r.gen::<f64>() * 10.0));
+        let items = rand_vec(NUM_ITEMS, || {
+            let w = r.gen_range(0.0..MAX_W);
+            // Generate items with a narrow range of value/weight ratios, to make the
+            // problem harder.
+            let v = r.gen_range(0.97..1.03) * w;
+            (w, v)
+        });
         Runner::new(Knapsack::new(MAX_W, items), *cfg, gen)
     });
     Criterion::default().configure_from_args().final_summary();
