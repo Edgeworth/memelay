@@ -4,19 +4,18 @@ use criterion::{BenchmarkGroup, Criterion};
 use ga::cfg::Cfg;
 use ga::runner::{Runner, Stats};
 use ga::Evaluator;
-use num_traits::NumCast;
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::time::Duration;
 
-type MetricFn<E> = Box<dyn Fn(Stats<E>) -> f64>;
+type MetricFn = Box<dyn Fn(Stats) -> f64>;
 
 fn bench_evolve<E: Evaluator, M: 'static + Measurement>(
     base_cfg: Cfg,
     g: &mut BenchmarkGroup<'_, M>,
     value: Rc<RefCell<f64>>,
     runner_fn: &dyn Fn(&Cfg) -> Runner<E>,
-    stats_fn: &dyn Fn(Stats<E>) -> f64,
+    stats_fn: &dyn Fn(Stats) -> f64,
 ) {
     const RUNS: usize = 100;
     let cfgs = [("100 pop", base_cfg)];
@@ -43,9 +42,9 @@ pub fn run<E: Evaluator>(name: &str, base_cfg: Cfg, runner_fn: &dyn Fn(&Cfg) -> 
         .sample_size(200)
         .warm_up_time(Duration::new(0, 1)) // Don't need warm-up time for non-time measurement.
         .with_measurement(F64Measurement::new(Rc::clone(&value)));
-    let metrics: &[(&'static str, MetricFn<E>)] = &[
-        ("best fitness", Box::new(|r| NumCast::from(r.best_fitness).unwrap())),
-        ("mean fitness", Box::new(|r| NumCast::from(r.mean_fitness).unwrap())),
+    let metrics: &[(&'static str, MetricFn)] = &[
+        ("best fitness", Box::new(|r| r.best_fitness)),
+        ("mean fitness", Box::new(|r| r.mean_fitness)),
         ("dupes", Box::new(|r| r.num_dup as f64)),
         ("mean dist", Box::new(|r| r.mean_distance)),
     ];

@@ -9,7 +9,6 @@ use crate::Args;
 use eyre::Result;
 use ga::cfg::Cfg;
 use ga::ops::crossover::crossover_kpx;
-use ga::ops::fitness::{combine_cost, combine_fitness};
 use ga::ops::sampling::rws;
 use ga::Evaluator;
 use rand::prelude::IteratorRandom;
@@ -66,22 +65,21 @@ impl LayoutEval {
         Ok(Self { layout_cfg, corpus, cnst: args.cnst.clone() })
     }
 
-    fn layout_cost(&self, l: &Layout) -> u128 {
+    fn layout_cost(&self, l: &Layout) -> f64 {
         // Penalise more layers.
-        let mut cost = l.layers.len() as u128;
+        let mut cost = l.layers.len();
         for layer in l.layers.iter() {
             for kcset in layer.keys.iter() {
                 // Penalise more keys.
-                cost += kcset.len() as u128;
+                cost += kcset.len();
             }
         }
-        cost
+        cost as f64
     }
 }
 
 impl Evaluator for LayoutEval {
     type State = Layout;
-    type Fitness = u128;
 
     fn crossover(&self, _: &Cfg, s1: &mut Layout, s2: &mut Layout) {
         let mut r = rand::thread_rng();
@@ -143,8 +141,8 @@ impl Evaluator for LayoutEval {
         s.normalise(&self.cnst);
     }
 
-    fn fitness(&self, _: &Cfg, s: &Layout) -> u128 {
-        let mut path_cost_mean = 0;
+    fn fitness(&self, _: &Cfg, s: &Layout) -> f64 {
+        let mut path_cost_mean = 0.0;
         let mut r = rand::thread_rng();
         let block_size = self.cnst.batch_size.min(self.corpus.len());
         let start_idx = r.gen_range(0..=(self.corpus.len() - block_size));
@@ -155,13 +153,10 @@ impl Evaluator for LayoutEval {
                 &self.cnst,
             );
             let res = PathFinder::new(&self.layout_cfg, &kevs, &self.cnst, s).path();
-            // TODO: Combining fitness like this is probably not good.
-            let fitness = combine_fitness(0, res.kevs_found as u128, kevs.len() as u128);
-            let fitness = combine_cost(fitness, res.cost as u128, kevs.len() as u128 * 1000000);
-            path_cost_mean += fitness;
+            // TODO: Need multi-objective EAs here.
+            path_cost_mean += res.kevs_found as f64 + (1000000.0 - res.cost as f64);
         }
-        let fitness = path_cost_mean / self.cnst.batch_num as u128;
-        combine_cost(fitness, self.layout_cost(s), 1000)
+        path_cost_mean / self.cnst.batch_num as f64 + 10000.0 - self.layout_cost(s)
     }
 
     fn distance(&self, _: &Cfg, s1: &Layout, s2: &Layout) -> f64 {

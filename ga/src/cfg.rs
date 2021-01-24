@@ -1,14 +1,38 @@
-use crate::generation::Selection;
-use crate::niching::Niching;
+pub const EP: f64 = 1.0e-6;
+
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum Survival {
+    TopProportion(f64),
+    SpeciesTopProportion(f64), // Top proportion for each species.
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum Selection {
+    Sus,
+    Roulette,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum Niching {
+    None,
+    SharedFitness,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum Species {
+    None,
+    TargetNumber(usize), // Target number of species.
+}
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Cfg {
     pub crossover_rate: f64,
     pub mutation_rate: f64, // Mutation rate per bit / basic block.
     pub pop_size: usize,
-    pub top_prop: f64,
+    pub survival: Survival,
     pub selection: Selection,
     pub niching: Niching,
+    pub species: Species,
 }
 
 impl Cfg {
@@ -17,9 +41,10 @@ impl Cfg {
             crossover_rate: 0.7,
             mutation_rate: 0.1,
             pop_size,
-            top_prop: 0.1,
+            survival: Survival::TopProportion(0.1),
             selection: Selection::Sus,
             niching: Niching::None,
+            species: Species::None,
         }
     }
 
@@ -41,5 +66,9 @@ impl Cfg {
 
     pub fn with_niching(self, niching: Niching) -> Self {
         Self { niching, ..self }
+    }
+
+    pub fn with_species(self, species: Species) -> Self {
+        Self { species, ..self }
     }
 }

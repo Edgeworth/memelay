@@ -1,7 +1,7 @@
 use criterion::Criterion;
 use ga::cfg::Cfg;
 use ga::distributions::PrintableAscii;
-use ga::generation::Generation;
+use ga::gen::unevaluated::UnevaluatedGen;
 use ga::ops::crossover::crossover_kpx_rand;
 use ga::ops::fitness::count_different;
 use ga::ops::initial::{rand_vec, str_to_vec};
@@ -27,7 +27,6 @@ impl TargetString {
 
 impl Evaluator for TargetString {
     type State = State;
-    type Fitness = f64;
 
     fn crossover(&self, _: &Cfg, s1: &mut State, s2: &mut State) {
         let mut r = rand::thread_rng();
@@ -56,7 +55,7 @@ fn main() {
         let initial = rand_vec(cfg.pop_size, || {
             rand_vec(TARGET.len(), || r.sample::<char, _>(PrintableAscii))
         });
-        let gen = Generation::from_states(initial);
+        let gen = UnevaluatedGen::from_states(initial);
         Runner::new(TargetString::new(TARGET), *cfg, gen)
     });
     Criterion::default().configure_from_args().final_summary();
