@@ -115,7 +115,7 @@ impl<E: Evaluator> UnevaluatedGen<E> {
                     state: self.states[i].clone(),
                     base_fitness: self.base_fitness[i],
                     selection_fitness: selection_fitness[i],
-                    species: *self.species.get(i).unwrap_or(&0),
+                    species: *self.species.get(i).unwrap_or(&0) as usize,
                 })
                 .collect(),
         )
