@@ -39,7 +39,7 @@ pub fn run<E: Evaluator>(name: &str, base_cfg: Cfg, runner_fn: &dyn Fn(&Cfg) -> 
     let value = Rc::new(RefCell::new(0.0));
     let mut c = Criterion::default()
         .configure_from_args()
-        .sample_size(200)
+        .sample_size(100)
         .warm_up_time(Duration::new(0, 1)) // Don't need warm-up time for non-time measurement.
         .with_measurement(F64Measurement::new(Rc::clone(&value)));
     let metrics: &[(&'static str, MetricFn)] = &[
