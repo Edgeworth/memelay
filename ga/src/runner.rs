@@ -34,8 +34,8 @@ impl<E: Evaluator> Runner<E> {
         let mut stats = None;
         if compute_stats {
             stats = Some(Stats {
-                best_fitness: evaluated.best().fitness,
-                mean_fitness: evaluated.mean_fitness(),
+                best_fitness: evaluated.best().base_fitness,
+                mean_fitness: evaluated.mean_base_fitness(),
                 num_dup: evaluated.num_dup(),
                 mean_distance: evaluated.dists(&self.cfg, &self.eval).mean(),
             });
