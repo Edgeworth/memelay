@@ -1,4 +1,4 @@
-use crate::Evaluator;
+use crate::{Evaluator, State};
 use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use std::ops::Index;
 
@@ -8,10 +8,12 @@ pub struct DistCache {
 }
 
 impl DistCache {
-    pub fn new<E: Evaluator>(eval: &E, s: &[E::State]) -> Self {
+    pub fn new<E: Evaluator>(eval: &E, s: &[State<E>]) -> Self {
         let cache = (0..s.len())
             .into_par_iter()
-            .map(|i| (0..s.len()).into_par_iter().map(|j| eval.distance(&s[i], &s[j])).collect())
+            .map(|i| {
+                (0..s.len()).into_par_iter().map(|j| eval.distance(&s[i].0, &s[j].0)).collect()
+            })
             .collect();
 
 

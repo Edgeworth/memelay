@@ -68,14 +68,14 @@ pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
     // Start from a base with all keys available.
     let initial = load_layout("data/all_keys.layout")?;
     let initial = (0..cfg.pop_size).map(|_| initial.clone()).collect();
-    let mut runner = Runner::new(eval.clone(), cfg, UnevaluatedGen::from_states(initial));
+    let mut runner = Runner::new(eval.clone(), cfg, UnevaluatedGen::initial(initial));
 
     let mut best;
     for i in 0..eval.cnst.runs {
         best = runner.run_iter(false).gen.best();
         println!("Generation: {} score: {:.3?}", i, best.base_fitness);
         if i % 10 == 0 {
-            println!("{}", eval.layout_cfg.format(&best.state));
+            println!("{}", eval.layout_cfg.format(&best.state.0));
         }
     }
     // let fitness = Fitness::new(eval.clone());

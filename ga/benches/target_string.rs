@@ -1,5 +1,5 @@
 use criterion::Criterion;
-use ga::cfg::Cfg;
+use ga::cfg::{Cfg, Mutation};
 use ga::distributions::PrintableAscii;
 use ga::gen::unevaluated::UnevaluatedGen;
 use ga::ops::crossover::crossover_kpx_rand;
@@ -26,7 +26,7 @@ impl TargetString {
 }
 
 impl Evaluator for TargetString {
-    type State = State;
+    type Genome = State;
 
     fn crossover(&self, s1: &mut State, s2: &mut State) {
         let mut r = rand::thread_rng();
@@ -49,13 +49,13 @@ impl Evaluator for TargetString {
 
 fn main() {
     const TARGET: &str = "Hello world!";
-    let base_cfg = Cfg::new(100).with_mutation_rate(1.0 / TARGET.len() as f64);
+    let base_cfg = Cfg::new(100).with_mutation(Mutation::Fixed(1.0 / TARGET.len() as f64));
     common::runner::run("target_string", base_cfg, &|cfg| {
         let mut r = rand::thread_rng();
         let initial = rand_vec(cfg.pop_size, || {
             rand_vec(TARGET.len(), || r.sample::<char, _>(PrintableAscii))
         });
-        let gen = UnevaluatedGen::from_states(initial);
+        let gen = UnevaluatedGen::initial(initial);
         Runner::new(TargetString::new(TARGET), *cfg, gen)
     });
     Criterion::default().configure_from_args().final_summary();

@@ -1,13 +1,14 @@
 use crate::cfg::{Cfg, Niching, Species, EP};
 use crate::gen::evaluated::{EvaluatedGen, Member};
 use crate::gen::species::DistCache;
-use crate::Evaluator;
+use crate::gen::Params;
+use crate::{Evaluator, State};
 use rayon::prelude::*;
 use std::cmp::Ordering;
 
 #[derive(Debug, Clone, PartialOrd, PartialEq)]
 pub struct UnevaluatedGen<E: Evaluator> {
-    states: Vec<E::State>,
+    states: Vec<State<E>>,
     base_fitness: Vec<f64>,
     species: Vec<i32>,
     num_species: usize,
@@ -16,7 +17,15 @@ pub struct UnevaluatedGen<E: Evaluator> {
 }
 
 impl<E: Evaluator> UnevaluatedGen<E> {
-    pub fn from_states(states: Vec<E::State>) -> Self {
+    pub fn initial(genomes: Vec<E::Genome>) -> Self {
+        let states = genomes
+            .into_iter()
+            .map(|v| (v, Params { mutation_rate: 0.1, crossover_rate: 0.7 }))
+            .collect();
+        Self::new(states)
+    }
+
+    pub fn new(states: Vec<State<E>>) -> Self {
         if states.is_empty() {
             panic!("Generation must not be empty");
         }
@@ -58,7 +67,7 @@ impl<E: Evaluator> UnevaluatedGen<E> {
 
     pub fn evaluate(&mut self, cfg: &Cfg, eval: &E) -> EvaluatedGen<E> {
         // First compute plain fitnesses.
-        self.base_fitness = self.states.par_iter_mut().map(|s| eval.fitness(s)).collect();
+        self.base_fitness = self.states.par_iter_mut().map(|s| eval.fitness(&s.0)).collect();
 
         // Speciate if necessary.
         match cfg.species {
