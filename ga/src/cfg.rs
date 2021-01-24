@@ -60,6 +60,10 @@ impl Cfg {
         Self { mutation_rate, ..self }
     }
 
+    pub fn with_survival(self, survival: Survival) -> Self {
+        Self { survival, ..self }
+    }
+
     pub fn with_selection(self, selection: Selection) -> Self {
         Self { selection, ..self }
     }

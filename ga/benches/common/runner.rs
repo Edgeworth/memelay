@@ -47,6 +47,7 @@ pub fn run<E: Evaluator>(name: &str, base_cfg: Cfg, runner_fn: &dyn Fn(&Cfg) -> 
         ("mean fitness", Box::new(|r| r.mean_fitness)),
         ("dupes", Box::new(|r| r.num_dup as f64)),
         ("mean dist", Box::new(|r| r.mean_distance)),
+        ("species", Box::new(|r| r.num_species as f64)),
     ];
 
     for (metric, stats_fn) in metrics.iter() {
