@@ -23,7 +23,7 @@ pub mod gen;
 pub mod ops;
 pub mod runner;
 
-pub type State<E: Evaluator> = (E::Genome, Params);
+pub type State<E> = (<E as Evaluator>::Genome, Params);
 
 pub trait Evaluator: Send + Sync + Clone {
     type Genome: fmt::Debug + Clone + Send + Sync + Ord + PartialOrd + PartialEq;

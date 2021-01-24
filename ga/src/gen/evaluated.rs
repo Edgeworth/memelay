@@ -1,7 +1,7 @@
 use crate::cfg::{Crossover, Mutation, Selection, Survival};
 use crate::gen::species::DistCache;
 use crate::gen::unevaluated::UnevaluatedGen;
-use crate::gen::Params;
+use crate::ops::mutation::mutate_lognorm;
 use crate::ops::sampling::{multi_rws, sus};
 use crate::{Cfg, Evaluator, State};
 use derive_more::Display;
@@ -95,21 +95,32 @@ impl<E: Evaluator> EvaluatedGen<E> {
         let mut r = rand::thread_rng();
         match crossover {
             Crossover::Fixed(rate) => {
-                if r.gen::<f64>() < rate {
-                    eval.crossover(&mut s1.0, &mut s2.0);
-                }
+                s1.1.crossover_rate = rate;
+                s2.1.crossover_rate = rate;
             }
-            Crossover::Adaptive(lrate) => {}
+            Crossover::Adaptive(lrate) => {
+                // Just mutate the crossover rates.
+                s1.1.crossover_rate =
+                    mutate_lognorm(s1.1.crossover_rate, lrate, &mut r).clamp(0.0, 1.0);
+                s2.1.crossover_rate =
+                    mutate_lognorm(s2.1.crossover_rate, lrate, &mut r).clamp(0.0, 1.0);
+            }
         };
+        if 2.0 * r.gen::<f64>() < s1.1.crossover_rate + s2.1.crossover_rate {
+            eval.crossover(&mut s1.0, &mut s2.0);
+        }
     }
 
     fn mutation(&self, mutation: Mutation, eval: &E, s: &mut State<E>) {
+        let mut r = rand::thread_rng();
         match mutation {
-            Mutation::Fixed(rate) => {
-                eval.mutate(&mut s.0, rate);
+            Mutation::Fixed(rate) => s.1.mutation_rate = rate,
+            Mutation::Adaptive(lrate) => {
+                s.1.mutation_rate =
+                    mutate_lognorm(s.1.mutation_rate, lrate, &mut r).clamp(0.0, 1.0);
             }
-            Mutation::Adaptive(lrate) => {}
         };
+        eval.mutate(&mut s.0, s.1.mutation_rate);
     }
 
 
