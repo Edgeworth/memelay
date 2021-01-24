@@ -17,7 +17,7 @@ use crate::ingest::load_layout;
 use crate::layout_eval::LayoutEval;
 use eyre::Result;
 use ga::cfg::Cfg;
-use ga::generation::Generation;
+use ga::gen::unevaluated::UnevaluatedGen;
 use ga::runner::Runner;
 use ga::Evaluator;
 use std::path::{Path, PathBuf};
@@ -68,7 +68,7 @@ pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
     // Start from a base with all keys available.
     let initial = load_layout("data/all_keys.layout")?;
     let initial = (0..cfg.pop_size).map(|_| initial.clone()).collect();
-    let mut runner = Runner::new(eval.clone(), cfg, Generation::from_states(initial));
+    let mut runner = Runner::new(eval.clone(), cfg, UnevaluatedGen::from_states(initial));
 
     let mut best;
     for i in 0..eval.cnst.runs {
