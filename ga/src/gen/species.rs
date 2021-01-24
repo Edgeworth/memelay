@@ -1,8 +1,6 @@
-use std::ops::Index;
-
-use crate::cfg::Cfg;
 use crate::Evaluator;
 use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use std::ops::Index;
 
 #[derive(Debug, Clone, PartialOrd, PartialEq)]
 pub struct DistCache {
@@ -10,12 +8,10 @@ pub struct DistCache {
 }
 
 impl DistCache {
-    pub fn new<E: Evaluator>(cfg: &Cfg, eval: &E, s: &[E::State]) -> Self {
+    pub fn new<E: Evaluator>(eval: &E, s: &[E::State]) -> Self {
         let cache = (0..s.len())
             .into_par_iter()
-            .map(|i| {
-                (0..s.len()).into_par_iter().map(|j| eval.distance(cfg, &s[i], &s[j])).collect()
-            })
+            .map(|i| (0..s.len()).into_par_iter().map(|j| eval.distance(&s[i], &s[j])).collect())
             .collect();
 
 

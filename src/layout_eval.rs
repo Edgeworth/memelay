@@ -7,7 +7,6 @@ use crate::path::PathFinder;
 use crate::types::{rand_kcset, Finger, PhysEv};
 use crate::Args;
 use eyre::Result;
-use ga::cfg::Cfg;
 use ga::ops::crossover::crossover_kpx;
 use ga::ops::sampling::rws;
 use ga::Evaluator;
@@ -81,7 +80,7 @@ impl LayoutEval {
 impl Evaluator for LayoutEval {
     type State = Layout;
 
-    fn crossover(&self, _: &Cfg, s1: &mut Layout, s2: &mut Layout) {
+    fn crossover(&self, s1: &mut Layout, s2: &mut Layout) {
         let mut r = rand::thread_rng();
         let lidx = r.gen_range(0..s1.layers.len());
         let kidx = r.gen_range(0..s1.layers[lidx].keys.len());
@@ -102,7 +101,7 @@ impl Evaluator for LayoutEval {
         s2.normalise(&self.cnst);
     }
 
-    fn mutate(&self, _: &Cfg, s: &mut Layout) {
+    fn mutate(&self, s: &mut Layout, _rate: f64) {
         // TODO: Use mutation rate.
         let mut r = rand::thread_rng();
         let lidx = r.gen_range(0..s.layers.len());
@@ -141,7 +140,7 @@ impl Evaluator for LayoutEval {
         s.normalise(&self.cnst);
     }
 
-    fn fitness(&self, _: &Cfg, s: &Layout) -> f64 {
+    fn fitness(&self, s: &Layout) -> f64 {
         let mut path_cost_mean = 0.0;
         let mut r = rand::thread_rng();
         let block_size = self.cnst.batch_size.min(self.corpus.len());
@@ -163,7 +162,7 @@ impl Evaluator for LayoutEval {
         path_cost_mean / self.cnst.batch_num as f64
     }
 
-    fn distance(&self, _: &Cfg, s1: &Layout, s2: &Layout) -> f64 {
+    fn distance(&self, s1: &Layout, s2: &Layout) -> f64 {
         let mut dist = 0.0;
         let layer_min = s1.layers.len().min(s2.layers.len());
         let layer_max = s1.layers.len().max(s2.layers.len());

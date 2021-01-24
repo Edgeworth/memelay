@@ -30,9 +30,9 @@ impl<E: Evaluator> UnevaluatedGen<E> {
         }
     }
 
-    fn ensure_dists(&mut self, cfg: &Cfg, eval: &E) {
+    fn ensure_dists(&mut self, eval: &E) {
         if self.dists.is_empty() {
-            self.dists = DistCache::new(cfg, eval, &self.states);
+            self.dists = DistCache::new(eval, &self.states);
         }
     }
 
@@ -58,13 +58,13 @@ impl<E: Evaluator> UnevaluatedGen<E> {
 
     pub fn evaluate(&mut self, cfg: &Cfg, eval: &E) -> EvaluatedGen<E> {
         // First compute plain fitnesses.
-        self.base_fitness = self.states.par_iter_mut().map(|s| eval.fitness(cfg, s)).collect();
+        self.base_fitness = self.states.par_iter_mut().map(|s| eval.fitness(s)).collect();
 
         // Speciate if necessary.
         match cfg.species {
             Species::None => {}
             Species::TargetNumber(target) => {
-                self.ensure_dists(cfg, eval);
+                self.ensure_dists(eval);
                 let mut lo = 0.0;
                 let mut hi = self.dists.max();
                 // TODO: tests
@@ -85,7 +85,7 @@ impl<E: Evaluator> UnevaluatedGen<E> {
         let selection_fitness = match cfg.niching {
             Niching::None => self.base_fitness.clone(),
             Niching::SharedFitness => {
-                self.ensure_dists(cfg, eval);
+                self.ensure_dists(eval);
 
                 // Compute alpha as: radius / num_species ^ (1 / dimensionality)
                 let alpha = self.species_radius / self.num_species as f64;

@@ -38,7 +38,7 @@ impl<E: Evaluator> Runner<E> {
                 best_fitness: evaluated.best().base_fitness,
                 mean_fitness: evaluated.mean_base_fitness(),
                 num_dup: evaluated.num_dup(),
-                mean_distance: evaluated.dists(&self.cfg, &self.eval).mean(),
+                mean_distance: evaluated.dists(&self.eval).mean(),
                 num_species: evaluated.num_species(),
             });
         }
