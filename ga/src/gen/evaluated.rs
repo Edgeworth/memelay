@@ -46,8 +46,8 @@ impl<E: Evaluator> EvaluatedGen<E> {
     }
 
     pub fn num_dup(&self) -> usize {
-        let mut mems_copy = self.mems.iter().map(|v| &v.state).cloned().collect::<Vec<_>>();
-        mems_copy.par_sort_unstable_by(|a, b| a.partial_cmp(&b).unwrap());
+        let mut mems_copy = self.mems.iter().map(|v| &v.state.0).cloned().collect::<Vec<_>>();
+        mems_copy.par_sort_unstable();
         mems_copy.dedup();
         self.mems.len() - mems_copy.len()
     }
