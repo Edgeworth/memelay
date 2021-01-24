@@ -3,8 +3,10 @@ Current fitnesses for selection don't change probabilities that much for actual 
 
 multi-objective optimization - currently just does weird fitness combinations
 
+all_cfg doesnt' work well for target_string - need to investigate.
+
 ## To implement:
-1. self-adaptive mutation rate
+1. Replace criterion.rs with custom GA hyper-param searcher / analyser
 
 ## Selection strategies
 1. SUS based on fitness
@@ -21,7 +23,6 @@ multi-objective optimization - currently just does weird fitness combinations
 4. Edge crossover (not implemented)
 5. Order crossover (not implemented)
 6. Cycle crossover (not implemented)
-
 
 ## Mutation strategies
 1. Single replacement - randomly replace a single gene
@@ -42,13 +43,22 @@ Adaptive mutation rate based on diversity => this is thought to be bad
 2. Shared fitness with species target
 3. Crowding (not implemented - shared fitness generally better)
 
-## Measures
+## Measures of performance
 1. Best fitness of last generation
 2. Mean fitness of last generation
 3. Number of duplicate states in last generation
 4. Mean distance between states
+5. Number of species
+6. Number of runs to a solution (not implemented)
 
-## Problems
+## Hyper-parameter tuning
+1. Meta-GA (not implemented)
+ - See SPO, F-race, REVAC, meta-GA
+2. Use tuning search method to analyse robustness of GA
+3. Tuning numeric params (e.g. mutation rate) vs symbolic (e.g. selection method)
+ - Robust set of symbolic params => works well for a large set of numeric params.
+
+## Example problems
 1. Target string evolution
 2. Knapsack
 3. Shortest path (not implemented)
