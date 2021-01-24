@@ -2,7 +2,6 @@ use crate::common::measurement::F64Measurement;
 use criterion::measurement::Measurement;
 use criterion::{BenchmarkGroup, Criterion};
 use ga::cfg::Cfg;
-use ga::generation::Selection;
 use ga::runner::{Runner, Stats};
 use ga::Evaluator;
 use num_traits::NumCast;
@@ -37,10 +36,11 @@ fn bench_evolve<E: Evaluator, M: 'static + Measurement>(
     }
 }
 
-pub fn run<E: Evaluator>(name: &str, runner_fn: &dyn Fn(&Cfg) -> Runner<E>) {
+pub fn run<E: Evaluator>(name: &str, base_cfg: Cfg, runner_fn: &dyn Fn(&Cfg) -> Runner<E>) {
     let value = Rc::new(RefCell::new(0.0));
     let mut c = Criterion::default()
         .configure_from_args()
+        .sample_size(200)
         .warm_up_time(Duration::new(0, 1)) // Don't need warm-up time for non-time measurement.
         .with_measurement(F64Measurement::new(Rc::clone(&value)));
     let metrics: &[(&'static str, MetricFn<E>)] = &[
@@ -50,7 +50,6 @@ pub fn run<E: Evaluator>(name: &str, runner_fn: &dyn Fn(&Cfg) -> Runner<E>) {
         ("mean dist", Box::new(|r| r.mean_distance)),
     ];
 
-    let base_cfg = Cfg::new(100).with_selection(Selection::Sus);
     for (metric, stats_fn) in metrics.iter() {
         let mut g = c.benchmark_group(format!("{}:{}", name, metric));
         bench_evolve(base_cfg, &mut g, Rc::clone(&value), runner_fn, stats_fn);
