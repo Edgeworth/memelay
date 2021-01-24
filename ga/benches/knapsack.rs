@@ -59,11 +59,7 @@ impl Evaluator for Knapsack {
 fn main() {
     const NUM_ITEMS: usize = 100;
     const MAX_W: f64 = 100.0;
-    let base_cfg = Cfg::new(100)
-        .with_mutation(Mutation::Fixed(1.0 / NUM_ITEMS as f64))
-        .with_survival(Survival::SpeciesTopProportion(0.1))
-        .with_species(Species::TargetNumber(10))
-        .with_niching(Niching::SharedFitness);
+    let base_cfg = Cfg::new(100);
     common::runner::run("knapsack", base_cfg, &|cfg| {
         let mut r = rand::thread_rng();
         let initial = rand_vec(cfg.pop_size, || rand_vec(NUM_ITEMS, || r.gen::<bool>()));

@@ -1,5 +1,6 @@
 use rand::prelude::IteratorRandom;
 use rand::Rng;
+use rand_distr::StandardNormal;
 
 // Replaces a random value in |s| with |v|.
 pub fn replace_rand<T, R: Rng + ?Sized>(s: &mut [T], v: T, r: &mut R) {
@@ -15,4 +16,8 @@ pub fn mutate_rate<T, R: Rng + ?Sized>(s: &mut [T], rate: f64, f: impl Fn(&mut R
             *v = f(r);
         }
     }
+}
+
+pub fn mutate_lognorm<R: Rng + ?Sized>(f: f64, std: f64, r: &mut R) -> f64 {
+    f * std::f64::consts::E.powf(std * r.sample::<f64, _>(StandardNormal))
 }
