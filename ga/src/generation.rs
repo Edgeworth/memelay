@@ -1,5 +1,5 @@
 use crate::niching::{DistCache, Niching};
-use crate::operators::sampling::{multi_rws, sus};
+use crate::ops::sampling::{multi_rws, sus};
 use crate::{Cfg, Evaluator};
 use derive_more::Display;
 use num_traits::NumCast;
@@ -17,7 +17,7 @@ pub enum Selection {
 
 #[derive(Debug, Display, Clone, PartialOrd, PartialEq)]
 #[display(fmt = "state {:?}, fitness {}", state, fitness)]
-pub struct Individual<E: Evaluator> {
+pub struct Member<E: Evaluator> {
     pub state: E::State,
     pub fitness: E::Fitness,
     pub species: usize,
@@ -26,7 +26,7 @@ pub struct Individual<E: Evaluator> {
 #[derive(Debug, Display, Clone, PartialOrd, PartialEq)]
 #[display(fmt = "pop: {}, best: {}", "mems.len()", "self.best()")]
 pub struct Generation<E: Evaluator> {
-    mems: Vec<Individual<E>>,
+    mems: Vec<Member<E>>,
     cache: Option<DistCache>,
 }
 
@@ -37,12 +37,12 @@ impl<E: Evaluator> Generation<E> {
         }
         let mems = states
             .into_iter()
-            .map(|state| Individual { state, fitness: Default::default(), species: 0 })
+            .map(|state| Member { state, fitness: Default::default(), species: 0 })
             .collect();
         Self { mems, cache: None }
     }
 
-    pub fn best(&self) -> Individual<E> {
+    pub fn best(&self) -> Member<E> {
         self.mems[0].clone()
     }
 
@@ -87,11 +87,11 @@ impl<E: Evaluator> Generation<E> {
         self.mems.len() - mems_copy.len()
     }
 
-    pub fn individuals(&self) -> &[Individual<E>] {
+    pub fn mems(&self) -> &[Member<E>] {
         &self.mems
     }
 
-    pub fn fitness(&self, cfg: &Cfg, eval: &E, mem: &Individual<E>) -> E::Fitness {
+    pub fn fitness(&self, cfg: &Cfg, eval: &E, mem: &Member<E>) -> E::Fitness {
         // TODO: shared fitness here.
         eval.fitness(cfg, &mem.state)
     }

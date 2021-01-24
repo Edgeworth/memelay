@@ -34,7 +34,7 @@ pub fn crossover_ux<T, R: Rng + ?Sized>(s1: &mut [T], s2: &mut [T], r: &mut R) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::operators::initial::{str_to_vec, vec_to_str};
+    use crate::ops::initial::{str_to_vec, vec_to_str};
     use rand::rngs::mock::StepRng;
 
     #[test]

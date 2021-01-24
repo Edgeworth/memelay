@@ -1,7 +1,7 @@
 use std::ops::Index;
 
 use crate::cfg::Cfg;
-use crate::generation::Individual;
+use crate::generation::Member;
 use crate::Evaluator;
 use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 
@@ -11,7 +11,7 @@ pub struct DistCache {
 }
 
 impl DistCache {
-    pub fn new<E: Evaluator>(cfg: &Cfg, eval: &E, mems: &[Individual<E>]) -> Self {
+    pub fn new<E: Evaluator>(cfg: &Cfg, eval: &E, mems: &[Member<E>]) -> Self {
         let n = mems.len();
         let cache = (0..n)
             .into_par_iter()

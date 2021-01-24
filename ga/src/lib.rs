@@ -21,7 +21,7 @@ pub mod cfg;
 pub mod distributions;
 pub mod generation;
 pub mod niching;
-pub mod operators;
+pub mod ops;
 pub mod runner;
 
 pub trait Evaluator: Send + Sync + Clone {
