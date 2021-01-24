@@ -7,10 +7,11 @@ use crate::path::PathFinder;
 use crate::types::{rand_kcset, Finger, PhysEv};
 use crate::Args;
 use eyre::Result;
-use ga::ops::crossover::crossover_kpx;
+use ga::ops::crossover::crossover_kpx_rand;
+use ga::ops::fitness::count_different;
+use ga::ops::mutation::mutate_rate;
 use ga::ops::sampling::rws;
 use ga::Evaluator;
-use rand::prelude::IteratorRandom;
 use rand::Rng;
 
 #[derive(Debug, Clone, Default, PartialEq)]
@@ -82,18 +83,16 @@ impl Evaluator for LayoutEval {
 
     fn crossover(&self, s1: &mut Layout, s2: &mut Layout) {
         let mut r = rand::thread_rng();
-        let lidx = r.gen_range(0..s1.layers.len());
-        let kidx = r.gen_range(0..s1.layers[lidx].keys.len());
         // TODO: Update crossovers here, also use operator functions in more places.
         match rws(&self.cnst.crossover_strat_weights, &mut r).unwrap() {
             0 => {
-                // Crossover on layer level.
-                let xpoint = r.gen_range(0..s1.layers.len());
-                crossover_kpx(&mut s1.layers, &mut s2.layers, &[xpoint]);
+                // 2-pt crossover on layer level.
+                crossover_kpx_rand(&mut s1.layers, &mut s2.layers, 2, &mut r);
             }
             1 => {
-                // Crossover on keys level;
-                crossover_kpx(&mut s1.layers[lidx].keys, &mut s2.layers[lidx].keys, &[kidx]);
+                // 2-pt crossover on keys level;
+                let lidx = r.gen_range(0..s1.layers.len());
+                crossover_kpx_rand(&mut s1.layers[lidx].keys, &mut s2.layers[lidx].keys, 2, &mut r);
             }
             _ => panic!("unknown crossover strategy"),
         };
@@ -101,39 +100,33 @@ impl Evaluator for LayoutEval {
         s2.normalise(&self.cnst);
     }
 
-    fn mutate(&self, s: &mut Layout, _rate: f64) {
-        // TODO: Use mutation rate.
+    fn mutate(&self, s: &mut Layout, rate: f64) {
         let mut r = rand::thread_rng();
         let lidx = r.gen_range(0..s.layers.len());
         let kidx = r.gen_range(0..s.layers[lidx].keys.len());
         let lidx2 = r.gen_range(0..s.layers.len());
         let kidx2 = r.gen_range(0..s.layers[lidx2].keys.len());
+        let swap = r.gen::<f64>() < rate;
 
         match rws(&self.cnst.mutate_strat_weights, &mut r).unwrap() {
             0 => {
                 // Mutate random available key.
-                let avail = s.layers[lidx].keys.iter_mut().filter(|k| !k.is_empty());
-                if let Some(kcset) = avail.choose(&mut r) {
-                    *kcset = rand_kcset(&self.cnst, &mut r);
-                }
+                mutate_rate(&mut s.layers[lidx].keys, rate, |r| rand_kcset(&self.cnst, r), &mut r);
             }
             1 => {
-                // Mutate random empty key.
-                let empty = s.layers[lidx].keys.iter_mut().filter(|k| k.is_empty());
-                if let Some(kcset) = empty.choose(&mut r) {
-                    *kcset = rand_kcset(&self.cnst, &mut r);
+                // Swap random layer.
+                if swap {
+                    let swap_idx = r.gen_range(0..s.layers.len());
+                    s.layers.swap(lidx, swap_idx);
                 }
             }
             2 => {
-                // Swap random layer.
-                let swap_idx = r.gen_range(0..s.layers.len());
-                s.layers.swap(lidx, swap_idx);
-            }
-            3 => {
                 // Swap random key
-                let tmp = s.layers[lidx].keys[kidx];
-                s.layers[lidx].keys[kidx] = s.layers[lidx2].keys[kidx2];
-                s.layers[lidx2].keys[kidx2] = tmp;
+                if swap {
+                    let tmp = s.layers[lidx].keys[kidx];
+                    s.layers[lidx].keys[kidx] = s.layers[lidx2].keys[kidx2];
+                    s.layers[lidx2].keys[kidx2] = tmp;
+                }
             }
             _ => panic!("unknown mutation strategy"),
         }
@@ -169,13 +162,8 @@ impl Evaluator for LayoutEval {
         // Different # layers is a big difference.
         dist += ((layer_max - layer_min) * self.layout_cfg.num_physical()) as f64;
         for i in 0..layer_min {
-            for j in 0..s1.layers[i].keys.len() {
-                if s1.layers[i].keys[j] != s2.layers[i].keys[j] {
-                    dist += 1.0;
-                }
-            }
+            dist += count_different(&s1.layers[i].keys, &s2.layers[i].keys) as f64;
         }
-        // TODO: this divide by 500.0
-        dist / 500.0
+        dist
     }
 }

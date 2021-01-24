@@ -19,6 +19,7 @@ use std::fmt;
 
 pub mod cfg;
 pub mod distributions;
+pub mod examples;
 pub mod gen;
 pub mod ops;
 pub mod runner;

@@ -81,7 +81,7 @@ pub struct Constants {
 
     #[structopt(
         long,
-        default_value = "20,5,1,20",
+        default_value = "20,5,1",
         use_delimiter = true,
         help = "Weights to roulette each mutate strategy."
     )]
