@@ -1,10 +1,10 @@
 use criterion::Criterion;
 use ga::cfg::Cfg;
 use ga::generation::Generation;
-use ga::operators::crossover::crossover_kpx_rand;
-use ga::operators::fitness::count_different;
-use ga::operators::initial::rand_vec;
-use ga::operators::mutation::mutate_rate;
+use ga::ops::crossover::crossover_kpx_rand;
+use ga::ops::fitness::count_different;
+use ga::ops::initial::rand_vec;
+use ga::ops::mutation::mutate_rate;
 use ga::runner::Runner;
 use ga::Evaluator;
 use rand::Rng;

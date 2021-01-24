@@ -1,7 +1,7 @@
 use crate::constants::Constants;
 use derive_more::Display;
 use enumset::{enum_set, EnumSet, EnumSetType};
-use ga::operators::sampling::rws;
+use ga::ops::sampling::rws;
 use rand::seq::IteratorRandom;
 use rand::Rng;
 use smallvec::SmallVec;
