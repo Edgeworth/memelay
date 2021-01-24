@@ -87,7 +87,7 @@ impl Evaluator for LayoutEval {
         let mut r = rand::thread_rng();
         let lidx = r.gen_range(0..s1.layers.len());
         let kidx = r.gen_range(0..s1.layers[lidx].keys.len());
-        // TODO: Update crossovers here.
+        // TODO: Update crossovers here, also use operator functions in more places.
         match rws(&self.cnst.crossover_strat_weights, &mut r).unwrap() {
             0 => {
                 // Crossover on layer level.

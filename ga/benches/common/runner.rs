@@ -30,8 +30,8 @@ fn bench_evolve<E: Evaluator, M: 'static + Measurement>(
                 for _ in 0..RUNS {
                     runner.run_iter(false);
                 }
-                let stats = runner.run_iter(true).stats.unwrap();
-                *value.borrow_mut() += stats_fn(stats);
+                let r = runner.run_iter(true);
+                *value.borrow_mut() += stats_fn(r.stats.unwrap());
             })
         });
     }
@@ -58,7 +58,7 @@ pub fn run<E: Evaluator>(name: &str, runner_fn: &dyn Fn(&Cfg) -> Runner<E>) {
     }
 
     let mut c = Criterion::default().configure_from_args();
-    let mut g = c.benchmark_group("ga time");
+    let mut g = c.benchmark_group(format!("{} time", name));
     bench_evolve(base_cfg, &mut g, value, runner_fn, &|_| 0.0);
     g.finish();
 }

@@ -1,5 +1,6 @@
 use criterion::measurement::{Measurement, ValueFormatter};
 use criterion::Throughput;
+use rand::Rng;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -22,7 +23,8 @@ impl Measurement for F64Measurement {
     }
 
     fn end(&self, st: f64) -> f64 {
-        *self.value.borrow() - st
+        // Work around bug in criterion.rs where it expects there to be more than one value reported.
+        *self.value.borrow() - st + rand::thread_rng().gen_range(1.0e-7..2.0e-7)
     }
 
     fn add(&self, v1: &f64, v2: &f64) -> f64 {
