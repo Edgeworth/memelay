@@ -1,6 +1,6 @@
 use criterion::Criterion;
 use ga::cfg::Cfg;
-use ga::generation::Generation;
+use ga::gen::unevaluated::UnevaluatedGen;
 use ga::ops::crossover::crossover_kpx_rand;
 use ga::ops::fitness::count_different;
 use ga::ops::initial::rand_vec;
@@ -27,7 +27,6 @@ impl Knapsack {
 
 impl Evaluator for Knapsack {
     type State = State;
-    type Fitness = f64;
 
     fn crossover(&self, _: &Cfg, s1: &mut State, s2: &mut State) {
         let mut r = rand::thread_rng();
@@ -64,7 +63,7 @@ fn main() {
     common::runner::run("knapsack", base_cfg, &|cfg| {
         let mut r = rand::thread_rng();
         let initial = rand_vec(cfg.pop_size, || rand_vec(NUM_ITEMS, || r.gen::<bool>()));
-        let gen = Generation::from_states(initial);
+        let gen = UnevaluatedGen::from_states(initial);
         let items = rand_vec(NUM_ITEMS, || {
             let w = r.gen_range(0.0..MAX_W);
             // Generate items with a narrow range of value/weight ratios, to make the

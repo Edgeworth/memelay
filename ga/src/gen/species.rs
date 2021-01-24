@@ -1,7 +1,6 @@
 use std::ops::Index;
 
 use crate::cfg::Cfg;
-use crate::generation::Member;
 use crate::Evaluator;
 use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
 
@@ -11,20 +10,24 @@ pub struct DistCache {
 }
 
 impl DistCache {
-    pub fn new<E: Evaluator>(cfg: &Cfg, eval: &E, mems: &[Member<E>]) -> Self {
-        let n = mems.len();
-        let cache = (0..n)
+    pub fn new<E: Evaluator>(cfg: &Cfg, eval: &E, s: &[E::State]) -> Self {
+        let cache = (0..s.len())
             .into_par_iter()
             .map(|i| {
-                (0..n)
-                    .into_par_iter()
-                    .map(|j| eval.distance(cfg, &mems[i].state, &mems[j].state))
-                    .collect()
+                (0..s.len()).into_par_iter().map(|j| eval.distance(cfg, &s[i], &s[j])).collect()
             })
             .collect();
 
 
         Self { cache }
+    }
+
+    pub fn empty() -> Self {
+        Self { cache: vec![] }
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.cache.is_empty()
     }
 
     pub fn mean(&self) -> f64 {
@@ -47,10 +50,4 @@ impl Index<(usize, usize)> for DistCache {
     fn index(&self, i: (usize, usize)) -> &f64 {
         &self.cache[i.0][i.1]
     }
-}
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub enum Niching {
-    None,
-    SharedFitness(usize), // Shared fitness with a target number of species.
 }
