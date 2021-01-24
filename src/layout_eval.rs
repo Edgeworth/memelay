@@ -154,9 +154,13 @@ impl Evaluator for LayoutEval {
             );
             let res = PathFinder::new(&self.layout_cfg, &kevs, &self.cnst, s).path();
             // TODO: Need multi-objective EAs here.
-            path_cost_mean += res.kevs_found as f64 + (1000000.0 - res.cost as f64);
+            path_cost_mean += 100.0 * res.kevs_found as f64;
+            if res.kevs_found == kevs.len() {
+                path_cost_mean += kevs.len() as f64 * 100.0 - res.cost as f64;
+                path_cost_mean += 10000.0 - self.layout_cost(s);
+            }
         }
-        path_cost_mean / self.cnst.batch_num as f64 + 10000.0 - self.layout_cost(s)
+        path_cost_mean / self.cnst.batch_num as f64
     }
 
     fn distance(&self, _: &Cfg, s1: &Layout, s2: &Layout) -> f64 {

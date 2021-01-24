@@ -9,6 +9,7 @@ pub struct Stats {
     pub mean_fitness: f64,
     pub num_dup: usize,
     pub mean_distance: f64,
+    pub num_species: usize,
 }
 
 #[derive(Debug, Display, Clone, PartialEq)]
@@ -38,6 +39,7 @@ impl<E: Evaluator> Runner<E> {
                 mean_fitness: evaluated.mean_base_fitness(),
                 num_dup: evaluated.num_dup(),
                 mean_distance: evaluated.dists(&self.cfg, &self.eval).mean(),
+                num_species: evaluated.num_species(),
             });
         }
         let mut gen = evaluated.next_gen(&self.cfg, &self.eval);
