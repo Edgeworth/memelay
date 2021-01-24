@@ -11,6 +11,10 @@ multi-objective optimization - currently just does weird fitness combinations
 1. SUS based on fitness
 2. Look for maximally different parent
 
+## Survival strategies
+1. Top proportion
+2. Top proportion from each species (not implemented)
+
 ## Crossover strategies
 1. k-point crossover
 2. Uniform crossover
