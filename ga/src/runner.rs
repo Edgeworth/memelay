@@ -1,5 +1,6 @@
 use crate::generation::Generation;
 use crate::{Cfg, Evaluator};
+use derive_more::Display;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Stats<E: Evaluator> {
@@ -9,6 +10,8 @@ pub struct Stats<E: Evaluator> {
     pub mean_distance: f64,
 }
 
+#[derive(Debug, Display, Clone, PartialEq)]
+#[display(fmt = "Run({})", gen)]
 pub struct RunResult<E: Evaluator> {
     pub gen: Generation<E>,
     pub stats: Option<Stats<E>>,

@@ -1,19 +1,27 @@
 use criterion::Criterion;
 use ga::cfg::Cfg;
 use ga::generation::Generation;
+use ga::operators::crossover::crossover_kpx_rand;
+use ga::operators::fitness::count_different;
+use ga::operators::initial::rand_vec;
+use ga::operators::mutation::mutate_rate;
 use ga::runner::Runner;
 use ga::Evaluator;
+use rand::Rng;
 
 mod common;
 
 type State = Vec<bool>;
 
 #[derive(Debug, Clone)]
-struct Knapsack {}
+struct Knapsack {
+    max_w: f64,
+    items: Vec<(f64, f64)>, // weight and value
+}
 
 impl Knapsack {
-    fn new() -> Self {
-        Self {}
+    fn new(max_w: f64, items: Vec<(f64, f64)>) -> Self {
+        Self { max_w, items }
     }
 }
 
@@ -21,24 +29,43 @@ impl Evaluator for Knapsack {
     type State = State;
     type Fitness = f64;
 
-    fn crossover(&self, _: &Cfg, _s1: &mut State, _s2: &mut State) {}
-
-    fn mutate(&self, _cfg: &Cfg, _s: &mut State) {}
-
-    fn fitness(&self, _: &Cfg, _s: &State) -> f64 {
-        0.0
+    fn crossover(&self, _: &Cfg, s1: &mut State, s2: &mut State) {
+        let mut r = rand::thread_rng();
+        crossover_kpx_rand(s1, s2, 2, &mut r);
     }
 
-    fn distance(&self, _: &Cfg, _s1: &State, _s2: &State) -> f64 {
-        0.0
+    fn mutate(&self, cfg: &Cfg, s: &mut State) {
+        let mut r = rand::thread_rng();
+        mutate_rate(s, cfg.mutation_rate, |r| r.gen::<bool>(), &mut r);
+    }
+
+    fn fitness(&self, _: &Cfg, s: &State) -> f64 {
+        let mut cur_w = 0.0;
+        let mut cur_v = 0.0;
+        for (i, &kept) in s.iter().enumerate() {
+            let (w, v) = self.items[i];
+            if kept && cur_w + w <= self.max_w {
+                cur_w += w;
+                cur_v += v;
+            }
+        }
+        cur_v
+    }
+
+    fn distance(&self, _: &Cfg, s1: &State, s2: &State) -> f64 {
+        count_different(s1, s2) as f64
     }
 }
 
 fn main() {
+    const NUM_ITEMS: usize = 100;
+    const MAX_W: f64 = 100.0;
     common::runner::run("knapsack", &|cfg| {
-        let _r = rand::thread_rng();
-        let gen = Generation::from_states(vec![]);
-        Runner::new(Knapsack::new(), *cfg, gen)
+        let mut r = rand::thread_rng();
+        let initial = rand_vec(cfg.pop_size, || rand_vec(NUM_ITEMS, || r.gen::<bool>()));
+        let gen = Generation::from_states(initial);
+        let items = rand_vec(NUM_ITEMS, || (r.gen_range(0.0..MAX_W), r.gen::<f64>() * 10.0));
+        Runner::new(Knapsack::new(MAX_W, items), *cfg, gen)
     });
     Criterion::default().configure_from_args().final_summary();
 }

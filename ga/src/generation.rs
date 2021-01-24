@@ -1,5 +1,6 @@
 use crate::operators::sampling::{multi_rws, sus};
 use crate::{Cfg, Evaluator};
+use derive_more::Display;
 use num_traits::NumCast;
 use rand::Rng;
 use rayon::prelude::*;
@@ -10,13 +11,16 @@ pub enum Selection {
     Roulette,
 }
 
-#[derive(Debug, Clone, PartialOrd, PartialEq)]
+#[derive(Debug, Display, Clone, PartialOrd, PartialEq)]
+#[display(fmt = "state {:?}, fitness {}", state, fitness)]
 pub struct Individual<E: Evaluator> {
     pub state: E::State,
     pub fitness: E::Fitness,
     pub species: usize,
 }
 
+#[derive(Debug, Display, Clone, PartialOrd, PartialEq)]
+#[display(fmt = "pop: {}, best: {}", "mems.len()", "self.best()")]
 pub struct Generation<E: Evaluator> {
     mems: Vec<Individual<E>>,
 }

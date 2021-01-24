@@ -37,12 +37,16 @@ sequential fitness sharing - see http://www.cse.cuhk.edu.hk/~ksleung/download_pa
 crowding
 
 ## Measures
-Problem: Evolving string to hello world - seems bad, improve
-
 1. Best fitness of last generation
 2. Mean fitness of last generation
 3. Number of duplicate states in last generation
 4. Mean distance between states
+
+## Problems
+1. Target string evolution
+2. Knapsack
+3. Shortest path (not implemented)
+4. Travelling salesperson (not implemented)
 
 ## Findings
 Stochastic Universal Selection vs Roulette Wheel Selection:
