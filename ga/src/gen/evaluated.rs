@@ -56,10 +56,10 @@ impl<E: Evaluator> EvaluatedGen<E> {
         self.mems.iter().map(|mem| mem.species).max().unwrap_or(0) + 1
     }
 
-    pub fn dists(&mut self, cfg: &Cfg, eval: &E) -> &DistCache {
+    pub fn dists(&mut self, eval: &E) -> &DistCache {
         if self.cache.is_none() {
             let states = self.mems.iter().map(|mem| mem.state.clone()).collect::<Vec<_>>();
-            self.cache = Some(DistCache::new(cfg, eval, &states));
+            self.cache = Some(DistCache::new(eval, &states));
         }
         self.cache.as_ref().unwrap()
     }
@@ -101,10 +101,10 @@ impl<E: Evaluator> EvaluatedGen<E> {
                 let mut r = rand::thread_rng();
                 let (mut a, mut b) = self.selection(cfg);
                 if r.gen::<f64>() < cfg.crossover_rate {
-                    eval.crossover(cfg, &mut a, &mut b);
+                    eval.crossover(&mut a, &mut b);
                 }
-                eval.mutate(cfg, &mut a);
-                eval.mutate(cfg, &mut b);
+                eval.mutate(&mut a, cfg.mutation_rate);
+                eval.mutate(&mut b, cfg.mutation_rate);
                 vec![a, b].into_iter()
             })
             .flatten_iter()

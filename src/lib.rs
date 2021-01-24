@@ -56,9 +56,9 @@ pub struct Args {
     pub cnst: Constants,
 }
 
-pub fn eval_layout<P: AsRef<Path>>(eval: LayoutEval, cfg: Cfg, p: P) -> Result<()> {
+pub fn eval_layout<P: AsRef<Path>>(eval: LayoutEval, p: P) -> Result<()> {
     let l = load_layout(p)?;
-    let fitness = eval.fitness(&cfg, &l);
+    let fitness = eval.fitness(&l);
     println!("layout: {}", eval.layout_cfg.format(&l));
     println!("fitness: {}", fitness);
     Ok(())
@@ -98,7 +98,7 @@ pub fn run() -> Result<()> {
         .with_niching(Niching::SharedFitness);
 
     if let Some(p) = args.eval_layout {
-        eval_layout(eval, cfg, p)?;
+        eval_layout(eval, p)?;
     } else {
         evolve(eval, cfg)?;
     }
