@@ -15,6 +15,7 @@
 
 use crate::cfg::Cfg;
 use num_traits::{Num, NumCast, ToPrimitive};
+use std::fmt;
 
 pub mod cfg;
 pub mod distributions;
@@ -24,8 +25,18 @@ pub mod operators;
 pub mod runner;
 
 pub trait Evaluator: Send + Sync + Clone {
-    type State: Clone + Send + Sync + Ord + PartialOrd + PartialEq;
-    type Fitness: Copy + Clone + Send + Sync + Default + PartialOrd + Num + NumCast + ToPrimitive;
+    type State: fmt::Debug + Clone + Send + Sync + Ord + PartialOrd + PartialEq;
+    type Fitness: fmt::Debug
+        + fmt::Display
+        + Copy
+        + Clone
+        + Send
+        + Sync
+        + Default
+        + PartialOrd
+        + Num
+        + NumCast
+        + ToPrimitive;
 
     fn crossover(&self, cfg: &Cfg, s1: &mut Self::State, s2: &mut Self::State);
     // Implementations should look at Cfg::mutation_rate to mutate.
