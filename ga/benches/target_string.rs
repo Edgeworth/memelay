@@ -50,7 +50,8 @@ impl Evaluator for TargetString {
 
 fn main() {
     const TARGET: &str = "Hello world!";
-    common::runner::run("target_string", &|cfg| {
+    let base_cfg = Cfg::new(100).with_mutation_rate(1.0 / TARGET.len() as f64);
+    common::runner::run("target_string", base_cfg, &|cfg| {
         let mut r = rand::thread_rng();
         let initial = rand_vec(cfg.pop_size, || {
             rand_vec(TARGET.len(), || r.sample::<char, _>(PrintableAscii))

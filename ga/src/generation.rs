@@ -1,9 +1,13 @@
+use crate::niching::{DistCache, Niching};
 use crate::operators::sampling::{multi_rws, sus};
 use crate::{Cfg, Evaluator};
 use derive_more::Display;
 use num_traits::NumCast;
 use rand::Rng;
 use rayon::prelude::*;
+use std::cmp::Ordering;
+
+const EP: f64 = 1.0e-6;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Selection {
@@ -23,6 +27,7 @@ pub struct Individual<E: Evaluator> {
 #[display(fmt = "pop: {}, best: {}", "mems.len()", "self.best()")]
 pub struct Generation<E: Evaluator> {
     mems: Vec<Individual<E>>,
+    cache: Option<DistCache>,
 }
 
 impl<E: Evaluator> Generation<E> {
@@ -34,7 +39,7 @@ impl<E: Evaluator> Generation<E> {
             .into_iter()
             .map(|state| Individual { state, fitness: Default::default(), species: 0 })
             .collect();
-        Self { mems }
+        Self { mems, cache: None }
     }
 
     pub fn best(&self) -> Individual<E> {
@@ -46,15 +51,33 @@ impl<E: Evaluator> Generation<E> {
             / NumCast::from(self.mems.len()).unwrap()
     }
 
-    pub fn mean_distance(&self, cfg: &Cfg, eval: &E) -> f64 {
-        let mut dist = 0.0;
-        let n = self.mems.len();
-        for i in 0..n {
-            for j in (i + 1)..n {
-                dist += eval.distance(cfg, &self.mems[i].state, &self.mems[j].state);
-            }
+    pub fn dists(&mut self, cfg: &Cfg, eval: &E) -> &DistCache {
+        if self.cache.is_none() {
+            self.cache = Some(DistCache::new(cfg, eval, &self.mems));
         }
-        2.0 * dist / (n * (n - 1)) as f64
+        self.cache.as_ref().unwrap()
+    }
+
+
+    fn assign_species(&mut self, cfg: &Cfg, eval: &E, dist: f64) -> usize {
+        let n = self.mems.len();
+        for v in self.mems.iter_mut() {
+            v.species = 0;
+        }
+        let mut num_species = 0;
+        for i in 0..n {
+            if self.mems[i].species == 0 {
+                continue;
+            }
+            self.mems[i].species = num_species;
+            for j in (i + 1)..n {
+                if self.dists(cfg, eval)[(i, j)] <= dist {
+                    self.mems[j].species = num_species;
+                }
+            }
+            num_species += 1;
+        }
+        num_species
     }
 
     pub fn num_dup(&self) -> usize {
@@ -68,12 +91,34 @@ impl<E: Evaluator> Generation<E> {
         &self.mems
     }
 
+    pub fn fitness(&self, cfg: &Cfg, eval: &E, mem: &Individual<E>) -> E::Fitness {
+        // TODO: shared fitness here.
+        eval.fitness(cfg, &mem.state)
+    }
+
     pub fn evaluate(&mut self, cfg: &Cfg, eval: &E) {
-        self.mems.par_iter_mut().for_each(|mem| {
-            let f = eval.fitness(cfg, &mem.state);
-            mem.fitness = f;
+        // Speciate if necessary.
+        match cfg.niching {
+            Niching::None => {}
+            Niching::SharedFitness(target) => {
+                let mut lo = 0.0;
+                let mut hi = self.dists(cfg, eval).max();
+                while hi - lo > EP {
+                    let mid = (lo + hi) / 2.0;
+                    match self.assign_species(cfg, eval, mid).cmp(&target) {
+                        Ordering::Less => hi = mid,
+                        Ordering::Equal => break,
+                        Ordering::Greater => lo = mid,
+                    }
+                }
+            }
+        };
+        let mut mems = self.mems.clone();
+        mems.par_iter_mut().for_each(|mem| {
+            mem.fitness = self.fitness(cfg, eval, mem);
         });
-        self.mems.par_sort_unstable_by(|a, b| b.fitness.partial_cmp(&a.fitness).unwrap());
+        mems.par_sort_unstable_by(|a, b| b.fitness.partial_cmp(&a.fitness).unwrap());
+        self.mems = mems;
     }
 
     fn get_top_proportion(&self, prop: f64) -> Vec<E::State> {

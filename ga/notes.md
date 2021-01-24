@@ -3,6 +3,10 @@ Current fitnesses for selection don't change probabilities that much for actual 
 
 multi-objective optimization - currently just does weird fitness combinations
 
+## To implement:
+1. shared fitness niching
+2. self-adaptive mutation rate
+
 ## Selection strategies
 1. SUS based on fitness
 2. Look for maximally different parent
@@ -12,17 +16,24 @@ multi-objective optimization - currently just does weird fitness combinations
 2. Uniform crossover
 
 ## Mutation strategies
-1. Single replacement - randomly replace a single bit
+1. Single replacement - randomly replace a single gene
+ - Uniform mutation, non-uniform mutation
 2. Random resetting (not implemented) - randomly reset a state
-3. Swap mutation (not implemented) - randomly swap two bits
+3. Swap mutation (not implemented) - randomly swap two genes
 4. Scramble mutation (not implemented) - scramble a substring
 5. Inversion mutation (not implemented) - invert a substring
+6. Creep mutation (not implemented) - add a value to gene; small creep, large creep
+7. Self-adaptive mutation (not implemented)
+ - Learn a mutation rate (or strategy?) in parallel
 
 ## Diversity
 Adaptive mutation rate based on diversity => this is thought to be bad
 
 
 ## Niching
+1. No niching
+2. Shared fitness with species target
+
 See https://arxiv.org/pdf/1508.05342.pdf
 
 Island model GAs - migration between

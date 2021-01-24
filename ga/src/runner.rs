@@ -36,7 +36,7 @@ impl<E: Evaluator> Runner<E> {
                 best_fitness: self.gen.best().fitness,
                 mean_fitness: self.gen.mean_fitness(),
                 num_dup: self.gen.num_dup(),
-                mean_distance: self.gen.mean_distance(&self.cfg, &self.eval),
+                mean_distance: self.gen.dists(&self.cfg, &self.eval).mean(),
             });
         }
         let mut gen = self.gen.create_next_gen(&self.cfg, &self.eval);
