@@ -25,9 +25,9 @@ pub mod runner;
 pub trait Evaluator: Send + Sync + Clone {
     type State: fmt::Debug + Clone + Send + Sync + Ord + PartialOrd + PartialEq;
 
-    fn crossover(&self, cfg: &Cfg, s1: &mut Self::State, s2: &mut Self::State);
+    fn crossover(&self, s1: &mut Self::State, s2: &mut Self::State);
     // Implementations should look at Cfg::mutation_rate to mutate.
-    fn mutate(&self, cfg: &Cfg, s: &mut Self::State);
-    fn fitness(&self, cfg: &Cfg, s: &Self::State) -> f64;
-    fn distance(&self, cfg: &Cfg, s1: &Self::State, s2: &Self::State) -> f64;
+    fn mutate(&self, s: &mut Self::State, rate: f64);
+    fn fitness(&self, s: &Self::State) -> f64;
+    fn distance(&self, s1: &Self::State, s2: &Self::State) -> f64;
 }
