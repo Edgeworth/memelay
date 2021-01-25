@@ -1,0 +1,17 @@
+[package]
+authors = ["Eliot Courtney <edgeworth.dev@gmail.com>"]
+edition = "2018"
+name = "grapher"
+version = "0.1.0"
+
+[dependencies]
+color-eyre = "*"
+derive_more = "*"
+eyre = "*"
+mathru = "*"
+plotters = "*"
+pretty_env_logger = "*"
+rand = "*"
+rand_distr = "*"
+rayon = "*"
+smallvec = "*"
