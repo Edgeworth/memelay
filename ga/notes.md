@@ -32,8 +32,6 @@ all_cfg doesnt' work well for target_string - need to investigate.
 4. Scramble mutation (not implemented) - scramble a substring
 5. Inversion mutation (not implemented) - invert a substring
 6. Creep mutation (not implemented) - add a value to gene; small creep, large creep
-7. Self-adaptive mutation (not implemented)
- - Learn a mutation rate (or strategy?) in parallel
 
 ## Diversity
 Adaptive mutation rate based on diversity => this is thought to be bad
@@ -43,6 +41,10 @@ Adaptive mutation rate based on diversity => this is thought to be bad
 2. Shared fitness with species target
 3. Crowding (not implemented - shared fitness generally better)
 
+## Fitness evaluation
+1. Stepwise adaption of weights (not implemented)
+ - As time goes on, add increasing penalties to particular constraints
+
 ## Measures of performance
 1. Best fitness of last generation
 2. Mean fitness of last generation
@@ -51,18 +53,31 @@ Adaptive mutation rate based on diversity => this is thought to be bad
 5. Number of species
 6. Number of runs to a solution (not implemented)
 
+## Tuning / analysis
+1. Graph of GA progress + mean progress averaged over multiple runs
+2. Statistical and graph comparison of two GAs
+3. ANOVA test - statistical analysis of varying multiple parameters
+4. Two-tailed t-test
+
 ## Hyper-parameter tuning
 1. Meta-GA (not implemented)
  - See SPO, F-race, REVAC, meta-GA
-2. Use tuning search method to analyse robustness of GA
+2. Use tuning search method to analyse robustness of GA (not implemented)
 3. Tuning numeric params (e.g. mutation rate) vs symbolic (e.g. selection method)
  - Robust set of symbolic params => works well for a large set of numeric params.
+4. Self-adaptive mutation
+
+## Extra stuff
+1. Local search (not implemented)?
 
 ## Example problems
 1. Target string evolution
 2. Knapsack
 3. Shortest path (not implemented)
 4. Travelling salesperson (not implemented)
+5. Ackley function
+6. Griewank function
+7. Rastrigin function
 
 ## Findings
 Stochastic Universal Selection vs Roulette Wheel Selection:
