@@ -49,7 +49,6 @@ impl KeyAutomata {
 mod tests {
     use super::*;
     use crate::types::KCSet;
-    use enumset::enum_set;
     use lazy_static::lazy_static;
 
     const SUPER: KCSet = enum_set!(KC::Super);
