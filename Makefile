@@ -26,4 +26,4 @@ update-deps:
 	cargo build --workspace --all-features --all-targets
 
 install-os-deps:
-	sudo apt install gnuplot
+	sudo apt install libfreetype-dev

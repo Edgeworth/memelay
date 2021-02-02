@@ -5,6 +5,7 @@ name = "grapher"
 version = "0.1.0"
 
 [dependencies]
+average = "*"
 color-eyre = "*"
 derive_more = "*"
 eyre = "*"
