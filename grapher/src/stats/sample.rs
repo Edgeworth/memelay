@@ -1,14 +1,11 @@
-use average::Variance;
-use mathru::{
-    statistics::{
-        test::{Test, T},
-    },
-};
-use eyre::Result;
-use eyre::eyre;
+use average::{Mean, Variance};
+use derive_more::Display;
+use eyre::{eyre, Result};
+use mathru::statistics::test::{Test, T};
 
 // Sample contains sampled values, e.g. times, distances, costs, etc.
-#[derive(Debug, Default, Clone, PartialOrd, PartialEq)]
+#[derive(Debug, Display, Default, Clone, PartialOrd, PartialEq)]
+#[display(fmt = "Sample(mean={}, dev={})", "self.mean()", "self.stddev()")]
 pub struct Sample {
     v: Vec<f64>,
 }
@@ -26,18 +23,34 @@ impl Sample {
         &self.v
     }
 
+    pub fn len(&self) -> usize {
+        self.v.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.v.is_empty()
+    }
+
+    pub fn mean(&self) -> f64 {
+        let v: Mean = self.v.iter().collect();
+        v.mean()
+    }
+
+    pub fn stddev(&self) -> f64 {
+        self.variance().sqrt()
+    }
+
     pub fn variance(&self) -> f64 {
         let v: Variance = self.v.iter().collect();
         v.sample_variance()
     }
 
-    pub fn ttest(&self, o: &Sample) -> Result<()> {
+    pub fn ttest(&self, o: &Sample) -> Result<f64> {
         if self.variance() == 0.0 || o.variance() == 0.0 {
             Err(eyre!("variance is zero"))
         } else {
-        let t = T::test_independence_unequal_variance(&self.v, &o.v);
-        println!("{}", t.value());
-        Ok(())
+            let v = T::test_independence_unequal_variance(&self.v, &o.v);
+            Ok(v.p_value())
         }
     }
 }

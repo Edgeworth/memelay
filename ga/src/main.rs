@@ -1,14 +1,20 @@
-use ga::cfg::{Cfg, Selection};
+use ga::cfg::{Cfg, Crossover, Mutation, Selection};
 use ga::examples::knapsack::knapsack_runner;
-use ga::examples::none_cfg;
+use ga::examples::{all_cfg, none_cfg};
 use ga::runner::Runner;
 use ga::Evaluator;
 use grapher::Grapher;
 
 type RunnerFn<E> = dyn Fn(&Cfg) -> Runner<E>;
 
-fn eval_run<E: Evaluator>(g: &mut Grapher, name: &str, run_id: &str, base_cfg: Cfg, runner_fn: &RunnerFn<E>) {
-    const SAMPLES: usize = 2;
+fn eval_run<E: Evaluator>(
+    g: &mut Grapher,
+    name: &str,
+    run_id: &str,
+    base_cfg: Cfg,
+    runner_fn: &RunnerFn<E>,
+) {
+    const SAMPLES: usize = 100;
     for _ in 0..SAMPLES {
         let cfgs = [("100 pop", base_cfg)];
         for (cfg_name, cfg) in cfgs.iter() {
@@ -30,8 +36,9 @@ fn eval_run<E: Evaluator>(g: &mut Grapher, name: &str, run_id: &str, base_cfg: C
 
 fn run_grapher<E: Evaluator>(name: &str, base_cfg: Cfg, runner_fn: &RunnerFn<E>) {
     let mut g = Grapher::new();
-    eval_run(&mut g, name, "rws", base_cfg.with_selection(Selection::Roulette), runner_fn);
-    eval_run(&mut g, name, "sus", base_cfg, runner_fn);
+    let mod_cfg = base_cfg.with_crossover(Crossover::Adaptive(1.0 / 10.0));
+    eval_run(&mut g, name, "def", base_cfg, runner_fn);
+    eval_run(&mut g, name, "mod", mod_cfg, runner_fn);
     g.analyse();
 }
 
