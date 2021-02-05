@@ -33,9 +33,6 @@ all_cfg doesnt' work well for target_string - need to investigate.
 5. Inversion mutation (not implemented) - invert a substring
 6. Creep mutation (not implemented) - add a value to gene; small creep, large creep
 
-## Diversity
-Adaptive mutation rate based on diversity => this is thought to be bad
-
 ## Niching
 1. No niching
 2. Shared fitness with species target
@@ -66,17 +63,20 @@ Adaptive mutation rate based on diversity => this is thought to be bad
 3. Tuning numeric params (e.g. mutation rate) vs symbolic (e.g. selection method)
  - Robust set of symbolic params => works well for a large set of numeric params.
 4. Self-adaptive mutation
+ - Adaptive mutation and crossover rates
+ - Multiple crossover and mutation methods with adaptively evolved rates (not implemented)
 
 ## Extra stuff
 1. Local search (not implemented)?
-
+2. Choice between minimisation and maximisation
+ - 1/(1 + f(x))
 ## Example problems
 1. Target string evolution
 2. Knapsack
 3. Shortest path (not implemented)
 4. Travelling salesperson (not implemented)
-5. Ackley function
-6. Griewank function
+5. Ackley function (not implemented)
+6. Griewank function (not implemented)
 7. Rastrigin function
 
 ## Findings

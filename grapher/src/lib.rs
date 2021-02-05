@@ -29,7 +29,6 @@ pub struct SampleGroup {
 
 impl std::fmt::Display for SampleGroup {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "Group {}", self.name)?;
         for (k, v) in self.samples.iter() {
             writeln!(f, "  {}: {}", k, v)?;
         }
@@ -42,7 +41,7 @@ impl SampleGroup {
         Self { name: name.to_owned(), samples: HashMap::new() }
     }
 
-    // Adds the sampled value to the Sample with name |id|.
+    // Adds the sampled value to the Sample with name |id|.cd
     pub fn add(&mut self, id: &str, v: f64) {
         self.samples.entry(id.to_owned()).or_insert_with(Sample::new).add(v);
     }
@@ -80,7 +79,7 @@ impl Grapher {
     pub fn analyse(&self) {
         for (k, v) in self.groups.iter() {
             if let Ok(p) = v.analyse() {
-                println!("group {}, p {}: {}", k, p, v);
+                println!("group {}, p {:.4}:\n{}", k, p, v);
             }
         }
     }

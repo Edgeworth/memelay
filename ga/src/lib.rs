@@ -10,7 +10,8 @@
     map_first_last,
     option_unwrap_none,
     array_windows,
-    array_chunks
+    array_chunks,
+    destructuring_assignment
 )]
 
 use crate::cfg::Cfg;
@@ -27,7 +28,7 @@ pub mod runner;
 pub type State<E> = (<E as Evaluator>::Genome, Params);
 
 pub trait Evaluator: Send + Sync + Clone {
-    type Genome: fmt::Debug + Clone + Send + Sync + Ord + PartialOrd + PartialEq;
+    type Genome: fmt::Debug + Clone + Send + Sync + PartialOrd + PartialEq;
 
     fn crossover(&self, s1: &mut Self::Genome, s2: &mut Self::Genome);
     // Implementations should look at Cfg::mutation_rate to mutate.

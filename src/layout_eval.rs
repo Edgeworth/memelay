@@ -111,7 +111,12 @@ impl Evaluator for LayoutEval {
         match rws(&self.cnst.mutate_strat_weights, &mut r).unwrap() {
             0 => {
                 // Mutate random available key.
-                mutate_rate(&mut s.layers[lidx].keys, rate, |r| rand_kcset(&self.cnst, r), &mut r);
+                mutate_rate(
+                    &mut s.layers[lidx].keys,
+                    rate,
+                    |_, r| rand_kcset(&self.cnst, r),
+                    &mut r,
+                );
             }
             1 => {
                 // Swap random layer.
