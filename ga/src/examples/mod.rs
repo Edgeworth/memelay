@@ -2,6 +2,7 @@ use crate::cfg::{Cfg, Crossover, Mutation, Niching, Species, Survival};
 
 pub mod knapsack;
 pub mod target_string;
+pub mod rastrigin;
 
 pub fn all_cfg() -> Cfg {
     Cfg::new(100)

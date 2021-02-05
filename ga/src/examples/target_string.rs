@@ -32,7 +32,7 @@ impl Evaluator for TargetString {
 
     fn mutate(&self, s: &mut State, rate: f64) {
         let mut r = rand::thread_rng();
-        mutate_rate(s, rate, |r| r.sample(PrintableAscii), &mut r);
+        mutate_rate(s, rate, |_, r| r.sample(PrintableAscii), &mut r);
     }
 
     fn fitness(&self, s: &State) -> f64 {

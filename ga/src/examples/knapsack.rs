@@ -32,7 +32,7 @@ impl Evaluator for Knapsack {
 
     fn mutate(&self, s: &mut State, rate: f64) {
         let mut r = rand::thread_rng();
-        mutate_rate(s, rate, |r| r.gen::<bool>(), &mut r);
+        mutate_rate(s, rate, |_, r| r.gen::<bool>(), &mut r);
     }
 
     fn fitness(&self, s: &State) -> f64 {
