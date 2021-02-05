@@ -2,6 +2,7 @@ use rand::prelude::IteratorRandom;
 use rand::Rng;
 use smallvec::SmallVec;
 
+// Discrete crossover operators:
 // Random point K-point crossover.
 pub fn crossover_kpx_rand<T, R: Rng + ?Sized>(s1: &mut [T], s2: &mut [T], k: usize, r: &mut R) {
     let xpoints = (0..s1.len()).choose_multiple(r, k);
@@ -28,6 +29,37 @@ pub fn crossover_ux<T, R: Rng + ?Sized>(s1: &mut [T], s2: &mut [T], r: &mut R) {
         if r.gen::<bool>() {
             std::mem::swap(&mut s1[i], &mut s2[i]);
         }
+    }
+}
+
+// Real crossover operators:
+
+// Whole arithemtic recombination:
+pub fn crossover_arith(s1: &mut [f64], s2: &mut [f64], alpha: f64) {
+    let min = s1.len().min(s2.len());
+    for i in 0..min {
+        let c1 = alpha * s1[i] + (1.0 - alpha) * s2[i];
+        let c2 = alpha * s2[i] + (1.0 - alpha) * s1[i];
+        (s1[i], s2[i]) = (c1, c2);
+    }
+}
+
+pub fn crossover_arith_rand<R: Rng + ?Sized>(s1: &mut [f64], s2: &mut [f64], r: &mut R) {
+    crossover_arith(s1, s2, r.gen())
+}
+
+// Blend crossover. For each element x < y, randomly generate a value in
+// [x - |y - x| * alpha, y + |y - x| * alpha]. A good choice for alpha is 0.5.
+pub fn crossover_blx<R: Rng + ?Sized>(s1: &mut [f64], s2: &mut [f64], alpha: f64, r: &mut R) {
+    let min = s1.len().min(s2.len());
+    for i in 0..min {
+        let x = s1[i].min(s2[i]);
+        let y = s1[i].max(s2[i]);
+        let dist = y - x;
+        let left = x - dist * alpha;
+        let right = y + dist * alpha;
+        s1[i] = r.gen_range(left..right);
+        s2[i] = r.gen_range(left..right);
     }
 }
 

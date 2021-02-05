@@ -5,7 +5,7 @@ use mathru::statistics::test::{Test, T};
 
 // Sample contains sampled values, e.g. times, distances, costs, etc.
 #[derive(Debug, Display, Default, Clone, PartialOrd, PartialEq)]
-#[display(fmt = "Sample(mean={}, dev={})", "self.mean()", "self.stddev()")]
+#[display(fmt = "Sample(mean={:.2}, dev={:.2})", "self.mean()", "self.stddev()")]
 pub struct Sample {
     v: Vec<f64>,
 }
