@@ -695,7 +695,6 @@ name = "ga"
 version = "0.1.0"
 dependencies = [
  "color-eyre",
- "criterion",
  "derive_more",
  "eyre",
  "grapher",
