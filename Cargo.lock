@@ -522,7 +522,7 @@ dependencies = [
  "ga",
  "lazy_static",
  "log",
- "ordered-float 2.1.0",
+ "ordered-float 2.1.1",
  "pretty_env_logger",
  "priority-queue",
  "rand",
@@ -1070,9 +1070,9 @@ dependencies = [
 
 [[package]]
 name = "ordered-float"
-version = "2.1.0"
+version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "200778d2ad6b54038350cef50e9d2ec5fb964f96e8c14f43960522195d9138e3"
+checksum = "766f840da25490628d8e63e529cd21c014f6600c6b8517add12a6fa6167a6218"
 dependencies = [
  "num-traits",
 ]
@@ -1482,9 +1482,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.61"
+version = "1.0.62"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4fceb2595057b6891a4ee808f70054bd2d12f0e97f1cbb78689b59f676df325a"
+checksum = "ea1c6153794552ea7cf7cf63b1231a25de00ec90db326ba6264440fa08e31486"
 dependencies = [
  "itoa",
  "ryu",
