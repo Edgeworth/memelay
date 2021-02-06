@@ -83,7 +83,6 @@ impl Evaluator for LayoutEval {
 
     fn crossover(&self, s1: &mut Layout, s2: &mut Layout) {
         let mut r = rand::thread_rng();
-        // TODO: Update crossovers here, also use operator functions in more places.
         match rws(&self.cnst.crossover_strat_weights, &mut r).unwrap() {
             0 => {
                 // 2-pt crossover on layer level.

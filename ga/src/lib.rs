@@ -25,10 +25,12 @@ pub mod gen;
 pub mod ops;
 pub mod runner;
 
+pub trait Genome = fmt::Debug + Clone + Send + Sync + PartialOrd + PartialEq;
 pub type State<E> = (<E as Evaluator>::Genome, Params);
+pub trait FitnessFn<G: Genome> = Fn(&G) -> f64 + Sync + Send + Clone;
 
-pub trait Evaluator: Send + Sync + Clone {
-    type Genome: fmt::Debug + Clone + Send + Sync + PartialOrd + PartialEq;
+pub trait Evaluator: Clone + Send + Sync {
+    type Genome: Genome;
 
     fn crossover(&self, s1: &mut Self::Genome, s2: &mut Self::Genome);
     // Implementations should look at Cfg::mutation_rate to mutate.

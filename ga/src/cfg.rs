@@ -26,14 +26,14 @@ pub enum Species {
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Mutation {
-    Fixed(f64),    // Fixed with given rate.
-    Adaptive(f64), // Adaptive with given learning rate.
+    Fixed(f64), // Fixed with given rate.
+    Adaptive,   // Adaptive - uses 1/sqrt(pop size) as learning rate.
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum Crossover {
-    Fixed(f64),    // Fixed with given rate.
-    Adaptive(f64), // Adaptive with given learning rate.
+    Fixed(f64), // Fixed with given rate.
+    Adaptive,   // Adaptive - uses 1/sqrt(pop size) as learning rate.
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]

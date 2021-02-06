@@ -58,8 +58,8 @@ pub fn crossover_blx<R: Rng + ?Sized>(s1: &mut [f64], s2: &mut [f64], alpha: f64
         let dist = y - x;
         let left = x - dist * alpha;
         let right = y + dist * alpha;
-        s1[i] = r.gen_range(left..right);
-        s2[i] = r.gen_range(left..right);
+        s1[i] = r.gen_range(left..=right);
+        s2[i] = r.gen_range(left..=right);
     }
 }
 

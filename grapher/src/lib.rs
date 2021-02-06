@@ -15,7 +15,7 @@
 
 use crate::stats::sample::Sample;
 use eyre::Result;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 pub mod stats;
 
@@ -24,7 +24,7 @@ pub mod stats;
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct SampleGroup {
     name: String,
-    samples: HashMap<String, Sample>,
+    samples: BTreeMap<String, Sample>,
 }
 
 impl std::fmt::Display for SampleGroup {
@@ -38,7 +38,7 @@ impl std::fmt::Display for SampleGroup {
 
 impl SampleGroup {
     pub fn new(name: &str) -> Self {
-        Self { name: name.to_owned(), samples: HashMap::new() }
+        Self { name: name.to_owned(), samples: BTreeMap::new() }
     }
 
     // Adds the sampled value to the Sample with name |id|.cd
@@ -62,13 +62,12 @@ pub struct Series;
 // Grapher performs analysis and draws graphs of samples and sample groups.
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct Grapher {
-    groups: HashMap<String, SampleGroup>,
+    groups: BTreeMap<String, SampleGroup>,
 }
 
-// TODO: Some way to get number of samples required?
 impl Grapher {
     pub fn new() -> Self {
-        Self { groups: HashMap::new() }
+        Self { groups: BTreeMap::new() }
     }
 
     // Adds the sampled value to the Sample with name |id| in group |group|.
