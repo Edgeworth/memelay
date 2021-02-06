@@ -1,5 +1,6 @@
 use crate::cfg::{Cfg, Crossover, Mutation, Niching, Species, Survival};
 
+pub mod ackley;
 pub mod func;
 pub mod griewank;
 pub mod knapsack;
