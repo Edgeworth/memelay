@@ -70,13 +70,14 @@ all_cfg doesnt' work well for target_string - need to investigate.
 1. Local search (not implemented)?
 2. Choice between minimisation and maximisation
  - 1/(1 + f(x))
+
 ## Example problems
 1. Target string evolution
 2. Knapsack
 3. Shortest path (not implemented)
 4. Travelling salesperson (not implemented)
 5. Ackley function (not implemented)
-6. Griewank function (not implemented)
+6. Griewank function
 7. Rastrigin function
 
 ## Findings

@@ -1,9 +1,10 @@
 use crate::cfg::{Cfg, Crossover, Mutation, Niching, Species, Survival};
 
+pub mod func;
+pub mod griewank;
 pub mod knapsack;
 pub mod rastrigin;
 pub mod target_string;
-pub mod func;
 
 pub fn all_cfg() -> Cfg {
     Cfg::new(100)
