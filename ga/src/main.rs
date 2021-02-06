@@ -1,5 +1,6 @@
 use eyre::{eyre, Result};
 use ga::cfg::{Cfg, Crossover, Mutation, Selection};
+use ga::examples::griewank::griewank_runner;
 use ga::examples::knapsack::knapsack_runner;
 use ga::examples::rastrigin::rastrigin_runner;
 use ga::examples::{all_cfg, none_cfg};
@@ -62,7 +63,8 @@ fn main() -> Result<()> {
     let cfg = none_cfg();
     // let cfg = all_cfg();
     // run_grapher("knapsack", cfg, &knapsack_runner)?;
-    run_grapher("rastrigin", cfg, &|cfg| rastrigin_runner(2, cfg))?;
+    // run_grapher("rastrigin", cfg, &|cfg| rastrigin_runner(2, cfg))?;
+    run_grapher("griewank", cfg, &|cfg| griewank_runner(2, cfg))?;
     // run_once(cfg, &|cfg| rastrigin_runner(2, cfg))?;
     Ok(())
 }
