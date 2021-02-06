@@ -42,6 +42,16 @@ all_cfg doesnt' work well for target_string - need to investigate.
 1. Stepwise adaption of weights (not implemented)
  - As time goes on, add increasing penalties to particular constraints
 
+## Multiobjective optimisation (MOEA)
+Approaches:
+1. Assign fitness based on # members dominated + fitness sharing
+2. Repeatedly take the pareto front and assign fitness based on iteration found
+3. MOEA-D
+
+## Constraint handling
+1. Stepwise Adaption of Weights penalty
+ - If best solution violates constraint i, it is a hard constraint so increase the penalty factor.
+
 ## Measures of performance
 1. Best fitness of last generation
 2. Mean fitness of last generation
@@ -71,12 +81,13 @@ all_cfg doesnt' work well for target_string - need to investigate.
 2. Choice between minimisation and maximisation
  - 1/(1 + f(x))
 
+
 ## Example problems
 1. Target string evolution
 2. Knapsack
 3. Shortest path (not implemented)
 4. Travelling salesperson (not implemented)
-5. Ackley function (not implemented)
+5. Ackley function
 6. Griewank function
 7. Rastrigin function
 
