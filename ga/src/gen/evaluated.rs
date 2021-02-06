@@ -32,6 +32,10 @@ impl<E: Evaluator> EvaluatedGen<E> {
         Self { mems, cache: None }
     }
 
+    pub fn size(&self) -> usize {
+        self.mems.len()
+    }
+
     pub fn best(&self) -> Member<E> {
         self.mems[0].clone()
     }
@@ -88,12 +92,13 @@ impl<E: Evaluator> EvaluatedGen<E> {
 
     fn crossover(&self, crossover: Crossover, eval: &E, s1: &mut State<E>, s2: &mut State<E>) {
         let mut r = rand::thread_rng();
+        let lrate = 1.0 / (self.size() as f64).sqrt();
         match crossover {
             Crossover::Fixed(rate) => {
                 s1.1.crossover_rate = rate;
                 s2.1.crossover_rate = rate;
             }
-            Crossover::Adaptive(lrate) => {
+            Crossover::Adaptive => {
                 // Just mutate the crossover rates, per:
                 // c' = c * e^(learning rate * N(0, 1))
                 s1.1.crossover_rate =
@@ -111,7 +116,8 @@ impl<E: Evaluator> EvaluatedGen<E> {
         let mut r = rand::thread_rng();
         match mutation {
             Mutation::Fixed(rate) => s.1.mutation_rate = rate,
-            Mutation::Adaptive(lrate) => {
+            Mutation::Adaptive => {
+                let lrate = 1.0 / (self.size() as f64).sqrt();
                 s.1.mutation_rate =
                     mutate_lognorm(s.1.mutation_rate, lrate, &mut r).clamp(0.0, 1.0);
             }

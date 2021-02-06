@@ -93,10 +93,9 @@ pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
 pub fn run() -> Result<()> {
     let args = Args::from_args();
     let eval = LayoutEval::from_args(&args)?;
-    let lrate = 1.0 / (eval.cnst.pop_size as f64).sqrt();
     let cfg = Cfg::new(eval.cnst.pop_size)
-        .with_mutation(Mutation::Adaptive(lrate))
-        .with_crossover(Crossover::Adaptive(lrate))
+        .with_mutation(Mutation::Adaptive)
+        .with_crossover(Crossover::Adaptive)
         .with_survival(Survival::SpeciesTopProportion(0.1))
         .with_species(Species::TargetNumber(10))
         .with_niching(Niching::SharedFitness);

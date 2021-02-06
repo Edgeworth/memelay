@@ -1,6 +1,5 @@
 use rand::prelude::IteratorRandom;
 use rand::Rng;
-use rand_distr::uniform::SampleRange;
 use rand_distr::StandardNormal;
 use std::f64::consts::E;
 
@@ -28,8 +27,8 @@ pub fn mutate_rate<T: Copy, R: Rng + ?Sized>(
 
 // Real mutation operators:
 // Random value taken from the uniform distribution on |range|.
-pub fn mutate_uniform<R: Rng + ?Sized>(range: impl SampleRange<f64>, r: &mut R) -> f64 {
-    r.gen_range(range)
+pub fn mutate_uniform<R: Rng + ?Sized>(st: f64, en: f64, r: &mut R) -> f64 {
+    r.gen_range(st..=en)
 }
 
 // Mutate |v| by a value from N(0, std). It's usual to use the mutation rate as |std|.
