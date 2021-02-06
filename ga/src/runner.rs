@@ -2,6 +2,7 @@ use crate::gen::evaluated::EvaluatedGen;
 use crate::gen::unevaluated::UnevaluatedGen;
 use crate::{Cfg, Evaluator};
 use derive_more::Display;
+use eyre::Result;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Stats {
@@ -30,8 +31,8 @@ impl<E: Evaluator> Runner<E> {
         Self { eval, cfg, gen }
     }
 
-    pub fn run_iter(&mut self, compute_stats: bool) -> RunResult<E> {
-        let mut evaluated = self.gen.evaluate(&self.cfg, &self.eval);
+    pub fn run_iter(&mut self, compute_stats: bool) -> Result<RunResult<E>> {
+        let mut evaluated = self.gen.evaluate(&self.cfg, &self.eval)?;
         let mut stats = None;
         if compute_stats {
             stats = Some(Stats {
@@ -44,6 +45,6 @@ impl<E: Evaluator> Runner<E> {
         }
         let mut gen = evaluated.next_gen(&self.cfg, &self.eval);
         std::mem::swap(&mut gen, &mut self.gen);
-        RunResult { gen: evaluated, stats }
+        Ok(RunResult { gen: evaluated, stats })
     }
 }

@@ -70,10 +70,9 @@ pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
     let initial = (0..cfg.pop_size).map(|_| initial.clone()).collect();
     let mut runner = Runner::new(eval.clone(), cfg, UnevaluatedGen::initial(initial));
 
-    let mut r;
     for i in 0..eval.cnst.runs {
         let detail = i % 10 == 0;
-        r = runner.run_iter(detail);
+        let r = runner.run_iter(detail)?;
         println!("Generation {}: {}", i + 1, r.gen.best().base_fitness);
         if detail {
             println!("Stats: {:?}", r.stats.unwrap());

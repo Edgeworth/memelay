@@ -15,17 +15,5 @@ pretty_env_logger = "*"
 rand = "*"
 rand_distr = "*"
 rayon = "*"
+serde = {version = "*", features = ["derive"]}
 smallvec = "*"
-# Pin to this version until criterion.rs updates.
-serde = {version = "=1.0.118", features = ["derive"]}
-
-[dev-dependencies]
-criterion = {version = "*", features = ["real_blackbox"]}
-
-[[bench]]
-harness = false
-name = "target_string"
-
-[[bench]]
-harness = false
-name = "knapsack"

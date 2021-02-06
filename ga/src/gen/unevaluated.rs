@@ -3,6 +3,7 @@ use crate::gen::evaluated::{EvaluatedGen, Member};
 use crate::gen::species::DistCache;
 use crate::gen::Params;
 use crate::{Evaluator, State};
+use eyre::{eyre, Result};
 use rayon::prelude::*;
 use std::cmp::Ordering;
 
@@ -65,9 +66,14 @@ impl<E: Evaluator> UnevaluatedGen<E> {
     }
 
 
-    pub fn evaluate(&mut self, cfg: &Cfg, eval: &E) -> EvaluatedGen<E> {
+    pub fn evaluate(&mut self, cfg: &Cfg, eval: &E) -> Result<EvaluatedGen<E>> {
         // First compute plain fitnesses.
         self.base_fitness = self.states.par_iter_mut().map(|s| eval.fitness(&s.0)).collect();
+
+        // Check fitnesses are non-negative.
+        if !self.base_fitness.iter().all(|&v| v >= 0.0) {
+            return Err(eyre!("got negative fitness"));
+        }
 
         // Speciate if necessary.
         match cfg.species {
@@ -119,7 +125,7 @@ impl<E: Evaluator> UnevaluatedGen<E> {
                 fitness
             }
         };
-        EvaluatedGen::new(
+        Ok(EvaluatedGen::new(
             (0..self.states.len())
                 .map(|i| Member {
                     state: self.states[i].clone(),
@@ -128,6 +134,6 @@ impl<E: Evaluator> UnevaluatedGen<E> {
                     species: *self.species.get(i).unwrap_or(&0) as usize,
                 })
                 .collect(),
-        )
+        ))
     }
 }
