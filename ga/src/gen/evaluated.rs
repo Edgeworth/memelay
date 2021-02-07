@@ -81,11 +81,10 @@ impl<E: Evaluator> EvaluatedGen<E> {
     }
 
     fn selection(&self, selection: Selection) -> [State<E>; 2] {
-        let mut r = rand::thread_rng();
         let fitnesses = self.mems.iter().map(|v| v.selection_fitness).collect::<Vec<_>>();
         let idxs = match selection {
-            Selection::Sus => sus(&fitnesses, 2, &mut r),
-            Selection::Roulette => multi_rws(&fitnesses, 2, &mut r),
+            Selection::Sus => sus(&fitnesses, 2),
+            Selection::Roulette => multi_rws(&fitnesses, 2),
         };
         [self.mems[idxs[0]].state.clone(), self.mems[idxs[1]].state.clone()]
     }
@@ -101,10 +100,8 @@ impl<E: Evaluator> EvaluatedGen<E> {
             Crossover::Adaptive => {
                 // Just mutate the crossover rates, per:
                 // c' = c * e^(learning rate * N(0, 1))
-                s1.1.crossover_rate =
-                    mutate_lognorm(s1.1.crossover_rate, lrate, &mut r).clamp(0.0, 1.0);
-                s2.1.crossover_rate =
-                    mutate_lognorm(s2.1.crossover_rate, lrate, &mut r).clamp(0.0, 1.0);
+                s1.1.crossover_rate = mutate_lognorm(s1.1.crossover_rate, lrate).clamp(0.0, 1.0);
+                s2.1.crossover_rate = mutate_lognorm(s2.1.crossover_rate, lrate).clamp(0.0, 1.0);
             }
         };
         if 2.0 * r.gen::<f64>() < s1.1.crossover_rate + s2.1.crossover_rate {
@@ -113,13 +110,11 @@ impl<E: Evaluator> EvaluatedGen<E> {
     }
 
     fn mutation(&self, mutation: Mutation, eval: &E, s: &mut State<E>) {
-        let mut r = rand::thread_rng();
         match mutation {
             Mutation::Fixed(rate) => s.1.mutation_rate = rate,
             Mutation::Adaptive => {
                 let lrate = 1.0 / (self.size() as f64).sqrt();
-                s.1.mutation_rate =
-                    mutate_lognorm(s.1.mutation_rate, lrate, &mut r).clamp(0.0, 1.0);
+                s.1.mutation_rate = mutate_lognorm(s.1.mutation_rate, lrate).clamp(0.0, 1.0);
             }
         };
         eval.mutate(&mut s.0, s.1.mutation_rate);
