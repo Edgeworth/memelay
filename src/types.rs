@@ -3,7 +3,6 @@ use derive_more::Display;
 use enumset::{enum_set, EnumSet, EnumSetType};
 use ga::ops::sampling::rws;
 use rand::seq::IteratorRandom;
-use rand::Rng;
 use smallvec::SmallVec;
 use strum::IntoEnumIterator;
 use strum_macros::{Display as StrumDisplay, EnumIter, EnumString};
@@ -44,13 +43,16 @@ impl KCSetExt for KCSet {
     }
 }
 
-pub fn rand_kcset<R: Rng + ?Sized>(cnst: &Constants, r: &mut R) -> KCSet {
-    let num_mod = rws(&cnst.num_mod_assigned_weights, r).unwrap();
-    let num_reg = rws(&cnst.num_reg_assigned_weights, r).unwrap();
+pub fn rand_kcset(cnst: &Constants) -> KCSet {
+    let mut r = rand::thread_rng();
+    let num_mod = rws(&cnst.num_mod_assigned_weights).unwrap();
+    let num_reg = rws(&cnst.num_reg_assigned_weights).unwrap();
     let mods = KC::iter().filter(|k| k.is_mod()).collect::<SmallVec<[KC; 4]>>();
     let regs = KC::iter().filter(|k| !k.is_mod()).collect::<SmallVec<[KC; 2]>>();
-    let mods = mods.iter().choose_multiple(r, num_mod).iter().fold(enum_set!(), |a, &&b| a | b);
-    let regs = regs.iter().choose_multiple(r, num_reg).iter().fold(enum_set!(), |a, &&b| a | b);
+    let mods =
+        mods.iter().choose_multiple(&mut r, num_mod).iter().fold(enum_set!(), |a, &&b| a | b);
+    let regs =
+        regs.iter().choose_multiple(&mut r, num_reg).iter().fold(enum_set!(), |a, &&b| a | b);
     mods | regs
 }
 

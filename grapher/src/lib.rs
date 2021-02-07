@@ -1,16 +1,18 @@
 #![warn(rust_2018_idioms, clippy::all)]
 #![feature(
-    const_fn,
-    option_result_contains,
-    trait_alias,
-    iterator_fold_self,
-    type_alias_impl_trait,
-    partition_point,
-    bool_to_option,
-    map_first_last,
-    option_unwrap_none,
+    array_chunks,
     array_windows,
-    array_chunks
+    bool_to_option,
+    const_fn,
+    destructuring_assignment,
+    iterator_fold_self,
+    map_first_last,
+    option_result_contains,
+    option_unwrap_none,
+    partition_point,
+    stmt_expr_attributes,
+    trait_alias,
+    type_alias_impl_trait
 )]
 
 use crate::stats::sample::Sample;

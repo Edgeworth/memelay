@@ -4,13 +4,14 @@ use smallvec::SmallVec;
 
 // Discrete crossover operators:
 // Random point K-point crossover.
-pub fn crossover_kpx_rand<T, R: Rng + ?Sized>(s1: &mut [T], s2: &mut [T], k: usize, r: &mut R) {
-    let xpoints = (0..s1.len()).choose_multiple(r, k);
-    crossover_kpx(s1, s2, &xpoints)
+pub fn crossover_kpx<T>(s1: &mut [T], s2: &mut [T], k: usize) {
+    let mut r = rand::thread_rng();
+    let xpoints = (0..s1.len()).choose_multiple(&mut r, k);
+    crossover_kpx_pts(s1, s2, &xpoints)
 }
 
 // K-point crossover.
-pub fn crossover_kpx<T>(s1: &mut [T], s2: &mut [T], xpoints: &[usize]) {
+pub fn crossover_kpx_pts<T>(s1: &mut [T], s2: &mut [T], xpoints: &[usize]) {
     let mut xpoints: SmallVec<[usize; 4]> = SmallVec::from_slice(xpoints);
     let min = s1.len().min(s2.len());
     xpoints.push(min);
@@ -23,7 +24,12 @@ pub fn crossover_kpx<T>(s1: &mut [T], s2: &mut [T], xpoints: &[usize]) {
 }
 
 // Uniform crossover.
-pub fn crossover_ux<T, R: Rng + ?Sized>(s1: &mut [T], s2: &mut [T], r: &mut R) {
+pub fn crossover_ux<T>(s1: &mut [T], s2: &mut [T]) {
+    let mut r = rand::thread_rng();
+    crossover_ux_rng(s1, s2, &mut r);
+}
+
+pub fn crossover_ux_rng<T, R: Rng + ?Sized>(s1: &mut [T], s2: &mut [T], r: &mut R) {
     let min = s1.len().min(s2.len());
     for i in 0..min {
         if r.gen::<bool>() {
@@ -33,9 +39,8 @@ pub fn crossover_ux<T, R: Rng + ?Sized>(s1: &mut [T], s2: &mut [T], r: &mut R) {
 }
 
 // Real crossover operators:
-
 // Whole arithemtic recombination:
-pub fn crossover_arith(s1: &mut [f64], s2: &mut [f64], alpha: f64) {
+pub fn crossover_arith_alpha(s1: &mut [f64], s2: &mut [f64], alpha: f64) {
     let min = s1.len().min(s2.len());
     for i in 0..min {
         let c1 = alpha * s1[i] + (1.0 - alpha) * s2[i];
@@ -44,13 +49,15 @@ pub fn crossover_arith(s1: &mut [f64], s2: &mut [f64], alpha: f64) {
     }
 }
 
-pub fn crossover_arith_rand<R: Rng + ?Sized>(s1: &mut [f64], s2: &mut [f64], r: &mut R) {
-    crossover_arith(s1, s2, r.gen())
+pub fn crossover_arith(s1: &mut [f64], s2: &mut [f64]) {
+    let mut r = rand::thread_rng();
+    crossover_arith_alpha(s1, s2, r.gen())
 }
 
 // Blend crossover. For each element x < y, randomly generate a value in
 // [x - |y - x| * alpha, y + |y - x| * alpha]. A good choice for alpha is 0.5.
-pub fn crossover_blx<R: Rng + ?Sized>(s1: &mut [f64], s2: &mut [f64], alpha: f64, r: &mut R) {
+pub fn crossover_blx(s1: &mut [f64], s2: &mut [f64], alpha: f64) {
+    let mut r = rand::thread_rng();
     let min = s1.len().min(s2.len());
     for i in 0..min {
         let x = s1[i].min(s2[i]);
@@ -73,7 +80,7 @@ mod tests {
     fn test_crossover_1px() {
         let mut a = str_to_vec("abcd");
         let mut b = str_to_vec("wxyz");
-        crossover_kpx(&mut a, &mut b, &[3]);
+        crossover_kpx_pts(&mut a, &mut b, &[3]);
         assert_eq!(vec_to_str(&a), "abcz");
         assert_eq!(vec_to_str(&b), "wxyd");
     }
@@ -82,7 +89,7 @@ mod tests {
     fn test_crossover_2px() {
         let mut a = str_to_vec("abcd");
         let mut b = str_to_vec("wxyz");
-        crossover_kpx(&mut a, &mut b, &[1, 2]);
+        crossover_kpx_pts(&mut a, &mut b, &[1, 2]);
         assert_eq!(vec_to_str(&a), "axcd");
         assert_eq!(vec_to_str(&b), "wbyz");
     }
@@ -92,7 +99,7 @@ mod tests {
         let mut r = StepRng::new(1 << 31, 1 << 31);
         let mut a = str_to_vec("abcd");
         let mut b = str_to_vec("wxyz");
-        crossover_ux(&mut a, &mut b, &mut r);
+        crossover_ux_rng(&mut a, &mut b, &mut r);
         assert_eq!(vec_to_str(&a), "wbyd");
         assert_eq!(vec_to_str(&b), "axcz");
     }

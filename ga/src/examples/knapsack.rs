@@ -1,6 +1,6 @@
 use crate::cfg::Cfg;
 use crate::gen::unevaluated::UnevaluatedGen;
-use crate::ops::crossover::crossover_kpx_rand;
+use crate::ops::crossover::crossover_kpx;
 use crate::ops::fitness::count_different;
 use crate::ops::initial::rand_vec;
 use crate::ops::mutation::mutate_rate;
@@ -26,13 +26,12 @@ impl Evaluator for Knapsack {
     type Genome = State;
 
     fn crossover(&self, s1: &mut State, s2: &mut State) {
-        let mut r = rand::thread_rng();
-        crossover_kpx_rand(s1, s2, 2, &mut r);
+        crossover_kpx(s1, s2, 2);
     }
 
     fn mutate(&self, s: &mut State, rate: f64) {
         let mut r = rand::thread_rng();
-        mutate_rate(s, rate, |_, r| r.gen::<bool>(), &mut r);
+        mutate_rate(s, rate, |_| r.gen::<bool>());
     }
 
     fn fitness(&self, s: &State) -> f64 {

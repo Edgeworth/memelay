@@ -67,29 +67,25 @@ Approaches:
 4. Two-tailed t-test
 
 ## Hyper-parameter tuning
-1. Meta-GA (not implemented)
- - See SPO, F-race, REVAC, meta-GA
-2. Use tuning search method to analyse robustness of GA (not implemented)
-3. Tuning numeric params (e.g. mutation rate) vs symbolic (e.g. selection method)
- - Robust set of symbolic params => works well for a large set of numeric params.
-4. Self-adaptive mutation
- - Adaptive mutation and crossover rates
- - Multiple crossover and mutation methods with adaptively evolved rates (not implemented)
+- Meta-GA (not implemented)
+  Multi-objective
+  Optimisations: Sharpening, Racing
+- Adaptive mutation and crossover rates
+- Multiple crossover and mutation methods with adaptively evolved rates (not implemented)
 
 ## Extra stuff
 1. Local search (not implemented)?
 2. Choice between minimisation and maximisation
  - 1/(1 + f(x))
 
-
 ## Example problems
-1. Target string evolution
-2. Knapsack
-3. Shortest path (not implemented)
-4. Travelling salesperson (not implemented)
-5. Ackley function
-6. Griewank function
-7. Rastrigin function
+- Target string evolution
+- Knapsack
+- Ackley function
+- Griewank function
+- Rastrigin function
+- Travelling salesperson (not implemented)
+- Shortest path (not implemented)
 
 ## Findings
 Stochastic Universal Selection vs Roulette Wheel Selection:

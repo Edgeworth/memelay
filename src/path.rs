@@ -87,10 +87,10 @@ impl<'a> PathFinder<'a> {
 
         let st = Node::new(self.l);
         q.push(st.clone(), 0);
-        let mut cnt = 0;
+        // let mut cnt = 0;
         while let Some((n, _pri)) = q.pop() {
             seen.insert(n.clone());
-            cnt += 1;
+            // cnt += 1;
 
             // println!(
             //     "pri: {}, dijk: {}, seen: {}, get to: {}",

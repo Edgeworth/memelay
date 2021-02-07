@@ -7,7 +7,7 @@ use crate::path::PathFinder;
 use crate::types::{rand_kcset, Finger, PhysEv};
 use crate::Args;
 use eyre::Result;
-use ga::ops::crossover::crossover_kpx_rand;
+use ga::ops::crossover::crossover_kpx;
 use ga::ops::fitness::count_different;
 use ga::ops::mutation::mutate_rate;
 use ga::ops::sampling::rws;
@@ -83,15 +83,15 @@ impl Evaluator for LayoutEval {
 
     fn crossover(&self, s1: &mut Layout, s2: &mut Layout) {
         let mut r = rand::thread_rng();
-        match rws(&self.cnst.crossover_strat_weights, &mut r).unwrap() {
+        match rws(&self.cnst.crossover_strat_weights).unwrap() {
             0 => {
                 // 2-pt crossover on layer level.
-                crossover_kpx_rand(&mut s1.layers, &mut s2.layers, 2, &mut r);
+                crossover_kpx(&mut s1.layers, &mut s2.layers, 2);
             }
             1 => {
                 // 2-pt crossover on keys level;
                 let lidx = r.gen_range(0..s1.layers.len());
-                crossover_kpx_rand(&mut s1.layers[lidx].keys, &mut s2.layers[lidx].keys, 2, &mut r);
+                crossover_kpx(&mut s1.layers[lidx].keys, &mut s2.layers[lidx].keys, 2);
             }
             _ => panic!("unknown crossover strategy"),
         };
@@ -107,15 +107,10 @@ impl Evaluator for LayoutEval {
         let kidx2 = r.gen_range(0..s.layers[lidx2].keys.len());
         let swap = r.gen::<f64>() < rate;
 
-        match rws(&self.cnst.mutate_strat_weights, &mut r).unwrap() {
+        match rws(&self.cnst.mutate_strat_weights).unwrap() {
             0 => {
                 // Mutate random available key.
-                mutate_rate(
-                    &mut s.layers[lidx].keys,
-                    rate,
-                    |_, r| rand_kcset(&self.cnst, r),
-                    &mut r,
-                );
+                mutate_rate(&mut s.layers[lidx].keys, rate, |_| rand_kcset(&self.cnst));
             }
             1 => {
                 // Swap random layer.

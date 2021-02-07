@@ -1,15 +1,18 @@
 #![warn(rust_2018_idioms, clippy::all)]
 #![feature(
-    const_fn,
-    option_result_contains,
-    trait_alias,
-    iterator_fold_self,
-    type_alias_impl_trait,
-    partition_point,
+    array_chunks,
+    array_windows,
     bool_to_option,
+    const_fn,
+    destructuring_assignment,
+    iterator_fold_self,
     map_first_last,
+    option_result_contains,
     option_unwrap_none,
-    destructuring_assignment
+    partition_point,
+    stmt_expr_attributes,
+    trait_alias,
+    type_alias_impl_trait
 )]
 
 use crate::constants::Constants;

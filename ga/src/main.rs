@@ -1,9 +1,6 @@
-use eyre::{eyre, Result};
-use ga::cfg::{Cfg, Crossover, Mutation, Selection};
+use eyre::Result;
+use ga::cfg::Cfg;
 use ga::examples::ackley::ackley_runner;
-use ga::examples::griewank::griewank_runner;
-use ga::examples::knapsack::knapsack_runner;
-use ga::examples::rastrigin::rastrigin_runner;
 use ga::examples::{all_cfg, none_cfg};
 use ga::runner::Runner;
 use ga::Evaluator;
