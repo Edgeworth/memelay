@@ -16,8 +16,7 @@ impl Layer {
     }
 
     pub fn rand_with_size(len: usize, cnst: &Constants) -> Self {
-        let mut r = rand::thread_rng();
-        Self { keys: (0..len).map(|_| rand_kcset(cnst, &mut r)).collect() }
+        Self { keys: (0..len).map(|_| rand_kcset(cnst)).collect() }
     }
 
     pub fn num_physical(&self) -> usize {
