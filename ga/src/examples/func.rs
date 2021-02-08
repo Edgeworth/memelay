@@ -2,8 +2,8 @@ use crate::cfg::Cfg;
 use crate::gen::unevaluated::UnevaluatedGen;
 use crate::ops::crossover::crossover_arith;
 use crate::ops::fitness::euclidean_dist;
-use crate::ops::initial::rand_vec;
 use crate::ops::mutation::{mutate_normal, mutate_rate, mutate_uniform};
+use crate::ops::util::rand_vec;
 use crate::runner::Runner;
 use crate::{Evaluator, FitnessFn};
 
@@ -26,12 +26,20 @@ impl<F: FitnessFn<FuncState>> FuncEvaluator<F> {
 impl<F: FitnessFn<FuncState>> Evaluator for FuncEvaluator<F> {
     type Genome = FuncState;
 
-    fn crossover(&self, s1: &mut FuncState, s2: &mut FuncState) {
-        crossover_arith(s1, s2);
+    fn crossover(&self, s1: &mut FuncState, s2: &mut FuncState, idx: usize) {
+        match idx {
+            0 => {}
+            1 => crossover_arith(s1, s2),
+            _ => panic!("bug"),
+        };
     }
 
-    fn mutate(&self, s: &mut FuncState, rate: f64) {
-        mutate_rate(s, 1.0, |v| mutate_normal(v, rate).clamp(self.st, self.en));
+    fn mutate(&self, s: &mut FuncState, rate: f64, idx: usize) {
+        match idx {
+            0 => {}
+            1 => mutate_rate(s, 1.0, |v| mutate_normal(v, rate).clamp(self.st, self.en)),
+            _ => panic!("bug"),
+        };
     }
 
     fn fitness(&self, s: &FuncState) -> f64 {
@@ -48,9 +56,9 @@ pub fn func_runner(
     st: f64,
     en: f64,
     f: impl FitnessFn<FuncState>,
-    cfg: &Cfg,
+    cfg: Cfg,
 ) -> Runner<FuncEvaluator<impl FitnessFn<FuncState>>> {
     let initial = rand_vec(cfg.pop_size, || rand_vec(dim, || mutate_uniform(st, en)));
     let gen = UnevaluatedGen::initial(initial);
-    Runner::new(FuncEvaluator::new(dim, st, en, f), *cfg, gen)
+    Runner::new(FuncEvaluator::new(dim, st, en, f), cfg, gen)
 }

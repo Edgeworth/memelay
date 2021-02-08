@@ -30,15 +30,14 @@ pub trait Genome = fmt::Debug + Clone + Send + Sync + PartialOrd + PartialEq;
 pub type State<E> = (<E as Evaluator>::Genome, Params);
 
 pub trait FitnessFn<G: Genome> = Fn(&G) -> f64 + Sync + Send + Clone;
-pub trait CrossoverFn<G: Genome> = Fn(&mut G, &mut G) + Sync + Send + Clone;
-pub trait MutationFn<G: Genome> = Fn(&mut G) + Sync + Send + Clone;
 
 pub trait Evaluator: Clone + Send + Sync {
     type Genome: Genome;
 
-    fn crossover(&self, s1: &mut Self::Genome, s2: &mut Self::Genome);
-    // Implementations should look at Cfg::mutation_rate to mutate.
-    fn mutate(&self, s: &mut Self::Genome, rate: f64);
+    // |idx| specifies which crossover or mutation function to use. 0 is conventionally do nothing,
+    // with actual crossover/mutation starting from index 1.
+    fn crossover(&self, s1: &mut Self::Genome, s2: &mut Self::Genome, idx: usize);
+    fn mutate(&self, s: &mut Self::Genome, rate: f64, idx: usize);
     fn fitness(&self, s: &Self::Genome) -> f64;
     fn distance(&self, s1: &Self::Genome, s2: &Self::Genome) -> f64;
 }

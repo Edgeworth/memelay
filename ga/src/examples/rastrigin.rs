@@ -4,7 +4,7 @@ use crate::runner::Runner;
 use crate::FitnessFn;
 use std::f64::consts::PI;
 
-pub fn rastrigin_runner(dim: usize, cfg: &Cfg) -> Runner<FuncEvaluator<impl FitnessFn<FuncState>>> {
+pub fn rastrigin_runner(dim: usize, cfg: Cfg) -> Runner<FuncEvaluator<impl FitnessFn<FuncState>>> {
     func_runner(
         dim,
         -5.12,
