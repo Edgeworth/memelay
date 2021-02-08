@@ -1,11 +1,12 @@
 use crate::cfg::{Crossover, Mutation, Selection, Survival};
 use crate::gen::species::DistCache;
 use crate::gen::unevaluated::UnevaluatedGen;
-use crate::ops::mutation::mutate_lognorm;
-use crate::ops::sampling::{multi_rws, sus};
+use crate::ops::crossover::crossover_blx;
+use crate::ops::mutation::{mutate_lognorm, mutate_rate};
+use crate::ops::sampling::{multi_rws, rws, sus};
+use crate::ops::util::clamp_vec;
 use crate::{Cfg, Evaluator, State};
 use derive_more::Display;
-use rand::Rng;
 use rayon::prelude::*;
 
 #[derive(Debug, Display, Clone, PartialOrd, PartialEq)]
@@ -89,35 +90,39 @@ impl<E: Evaluator> EvaluatedGen<E> {
         [self.mems[idxs[0]].state.clone(), self.mems[idxs[1]].state.clone()]
     }
 
-    fn crossover(&self, crossover: Crossover, eval: &E, s1: &mut State<E>, s2: &mut State<E>) {
-        let mut r = rand::thread_rng();
-        let lrate = 1.0 / (self.size() as f64).sqrt();
+    fn crossover(&self, crossover: &Crossover, eval: &E, s1: &mut State<E>, s2: &mut State<E>) {
         match crossover {
-            Crossover::Fixed(rate) => {
-                s1.1.crossover_rate = rate;
-                s2.1.crossover_rate = rate;
+            Crossover::Fixed(rates) => {
+                s1.1.crossover_rates = rates.clone();
+                s2.1.crossover_rates = rates.clone();
             }
-            Crossover::Adaptive => {
-                // Just mutate the crossover rates, per:
-                // c' = c * e^(learning rate * N(0, 1))
-                s1.1.crossover_rate = mutate_lognorm(s1.1.crossover_rate, lrate).clamp(0.0, 1.0);
-                s2.1.crossover_rate = mutate_lognorm(s2.1.crossover_rate, lrate).clamp(0.0, 1.0);
+            Crossover::Adaptive(num_rates) => {
+                // We need to generate one crossover rate vector from two parents.
+                // Use blend crossover to do this, and take the first one.
+                s1.1.crossover_rates.resize(*num_rates, 0.1);
+                s2.1.crossover_rates.resize(*num_rates, 0.1);
+                crossover_blx(&mut s1.1.crossover_rates, &mut s2.1.crossover_rates, 0.5);
+                clamp_vec(&mut s1.1.crossover_rates, Some(0.0), None);
             }
         };
-        if 2.0 * r.gen::<f64>() < s1.1.crossover_rate + s2.1.crossover_rate {
-            eval.crossover(&mut s1.0, &mut s2.0);
-        }
+        let idx = rws(&s1.1.crossover_rates).unwrap();
+        eval.crossover(&mut s1.0, &mut s2.0, idx);
     }
 
-    fn mutation(&self, mutation: Mutation, eval: &E, s: &mut State<E>) {
+    fn mutation(&self, mutation: &Mutation, eval: &E, s: &mut State<E>) {
         match mutation {
-            Mutation::Fixed(rate) => s.1.mutation_rate = rate,
-            Mutation::Adaptive => {
+            Mutation::Fixed(rates) => s.1.mutation_rates = rates.clone(),
+            Mutation::Adaptive(num_rates) => {
                 let lrate = 1.0 / (self.size() as f64).sqrt();
-                s.1.mutation_rate = mutate_lognorm(s.1.mutation_rate, lrate).clamp(0.0, 1.0);
+                // Apply every mutation with the given rate.
+                // c' = c * e^(learning rate * N(0, 1))
+                s.1.mutation_rates.resize(*num_rates, 0.1);
+                mutate_rate(&mut s.1.mutation_rates, 1.0, |v| mutate_lognorm(v, lrate).max(0.0));
             }
         };
-        eval.mutate(&mut s.0, s.1.mutation_rate);
+        for (idx, &rate) in s.1.mutation_rates.iter().enumerate() {
+            eval.mutate(&mut s.0, rate, idx);
+        }
     }
 
 
@@ -130,9 +135,9 @@ impl<E: Evaluator> EvaluatedGen<E> {
             .into_par_iter()
             .map(|_| {
                 let [mut s1, mut s2] = self.selection(cfg.selection);
-                self.crossover(cfg.crossover, eval, &mut s1, &mut s2);
-                self.mutation(cfg.mutation, eval, &mut s1);
-                self.mutation(cfg.mutation, eval, &mut s2);
+                self.crossover(&cfg.crossover, eval, &mut s1, &mut s2);
+                self.mutation(&cfg.mutation, eval, &mut s1);
+                self.mutation(&cfg.mutation, eval, &mut s2);
                 vec![s1, s2].into_iter()
             })
             .flatten_iter()

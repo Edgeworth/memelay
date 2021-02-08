@@ -70,20 +70,4 @@ pub struct Constants {
         help = "Weight to assign k mod keycodes to a key, where k is in the index."
     )]
     pub num_mod_assigned_weights: Vec<f64>,
-
-    #[structopt(
-        long,
-        default_value = "1,10",
-        use_delimiter = true,
-        help = "Weights to roulette each crossover strategy."
-    )]
-    pub crossover_strat_weights: Vec<f64>,
-
-    #[structopt(
-        long,
-        default_value = "20,5,1",
-        use_delimiter = true,
-        help = "Weights to roulette each mutate strategy."
-    )]
-    pub mutate_strat_weights: Vec<f64>,
 }

@@ -21,7 +21,7 @@ impl<E: Evaluator> UnevaluatedGen<E> {
     pub fn initial(genomes: Vec<E::Genome>) -> Self {
         let states = genomes
             .into_iter()
-            .map(|v| (v, Params { mutation_rate: 0.1, crossover_rate: 0.7 }))
+            .map(|v| (v, Params { mutation_rates: vec![], crossover_rates: vec![] }))
             .collect();
         Self::new(states)
     }

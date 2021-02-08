@@ -9,3 +9,14 @@ pub fn vec_to_str(input: &[char]) -> String {
 pub fn str_to_vec(input: &str) -> Vec<char> {
     input.chars().collect()
 }
+
+pub fn clamp_vec(v: &mut [f64], lo: Option<f64>, hi: Option<f64>) {
+    for k in v.iter_mut() {
+        if let Some(lo) = lo {
+            *k = k.max(lo);
+        }
+        if let Some(hi) = hi {
+            *k = k.min(hi);
+        }
+    }
+}

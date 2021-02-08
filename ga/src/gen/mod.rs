@@ -3,8 +3,9 @@ mod species;
 pub mod unevaluated;
 
 // Potentially self-adaptive parameters per state.
-#[derive(Debug, Copy, Clone, PartialOrd, PartialEq)]
+#[derive(Debug, Clone, PartialOrd, PartialEq)]
 pub struct Params {
-    mutation_rate: f64,
-    crossover_rate: f64,
+    // Conventionally, the first element will be the weight of doing no mutation or crossover.
+    mutation_rates: Vec<f64>,
+    crossover_rates: Vec<f64>,
 }

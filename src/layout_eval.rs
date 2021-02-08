@@ -10,7 +10,6 @@ use eyre::Result;
 use ga::ops::crossover::crossover_kpx;
 use ga::ops::fitness::count_different;
 use ga::ops::mutation::mutate_rate;
-use ga::ops::sampling::rws;
 use ga::Evaluator;
 use rand::Rng;
 
@@ -81,14 +80,15 @@ impl LayoutEval {
 impl Evaluator for LayoutEval {
     type Genome = Layout;
 
-    fn crossover(&self, s1: &mut Layout, s2: &mut Layout) {
+    fn crossover(&self, s1: &mut Layout, s2: &mut Layout, idx: usize) {
         let mut r = rand::thread_rng();
-        match rws(&self.cnst.crossover_strat_weights).unwrap() {
-            0 => {
+        match idx {
+            0 => {} // Do nothing.
+            1 => {
                 // 2-pt crossover on layer level.
                 crossover_kpx(&mut s1.layers, &mut s2.layers, 2);
             }
-            1 => {
+            2 => {
                 // 2-pt crossover on keys level;
                 let lidx = r.gen_range(0..s1.layers.len());
                 crossover_kpx(&mut s1.layers[lidx].keys, &mut s2.layers[lidx].keys, 2);
@@ -99,7 +99,7 @@ impl Evaluator for LayoutEval {
         s2.normalise(&self.cnst);
     }
 
-    fn mutate(&self, s: &mut Layout, rate: f64) {
+    fn mutate(&self, s: &mut Layout, rate: f64, idx: usize) {
         let mut r = rand::thread_rng();
         let lidx = r.gen_range(0..s.layers.len());
         let kidx = r.gen_range(0..s.layers[lidx].keys.len());
@@ -107,19 +107,20 @@ impl Evaluator for LayoutEval {
         let kidx2 = r.gen_range(0..s.layers[lidx2].keys.len());
         let swap = r.gen::<f64>() < rate;
 
-        match rws(&self.cnst.mutate_strat_weights).unwrap() {
-            0 => {
+        match idx {
+            0 => {} // Do nothing.
+            1 => {
                 // Mutate random available key.
                 mutate_rate(&mut s.layers[lidx].keys, rate, |_| rand_kcset(&self.cnst));
             }
-            1 => {
+            2 => {
                 // Swap random layer.
                 if swap {
                     let swap_idx = r.gen_range(0..s.layers.len());
                     s.layers.swap(lidx, swap_idx);
                 }
             }
-            2 => {
+            3 => {
                 // Swap random key
                 if swap {
                     let tmp = s.layers[lidx].keys[kidx];

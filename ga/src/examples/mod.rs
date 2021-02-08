@@ -9,8 +9,8 @@ pub mod target_string;
 
 pub fn all_cfg() -> Cfg {
     Cfg::new(100)
-        .with_mutation(Mutation::Adaptive)
-        .with_crossover(Crossover::Adaptive)
+        .with_mutation(Mutation::Adaptive(2))
+        .with_crossover(Crossover::Adaptive(2))
         .with_survival(Survival::SpeciesTopProportion(0.1))
         .with_species(Species::TargetNumber(10))
         .with_niching(Niching::SharedFitness)

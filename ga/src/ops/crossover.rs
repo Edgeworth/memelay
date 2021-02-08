@@ -73,7 +73,7 @@ pub fn crossover_blx(s1: &mut [f64], s2: &mut [f64], alpha: f64) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ops::initial::{str_to_vec, vec_to_str};
+    use crate::ops::util::{str_to_vec, vec_to_str};
     use rand::rngs::mock::StepRng;
 
     #[test]

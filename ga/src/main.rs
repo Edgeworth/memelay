@@ -1,12 +1,16 @@
 use eyre::Result;
 use ga::cfg::Cfg;
 use ga::examples::ackley::ackley_runner;
+use ga::examples::griewank::griewank_runner;
+use ga::examples::knapsack::knapsack_runner;
+use ga::examples::rastrigin::rastrigin_runner;
+use ga::examples::target_string::target_string_runner;
 use ga::examples::{all_cfg, none_cfg};
 use ga::runner::Runner;
 use ga::Evaluator;
 use grapher::Grapher;
 
-type RunnerFn<E> = dyn Fn(&Cfg) -> Runner<E>;
+type RunnerFn<E> = dyn Fn(Cfg) -> Runner<E>;
 
 fn eval_run<E: Evaluator>(
     g: &mut Grapher,
@@ -16,10 +20,10 @@ fn eval_run<E: Evaluator>(
     runner_fn: &RunnerFn<E>,
 ) -> Result<()> {
     const SAMPLES: usize = 100;
+    let cfgs = [("100 pop", base_cfg)];
     for _ in 0..SAMPLES {
-        let cfgs = [("100 pop", base_cfg)];
         for (cfg_name, cfg) in cfgs.iter() {
-            let mut runner = runner_fn(cfg);
+            let mut runner = runner_fn(cfg.clone());
             for _ in 0..100 {
                 runner.run_iter(false)?;
             }
@@ -45,7 +49,7 @@ fn run_grapher<E: Evaluator>(name: &str, base_cfg: Cfg, runner_fn: &RunnerFn<E>)
 }
 
 fn run_once<E: Evaluator>(cfg: Cfg, runner_fn: &RunnerFn<E>) -> Result<()> {
-    let mut runner = runner_fn(&cfg);
+    let mut runner = runner_fn(cfg);
     for i in 0..100 {
         let detail = i % 10 == 0;
         let r = runner.run_iter(detail)?;
@@ -60,10 +64,10 @@ fn run_once<E: Evaluator>(cfg: Cfg, runner_fn: &RunnerFn<E>) -> Result<()> {
 fn main() -> Result<()> {
     let cfg = none_cfg();
     // let cfg = all_cfg();
-    // run_grapher("knapsack", cfg, &knapsack_runner)?;
-    // run_grapher("rastrigin", cfg, &|cfg| rastrigin_runner(2, cfg))?;
-    // run_grapher("griewank", cfg, &|cfg| griewank_runner(2, cfg))?;
-    run_grapher("ackley", cfg, &|cfg| ackley_runner(2, cfg))?;
-    // run_once(cfg, &|cfg| rastrigin_runner(2, cfg))?;
+    run_grapher("knapsack", cfg.clone(), &knapsack_runner)?;
+    run_grapher("rastrigin", cfg.clone(), &|cfg| rastrigin_runner(2, cfg))?;
+    run_grapher("griewank", cfg.clone(), &|cfg| griewank_runner(2, cfg))?;
+    run_grapher("ackley", cfg.clone(), &|cfg| ackley_runner(2, cfg))?;
+    run_grapher("string", cfg, &target_string_runner)?;
     Ok(())
 }
