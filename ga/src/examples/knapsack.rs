@@ -2,8 +2,8 @@ use crate::cfg::Cfg;
 use crate::gen::unevaluated::UnevaluatedGen;
 use crate::ops::crossover::crossover_kpx;
 use crate::ops::fitness::count_different;
-use crate::ops::initial::rand_vec;
 use crate::ops::mutation::mutate_rate;
+use crate::ops::util::rand_vec;
 use crate::runner::Runner;
 use crate::Evaluator;
 use rand::Rng;
@@ -25,13 +25,21 @@ impl Knapsack {
 impl Evaluator for Knapsack {
     type Genome = State;
 
-    fn crossover(&self, s1: &mut State, s2: &mut State) {
-        crossover_kpx(s1, s2, 2);
+    fn crossover(&self, s1: &mut State, s2: &mut State, idx: usize) {
+        match idx {
+            0 => {}
+            1 => crossover_kpx(s1, s2, 2),
+            _ => panic!("bug"),
+        };
     }
 
-    fn mutate(&self, s: &mut State, rate: f64) {
+    fn mutate(&self, s: &mut State, rate: f64, idx: usize) {
         let mut r = rand::thread_rng();
-        mutate_rate(s, rate, |_| r.gen::<bool>());
+        match idx {
+            0 => {}
+            1 => mutate_rate(s, rate, |_| r.gen::<bool>()),
+            _ => panic!("bug"),
+        };
     }
 
     fn fitness(&self, s: &State) -> f64 {
@@ -52,7 +60,7 @@ impl Evaluator for Knapsack {
     }
 }
 
-pub fn knapsack_runner(cfg: &Cfg) -> Runner<Knapsack> {
+pub fn knapsack_runner(cfg: Cfg) -> Runner<Knapsack> {
     const NUM_ITEMS: usize = 100;
     const MAX_W: f64 = 100.0;
 
@@ -64,5 +72,5 @@ pub fn knapsack_runner(cfg: &Cfg) -> Runner<Knapsack> {
         let v = r.gen_range(0.1..10.0) * w;
         (w, v)
     });
-    Runner::new(Knapsack::new(MAX_W, items), *cfg, gen)
+    Runner::new(Knapsack::new(MAX_W, items), cfg, gen)
 }

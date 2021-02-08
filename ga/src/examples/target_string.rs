@@ -3,8 +3,8 @@ use crate::distributions::PrintableAscii;
 use crate::gen::unevaluated::UnevaluatedGen;
 use crate::ops::crossover::crossover_kpx;
 use crate::ops::fitness::count_different;
-use crate::ops::initial::{rand_vec, str_to_vec};
 use crate::ops::mutation::mutate_rate;
+use crate::ops::util::{rand_vec, str_to_vec};
 use crate::runner::Runner;
 use crate::Evaluator;
 use rand::Rng;
@@ -25,13 +25,21 @@ impl TargetString {
 impl Evaluator for TargetString {
     type Genome = State;
 
-    fn crossover(&self, s1: &mut State, s2: &mut State) {
-        crossover_kpx(s1, s2, 2);
+    fn crossover(&self, s1: &mut State, s2: &mut State, idx: usize) {
+        match idx {
+            0 => {}
+            1 => crossover_kpx(s1, s2, 2),
+            _ => panic!("bug"),
+        };
     }
 
-    fn mutate(&self, s: &mut State, rate: f64) {
+    fn mutate(&self, s: &mut State, rate: f64, idx: usize) {
         let mut r = rand::thread_rng();
-        mutate_rate(s, rate, |_| r.sample(PrintableAscii));
+        match idx {
+            0 => {}
+            1 => mutate_rate(s, rate, |_| r.sample(PrintableAscii)),
+            _ => panic!("bug"),
+        };
     }
 
     fn fitness(&self, s: &State) -> f64 {
@@ -43,11 +51,11 @@ impl Evaluator for TargetString {
     }
 }
 
-pub fn target_string_runner(cfg: &Cfg) -> Runner<TargetString> {
+pub fn target_string_runner(cfg: Cfg) -> Runner<TargetString> {
     const TARGET: &str = "Hello world!";
     let mut r = rand::thread_rng();
     let initial =
         rand_vec(cfg.pop_size, || rand_vec(TARGET.len(), || r.sample::<char, _>(PrintableAscii)));
     let gen = UnevaluatedGen::initial(initial);
-    Runner::new(TargetString::new(TARGET), *cfg, gen)
+    Runner::new(TargetString::new(TARGET), cfg, gen)
 }
