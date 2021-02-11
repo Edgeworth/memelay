@@ -1,30 +1,30 @@
 pub const EP: f64 = 1.0e-6;
 
-#[derive(Debug, Copy, Clone, PartialEq)]
+#[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
 pub enum Survival {
     TopProportion(f64),
     SpeciesTopProportion(f64), // Top proportion for each species.
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, PartialOrd)]
 pub enum Selection {
     Sus,
     Roulette,
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, PartialOrd)]
 pub enum Niching {
     None,
     SharedFitness,
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, PartialOrd)]
 pub enum Species {
     None,
     TargetNumber(usize), // Target number of species.
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 // Each mutation function will be applied with the given rate. This is different to crossover,
 // which is only applied once.
 pub enum Mutation {
@@ -34,7 +34,7 @@ pub enum Mutation {
     Adaptive(usize),
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 // Only one crossover function will be applied at a time.
 pub enum Crossover {
     // Fixed with given rate. Specify the probabilities for each crossover function.
@@ -44,7 +44,7 @@ pub enum Crossover {
     Adaptive(usize),
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub struct Cfg {
     pub pop_size: usize,
     pub crossover: Crossover,

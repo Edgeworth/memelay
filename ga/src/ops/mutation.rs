@@ -5,7 +5,7 @@ use std::f64::consts::E;
 
 // Discrete mutation operators:
 // Replaces a random value in |s| with |v|.
-pub fn replace_rand<T>(s: &mut [T], v: T) {
+pub fn mutate_reset<T>(s: &mut [T], v: T) {
     let mut r = rand::thread_rng();
     if let Some(ov) = s.iter_mut().choose(&mut r) {
         *ov = v;
