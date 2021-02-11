@@ -1,7 +1,7 @@
 use crate::cfg::Cfg;
 use crate::gen::unevaluated::UnevaluatedGen;
 use crate::ops::crossover::crossover_arith;
-use crate::ops::fitness::euclidean_dist;
+use crate::ops::distance::dist2;
 use crate::ops::mutation::{mutate_normal, mutate_rate, mutate_uniform};
 use crate::ops::util::rand_vec;
 use crate::runner::Runner;
@@ -47,7 +47,7 @@ impl<F: FitnessFn<FuncState>> Evaluator for FuncEvaluator<F> {
     }
 
     fn distance(&self, s1: &FuncState, s2: &FuncState) -> f64 {
-        euclidean_dist(s1, s2)
+        dist2(s1, s2)
     }
 }
 

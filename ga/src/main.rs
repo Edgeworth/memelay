@@ -6,18 +6,16 @@ use ga::examples::knapsack::knapsack_runner;
 use ga::examples::rastrigin::rastrigin_runner;
 use ga::examples::target_string::target_string_runner;
 use ga::examples::{all_cfg, none_cfg};
-use ga::runner::Runner;
+use ga::runner::RunnerFn;
 use ga::Evaluator;
 use grapher::Grapher;
-
-type RunnerFn<E> = dyn Fn(Cfg) -> Runner<E>;
 
 fn eval_run<E: Evaluator>(
     g: &mut Grapher,
     name: &str,
     run_id: &str,
     base_cfg: Cfg,
-    runner_fn: &RunnerFn<E>,
+    runner_fn: &impl RunnerFn<E>,
 ) -> Result<()> {
     const SAMPLES: usize = 100;
     let cfgs = [("100 pop", base_cfg)];
@@ -39,7 +37,11 @@ fn eval_run<E: Evaluator>(
     Ok(())
 }
 
-fn run_grapher<E: Evaluator>(name: &str, base_cfg: Cfg, runner_fn: &RunnerFn<E>) -> Result<()> {
+fn run_grapher<E: Evaluator>(
+    name: &str,
+    base_cfg: Cfg,
+    runner_fn: &impl RunnerFn<E>,
+) -> Result<()> {
     let mut g = Grapher::new();
     let mod_cfg = all_cfg();
     eval_run(&mut g, name, "def", base_cfg, runner_fn)?;
@@ -48,7 +50,7 @@ fn run_grapher<E: Evaluator>(name: &str, base_cfg: Cfg, runner_fn: &RunnerFn<E>)
     Ok(())
 }
 
-fn run_once<E: Evaluator>(cfg: Cfg, runner_fn: &RunnerFn<E>) -> Result<()> {
+fn run_once<E: Evaluator>(cfg: Cfg, runner_fn: &impl RunnerFn<E>) -> Result<()> {
     let mut runner = runner_fn(cfg);
     for i in 0..100 {
         let detail = i % 10 == 0;

@@ -4,6 +4,8 @@ use crate::{Cfg, Evaluator};
 use derive_more::Display;
 use eyre::Result;
 
+pub trait RunnerFn<E: Evaluator> = Fn(Cfg) -> Runner<E> + Sync + Send + Clone;
+
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Stats {
     pub best_fitness: f64,
