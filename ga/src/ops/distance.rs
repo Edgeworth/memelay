@@ -15,8 +15,8 @@ pub fn dist1<T: Num + NumAssign + Copy + PartialOrd>(s1: &[T], s2: &[T]) -> T {
     let mut dist = T::zero();
     for i in 0..max {
         let zero = T::zero();
-        let mut a = s1.get(i).unwrap_or(&zero);
-        let mut b = s2.get(i).unwrap_or(&zero);
+        let a = s1.get(i).unwrap_or(&zero);
+        let b = s2.get(i).unwrap_or(&zero);
         dist += dist_abs(*a, *b);
     }
     dist

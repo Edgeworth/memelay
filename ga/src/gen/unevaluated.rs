@@ -1,4 +1,4 @@
-use crate::cfg::{Cfg, Niching, Species, EP};
+use crate::cfg::{Cfg, Crossover, Mutation, Niching, Species, EP};
 use crate::gen::evaluated::{EvaluatedGen, Member};
 use crate::gen::species::DistCache;
 use crate::gen::Params;
@@ -7,7 +7,7 @@ use eyre::{eyre, Result};
 use rayon::prelude::*;
 use std::cmp::Ordering;
 
-#[derive(Debug, Clone, PartialOrd, PartialEq)]
+#[derive(Clone, PartialOrd, PartialEq)]
 pub struct UnevaluatedGen<E: Evaluator> {
     states: Vec<State<E>>,
     base_fitness: Vec<f64>,
@@ -18,10 +18,22 @@ pub struct UnevaluatedGen<E: Evaluator> {
 }
 
 impl<E: Evaluator> UnevaluatedGen<E> {
-    pub fn initial(genomes: Vec<E::Genome>) -> Self {
+    pub fn initial(genomes: Vec<E::Genome>, cfg: &Cfg) -> Self {
+        let mutation = if let Mutation::Fixed(v) = &cfg.mutation {
+            v.clone()
+        } else {
+            vec![0.1; E::NUM_MUTATION]
+        };
+
+        let crossover = if let Crossover::Fixed(v) = &cfg.crossover {
+            v.clone()
+        } else {
+            vec![0.1; E::NUM_CROSSOVER]
+        };
+
         let states = genomes
             .into_iter()
-            .map(|v| (v, Params { mutation_rates: vec![], crossover_rates: vec![] }))
+            .map(|v| (v, Params { mutation: mutation.clone(), crossover: crossover.clone() }))
             .collect();
         Self::new(states)
     }
@@ -64,7 +76,6 @@ impl<E: Evaluator> UnevaluatedGen<E> {
         }
         num_species
     }
-
 
     pub fn evaluate(&mut self, cfg: &Cfg, eval: &E) -> Result<EvaluatedGen<E>> {
         // First compute plain fitnesses.

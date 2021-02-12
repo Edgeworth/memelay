@@ -1,7 +1,7 @@
 use designer::constants::Constants;
 use designer::ingest::{load_corpus, load_layout, load_layout_cfg};
 use designer::models::compute_kevs;
-use designer::models::us::USModel;
+use designer::models::us::UsModel;
 use designer::path::PathFinder;
 use eyre::Result;
 
@@ -15,7 +15,7 @@ fn test_all_keys_can_path() -> Result<()> {
         max_mod_pressed: 1,
         ..Default::default()
     };
-    let kevs = compute_kevs(USModel::new(), &corpus, &cnst);
+    let kevs = compute_kevs(UsModel::new(), &corpus, &cnst);
     let l = load_layout("data/all_keys.layout")?;
     let res = PathFinder::new(&layout_cfg, &kevs, &cnst, &l).path();
     assert_eq!(res.kevs_found, kevs.len());

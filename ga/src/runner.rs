@@ -15,7 +15,7 @@ pub struct Stats {
     pub num_species: usize,
 }
 
-#[derive(Debug, Display, Clone, PartialEq)]
+#[derive(Display, Clone, PartialEq)]
 #[display(fmt = "Run({})", gen)]
 pub struct RunResult<E: Evaluator> {
     pub gen: EvaluatedGen<E>,
@@ -45,7 +45,7 @@ impl<E: Evaluator> Runner<E> {
                 num_species: evaluated.num_species(),
             });
         }
-        let mut gen = evaluated.next_gen(&self.cfg, &self.eval);
+        let mut gen = evaluated.next_gen(&self.cfg, &self.eval)?;
         std::mem::swap(&mut gen, &mut self.gen);
         Ok(RunResult { gen: evaluated, stats })
     }

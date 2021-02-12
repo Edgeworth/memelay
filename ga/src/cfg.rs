@@ -1,5 +1,24 @@
 pub const EP: f64 = 1.0e-6;
 
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
+// Only one crossover function will be applied at a time.
+pub enum Crossover {
+    // Fixed with given rate. Specify the probabilities for each crossover function.
+    Fixed(Vec<f64>),
+    // Adaptive - uses 1/sqrt(pop size) as learning rate.
+    Adaptive,
+}
+
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
+// Each mutation function will be applied with the given rate. This is different to crossover,
+// which is only applied once.
+pub enum Mutation {
+    // Fixed with given rate. Specify the probabilities for each mutation function.
+    Fixed(Vec<f64>),
+    // Adaptive - uses 1/sqrt(pop size) as learning rate.
+    Adaptive,
+}
+
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
 pub enum Survival {
     TopProportion(f64),
@@ -25,26 +44,6 @@ pub enum Species {
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
-// Each mutation function will be applied with the given rate. This is different to crossover,
-// which is only applied once.
-pub enum Mutation {
-    // Fixed with given rate. Specify the probabilities for each mutation function.
-    Fixed(Vec<f64>),
-    // Adaptive - uses 1/sqrt(pop size) as learning rate. Specify number of mutation functions to select from.
-    Adaptive(usize),
-}
-
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
-// Only one crossover function will be applied at a time.
-pub enum Crossover {
-    // Fixed with given rate. Specify the probabilities for each crossover function.
-    Fixed(Vec<f64>),
-    // Adaptive - uses 1/sqrt(pop size) as learning rate. Specify number of crossover functions to
-    // select from.
-    Adaptive(usize),
-}
-
-#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub struct Cfg {
     pub pop_size: usize,
     pub crossover: Crossover,
@@ -59,8 +58,8 @@ impl Cfg {
     pub fn new(pop_size: usize) -> Self {
         Self {
             pop_size,
-            crossover: Crossover::Fixed(vec![0.3, 0.7]),
-            mutation: Mutation::Fixed(vec![0.9, 0.1]),
+            crossover: Crossover::Adaptive,
+            mutation: Mutation::Adaptive,
             survival: Survival::TopProportion(0.1),
             selection: Selection::Sus,
             niching: Niching::None,

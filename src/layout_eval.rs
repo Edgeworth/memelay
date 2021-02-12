@@ -2,7 +2,7 @@ use crate::constants::Constants;
 use crate::ingest::{load_corpus, load_layout_cfg};
 use crate::models::compute_kevs;
 use crate::models::layout::Layout;
-use crate::models::us::USModel;
+use crate::models::us::UsModel;
 use crate::path::PathFinder;
 use crate::types::{rand_kcset, Finger, PhysEv};
 use crate::Args;
@@ -79,6 +79,8 @@ impl LayoutEval {
 
 impl Evaluator for LayoutEval {
     type Genome = Layout;
+    const NUM_CROSSOVER: usize = 3;
+    const NUM_MUTATION: usize = 4;
 
     fn crossover(&self, s1: &mut Layout, s2: &mut Layout, idx: usize) {
         let mut r = rand::thread_rng();
@@ -140,7 +142,7 @@ impl Evaluator for LayoutEval {
         let start_idx = r.gen_range(0..=(self.corpus.len() - block_size));
         for _ in 0..self.cnst.batch_num {
             let kevs = compute_kevs(
-                USModel::new(),
+                UsModel::new(),
                 &self.corpus[start_idx..(start_idx + block_size)],
                 &self.cnst,
             );

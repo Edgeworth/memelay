@@ -1,17 +1,17 @@
 use crate::constants::Constants;
 use crate::models::count_map::CountMap;
-use crate::types::{rand_kcset, KCSet, KCSetExt};
+use crate::types::{rand_kcset, KcSet, KcSetExt};
 use derive_more::Display;
 use enumset::enum_set;
 
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Display)]
 #[display(fmt = "{:?}", keys)]
 pub struct Layer {
-    pub keys: Vec<KCSet>,
+    pub keys: Vec<KcSet>,
 }
 
 impl Layer {
-    pub fn new(keys: &[KCSet]) -> Self {
+    pub fn new(keys: &[KcSet]) -> Self {
         Self { keys: keys.to_vec() }
     }
 
@@ -25,7 +25,7 @@ impl Layer {
 
     pub fn normalise(&mut self, cnst: &Constants) {
         // Remove same keys and excess mod keys.
-        let mut cm: CountMap<KCSet> = CountMap::new();
+        let mut cm: CountMap<KcSet> = CountMap::new();
         let mut keys = Vec::new();
         let mut mod_count = 0;
         for mut kcset in self.keys.iter().copied() {
@@ -98,11 +98,11 @@ impl Layout {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::KC;
+    use crate::types::Kc;
     use lazy_static::lazy_static;
 
-    const CTRL_C: KCSet = enum_set!(KC::C | KC::Ctrl);
-    const C: KCSet = enum_set!(KC::C);
+    const CTRL_C: KcSet = enum_set!(Kc::C | Kc::Ctrl);
+    const C: KcSet = enum_set!(Kc::C);
     lazy_static! {
         static ref CNST: Constants =
             Constants { max_phys_duplicate_per_layer: 1, ..Default::default() };
