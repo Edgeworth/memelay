@@ -1,9 +1,11 @@
+use rand_distr::{Distribution, Standard};
+
 pub const EP: f64 = 1.0e-6;
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
 // Only one crossover function will be applied at a time.
 pub enum Crossover {
-    // Fixed with given rate. Specify the probabilities for each crossover function.
+    // Fixed with given rate. Specify the weights for each crossover function.
     Fixed(Vec<f64>),
     // Adaptive - uses 1/sqrt(pop size) as learning rate.
     Adaptive,
@@ -13,7 +15,7 @@ pub enum Crossover {
 // Each mutation function will be applied with the given rate. This is different to crossover,
 // which is only applied once.
 pub enum Mutation {
-    // Fixed with given rate. Specify the probabilities for each mutation function.
+    // Fixed with given rate. Specify the weights for each mutation function.
     Fixed(Vec<f64>),
     // Adaptive - uses 1/sqrt(pop size) as learning rate.
     Adaptive,
@@ -25,10 +27,28 @@ pub enum Survival {
     SpeciesTopProportion(f64), // Top proportion for each species.
 }
 
+impl Distribution<Survival> for Standard {
+    fn sample<R: rand::Rng + ?Sized>(&self, r: &mut R) -> Survival {
+        match r.gen_range(0..2) {
+            0 => Survival::TopProportion(r.gen_range(0.0..0.9)),
+            _ => Survival::SpeciesTopProportion(r.gen_range(0.0..0.9)),
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, PartialOrd)]
 pub enum Selection {
     Sus,
     Roulette,
+}
+
+impl Distribution<Selection> for Standard {
+    fn sample<R: rand::Rng + ?Sized>(&self, r: &mut R) -> Selection {
+        match r.gen_range(0..2) {
+            0 => Selection::Sus,
+            _ => Selection::Roulette,
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, PartialOrd)]
@@ -37,10 +57,28 @@ pub enum Niching {
     SharedFitness,
 }
 
+impl Distribution<Niching> for Standard {
+    fn sample<R: rand::Rng + ?Sized>(&self, r: &mut R) -> Niching {
+        match r.gen_range(0..2) {
+            0 => Niching::None,
+            _ => Niching::SharedFitness,
+        }
+    }
+}
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, PartialOrd)]
 pub enum Species {
     None,
     TargetNumber(usize), // Target number of species.
+}
+
+impl Distribution<Species> for Standard {
+    fn sample<R: rand::Rng + ?Sized>(&self, r: &mut R) -> Species {
+        match r.gen_range(0..2) {
+            0 => Species::None,
+            _ => Species::TargetNumber(r.gen_range(1..10)),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
