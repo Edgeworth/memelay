@@ -56,25 +56,32 @@ impl<F: RunnerFn<E>, E: Evaluator + Genome> Evaluator for HyperAlg<F, E> {
     }
 
     fn mutate(&self, s: &mut State<E>, rate: f64, idx: usize) {
+        let mut r = rand::thread_rng();
         match idx {
             0 => {}
             1 => {
                 // Mutate crossover
+                s.cfg.crossover = r.gen();
             }
             2 => {
                 // Mutate mutation
+                s.cfg.mutation = r.gen();
             }
             3 => {
                 // Mutate survival
+                s.cfg.survival = r.gen();
             }
             4 => {
                 // Mutate selection
+                s.cfg.selection = r.gen();
             }
             5 => {
                 // Mutate niching
+                s.cfg.niching = r.gen();
             }
             6 => {
                 // Mutate species
+                s.cfg.species = r.gen();
             }
             _ => panic!("bug"),
         }
