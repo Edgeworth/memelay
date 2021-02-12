@@ -9,46 +9,46 @@ use strum_macros::{Display as StrumDisplay, EnumIter, EnumString};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, EnumString, StrumDisplay)]
 pub enum Finger {
-    LP,
-    LR,
-    LM,
-    LI,
-    LT,
-    RP,
-    RR,
-    RM,
-    RI,
-    RT,
+    Lp,
+    Lr,
+    Lm,
+    Li,
+    Lt,
+    Rp,
+    Rr,
+    Rm,
+    Ri,
+    Rt,
 }
 
-pub trait KCSetExt {
-    fn reg(&self) -> KCSet;
-    fn mods(&self) -> KCSet;
-    fn layers(&self) -> KCSet;
+pub trait KcSetExt {
+    fn reg(&self) -> KcSet;
+    fn mods(&self) -> KcSet;
+    fn layers(&self) -> KcSet;
 }
 
-pub type KCSet = EnumSet<KC>;
+pub type KcSet = EnumSet<Kc>;
 
-impl KCSetExt for KCSet {
-    fn reg(&self) -> KCSet {
+impl KcSetExt for KcSet {
+    fn reg(&self) -> KcSet {
         self.iter().filter(|x| !x.is_mod()).collect()
     }
 
-    fn mods(&self) -> KCSet {
+    fn mods(&self) -> KcSet {
         self.iter().filter(|x| x.is_mod()).collect()
     }
 
-    fn layers(&self) -> KCSet {
+    fn layers(&self) -> KcSet {
         self.iter().filter(|x| x.is_layer()).collect()
     }
 }
 
-pub fn rand_kcset(cnst: &Constants) -> KCSet {
+pub fn rand_kcset(cnst: &Constants) -> KcSet {
     let mut r = rand::thread_rng();
     let num_mod = rws(&cnst.num_mod_assigned_weights).unwrap();
     let num_reg = rws(&cnst.num_reg_assigned_weights).unwrap();
-    let mods = KC::iter().filter(|k| k.is_mod()).collect::<SmallVec<[KC; 4]>>();
-    let regs = KC::iter().filter(|k| !k.is_mod()).collect::<SmallVec<[KC; 2]>>();
+    let mods = Kc::iter().filter(|k| k.is_mod()).collect::<SmallVec<[Kc; 4]>>();
+    let regs = Kc::iter().filter(|k| !k.is_mod()).collect::<SmallVec<[Kc; 2]>>();
     let mods =
         mods.iter().choose_multiple(&mut r, num_mod).iter().fold(enum_set!(), |a, &&b| a | b);
     let regs =
@@ -59,20 +59,20 @@ pub fn rand_kcset(cnst: &Constants) -> KCSet {
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Display)]
 #[display(fmt = "KeyEv({:?}, {})", kcset, press)]
 pub struct KeyEv {
-    pub kcset: KCSet,
+    pub kcset: KcSet,
     pub press: bool,
 }
 
 impl KeyEv {
-    pub fn new(kcset: KCSet, press: bool) -> Self {
+    pub fn new(kcset: KcSet, press: bool) -> Self {
         Self { kcset, press }
     }
 
-    pub fn press(kcset: KCSet) -> Self {
+    pub fn press(kcset: KcSet) -> Self {
         Self::new(kcset, true)
     }
 
-    pub fn release(kcset: KCSet) -> Self {
+    pub fn release(kcset: KcSet) -> Self {
         Self::new(kcset, false)
     }
 }
@@ -101,7 +101,7 @@ impl PhysEv {
 // Based on QMK keycodes.
 #[allow(clippy::derive_hash_xor_eq)]
 #[derive(Debug, Ord, PartialOrd, EnumSetType, EnumIter, EnumString, Hash, StrumDisplay)]
-pub enum KC {
+pub enum Kc {
     // Mod - these come first on purpose, to make sure e.g. Ctrl-C is generated as Ctrl then C.
     Ctrl,
     Shift,
@@ -211,9 +211,9 @@ pub enum KC {
     Layer1,
 }
 
-impl KC {
+impl Kc {
     pub fn is_mod(&self) -> bool {
-        [KC::Ctrl, KC::Shift, KC::Alt, KC::Super].contains(self)
+        [Kc::Ctrl, Kc::Shift, Kc::Alt, Kc::Super].contains(self)
     }
 
     pub fn is_layer(&self) -> bool {
@@ -222,8 +222,8 @@ impl KC {
 
     pub fn layer_num(&self) -> Option<usize> {
         match self {
-            KC::Layer0 => Some(0),
-            KC::Layer1 => Some(1),
+            Kc::Layer0 => Some(0),
+            Kc::Layer1 => Some(1),
             _ => None,
         }
     }

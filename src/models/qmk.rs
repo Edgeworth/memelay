@@ -3,7 +3,7 @@ use crate::models::count_map::CountMap;
 use crate::models::key_automata::KeyAutomata;
 use crate::models::layout::Layout;
 use crate::models::Model;
-use crate::types::{KCSet, KCSetExt, KeyEv, PhysEv, KC};
+use crate::types::{KcSet, KcSetExt, KeyEv, PhysEv, Kc};
 use derive_more::Display;
 use smallvec::SmallVec;
 use vec_map::VecMap;
@@ -24,7 +24,7 @@ pub struct QmkModel<'a> {
     layout: &'a Layout,
     phys: CountMap<usize>, // Holds # of times physical key pressed.
     // Holds KCSet initially used when a physical key was pressed. Needed for layers.
-    cached_key: VecMap<KCSet>,
+    cached_key: VecMap<KcSet>,
     layer: usize, // Current active layer.
     ks: KeyAutomata,
     idle_count: usize,
@@ -138,7 +138,7 @@ impl<'a> QmkModel<'a> {
         edges
     }
 
-    fn get_kcset(&mut self, pev: PhysEv) -> (Option<usize>, KCSet) {
+    fn get_kcset(&mut self, pev: PhysEv) -> (Option<usize>, KcSet) {
         let mut kcset = if pev.press {
             let kcset = self.layout.layers[self.layer].keys[pev.phys as usize];
             self.cached_key.insert(pev.phys, kcset);
@@ -149,10 +149,10 @@ impl<'a> QmkModel<'a> {
         let mut layer = None;
         // Filter layer stuff here, since it is never sent, just handled by QMK.
         // TODO: layer limit here.
-        if kcset.remove(KC::Layer0) {
+        if kcset.remove(Kc::Layer0) {
             layer = Some(0);
         }
-        if kcset.remove(KC::Layer1) && self.layout.layers.len() >= 2 {
+        if kcset.remove(Kc::Layer1) && self.layout.layers.len() >= 2 {
             layer = Some(1);
         }
         (layer, kcset)
@@ -193,7 +193,7 @@ impl<'a> Model for QmkModel<'a> {
         Some(kev)
     }
 
-    fn kc_counts(&self) -> &CountMap<KC> {
+    fn kc_counts(&self) -> &CountMap<Kc> {
         self.ks.kc_counts()
     }
 }
@@ -202,17 +202,17 @@ impl<'a> Model for QmkModel<'a> {
 mod tests {
     use super::*;
     use crate::models::layout::Layer;
-    use crate::types::KCSet;
+    use crate::types::KcSet;
     use enumset::enum_set;
     use lazy_static::lazy_static;
 
-    const NONE: KCSet = enum_set!();
-    const SUPER: KCSet = enum_set!(KC::Super);
-    const CTRL: KCSet = enum_set!(KC::Ctrl);
-    const A: KCSet = enum_set!(KC::A);
-    const C: KCSet = enum_set!(KC::C);
-    const LAYER0: KCSet = enum_set!(KC::Layer0);
-    const LAYER1: KCSet = enum_set!(KC::Layer1);
+    const NONE: KcSet = enum_set!();
+    const SUPER: KcSet = enum_set!(Kc::Super);
+    const CTRL: KcSet = enum_set!(Kc::Ctrl);
+    const A: KcSet = enum_set!(Kc::A);
+    const C: KcSet = enum_set!(Kc::C);
+    const LAYER0: KcSet = enum_set!(Kc::Layer0);
+    const LAYER1: KcSet = enum_set!(Kc::Layer1);
 
     lazy_static! {
         static ref CNST: Constants = Constants {

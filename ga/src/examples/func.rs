@@ -59,6 +59,6 @@ pub fn func_runner(
     cfg: Cfg,
 ) -> Runner<FuncEvaluator<impl FitnessFn<FuncState>>> {
     let initial = rand_vec(cfg.pop_size, || rand_vec(dim, || mutate_uniform(st, en)));
-    let gen = UnevaluatedGen::initial(initial);
+    let gen = UnevaluatedGen::initial(initial, &cfg);
     Runner::new(FuncEvaluator::new(dim, st, en, f), cfg, gen)
 }

@@ -1,6 +1,6 @@
 use crate::constants::Constants;
 use crate::models::count_map::CountMap;
-use crate::types::{KeyEv, KC};
+use crate::types::{KeyEv, Kc};
 use derive_more::Display;
 use enumset::enum_set;
 use smallvec::SmallVec;
@@ -9,7 +9,7 @@ use smallvec::SmallVec;
 #[display(fmt = "count: {}", kcm)]
 pub struct KeyAutomata {
     // TODO: Is this still needed?
-    kcm: CountMap<KC>,
+    kcm: CountMap<Kc>,
 }
 
 impl Default for KeyAutomata {
@@ -23,7 +23,7 @@ impl KeyAutomata {
         Self { kcm: CountMap::new() }
     }
 
-    pub fn kc_counts(&self) -> &CountMap<KC> {
+    pub fn kc_counts(&self) -> &CountMap<Kc> {
         &self.kcm
     }
 
@@ -48,13 +48,13 @@ impl KeyAutomata {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::KCSet;
+    use crate::types::KcSet;
     use lazy_static::lazy_static;
 
-    const SUPER: KCSet = enum_set!(KC::Super);
-    const CTRL: KCSet = enum_set!(KC::Ctrl);
-    const C: KCSet = enum_set!(KC::C);
-    const CTRL_C: KCSet = enum_set!(KC::C | KC::Ctrl);
+    const SUPER: KcSet = enum_set!(Kc::Super);
+    const CTRL: KcSet = enum_set!(Kc::Ctrl);
+    const C: KcSet = enum_set!(Kc::C);
+    const CTRL_C: KcSet = enum_set!(Kc::C | Kc::Ctrl);
     lazy_static! {
         static ref CNST: Constants = Constants { max_mod_pressed: 5, ..Default::default() };
     }

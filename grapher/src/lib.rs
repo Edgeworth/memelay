@@ -5,7 +5,6 @@
     bool_to_option,
     const_fn,
     destructuring_assignment,
-    iterator_fold_self,
     map_first_last,
     option_result_contains,
     option_unwrap_none,

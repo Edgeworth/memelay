@@ -7,9 +7,10 @@ use crate::ops::sampling::{multi_rws, rws, sus};
 use crate::ops::util::clamp_vec;
 use crate::{Cfg, Evaluator, State};
 use derive_more::Display;
+use eyre::{eyre, Result};
 use rayon::prelude::*;
 
-#[derive(Debug, Display, Clone, PartialOrd, PartialEq)]
+#[derive(Display, Clone, PartialOrd, PartialEq)]
 #[display(fmt = "base fitness {:.2}, selection fitness {:.2}", base_fitness, selection_fitness)]
 pub struct Member<E: Evaluator> {
     pub state: State<E>,
@@ -18,7 +19,7 @@ pub struct Member<E: Evaluator> {
     pub species: usize,
 }
 
-#[derive(Debug, Display, Clone, PartialOrd, PartialEq)]
+#[derive(Display, Clone, PartialOrd, PartialEq)]
 #[display(fmt = "pop: {}, best: {}", "mems.len()", "self.best()")]
 pub struct EvaluatedGen<E: Evaluator> {
     mems: Vec<Member<E>>,
@@ -90,43 +91,61 @@ impl<E: Evaluator> EvaluatedGen<E> {
         [self.mems[idxs[0]].state.clone(), self.mems[idxs[1]].state.clone()]
     }
 
-    fn crossover(&self, crossover: &Crossover, eval: &E, s1: &mut State<E>, s2: &mut State<E>) {
+    fn crossover(
+        &self,
+        crossover: &Crossover,
+        eval: &E,
+        s1: &mut State<E>,
+        s2: &mut State<E>,
+    ) -> Result<()> {
         match crossover {
             Crossover::Fixed(rates) => {
-                s1.1.crossover_rates = rates.clone();
-                s2.1.crossover_rates = rates.clone();
+                if rates.len() != E::NUM_CROSSOVER {
+                    return Err(eyre!(
+                        "number of fixed crossover weights {} doesn't match NUM_CROSSOVER {}",
+                        rates.len(),
+                        E::NUM_CROSSOVER
+                    ));
+                }
             }
-            Crossover::Adaptive(num_rates) => {
+            Crossover::Adaptive => {
                 // We need to generate one crossover rate vector from two parents.
                 // Use blend crossover to do this, and take the first one.
-                s1.1.crossover_rates.resize(*num_rates, 0.1);
-                s2.1.crossover_rates.resize(*num_rates, 0.1);
-                crossover_blx(&mut s1.1.crossover_rates, &mut s2.1.crossover_rates, 0.5);
-                clamp_vec(&mut s1.1.crossover_rates, Some(0.0), None);
+                crossover_blx(&mut s1.1.crossover, &mut s2.1.crossover, 0.5);
+                clamp_vec(&mut s1.1.crossover, Some(0.0), None);
             }
         };
-        let idx = rws(&s1.1.crossover_rates).unwrap();
+        let idx = rws(&s1.1.crossover).unwrap();
         eval.crossover(&mut s1.0, &mut s2.0, idx);
+        Ok(())
     }
 
-    fn mutation(&self, mutation: &Mutation, eval: &E, s: &mut State<E>) {
+    fn mutation(&self, mutation: &Mutation, eval: &E, s: &mut State<E>) -> Result<()> {
         match mutation {
-            Mutation::Fixed(rates) => s.1.mutation_rates = rates.clone(),
-            Mutation::Adaptive(num_rates) => {
-                let lrate = 1.0 / (self.size() as f64).sqrt();
+            Mutation::Fixed(rates) => {
+                if rates.len() != E::NUM_MUTATION {
+                    return Err(eyre!(
+                        "number of fixed mutation weights {} doesn't match NUM_MUTATION {}",
+                        rates.len(),
+                        E::NUM_MUTATION
+                    ));
+                }
+            }
+            Mutation::Adaptive => {
                 // Apply every mutation with the given rate.
                 // c' = c * e^(learning rate * N(0, 1))
-                s.1.mutation_rates.resize(*num_rates, 0.1);
-                mutate_rate(&mut s.1.mutation_rates, 1.0, |v| mutate_lognorm(v, lrate).max(0.0));
+                let lrate = 1.0 / (self.size() as f64).sqrt();
+                mutate_rate(&mut s.1.mutation, 1.0, |v| mutate_lognorm(v, lrate).max(0.0));
             }
         };
-        for (idx, &rate) in s.1.mutation_rates.iter().enumerate() {
+        for (idx, &rate) in s.1.mutation.iter().enumerate() {
             eval.mutate(&mut s.0, rate, idx);
         }
+        Ok(())
     }
 
 
-    pub fn next_gen(&self, cfg: &Cfg, eval: &E) -> UnevaluatedGen<E> {
+    pub fn next_gen(&self, cfg: &Cfg, eval: &E) -> Result<UnevaluatedGen<E>> {
         // Pick survivors:
         let mut new_states = self.survivors(cfg.survival);
         let remaining = cfg.pop_size - new_states.len();
@@ -135,14 +154,14 @@ impl<E: Evaluator> EvaluatedGen<E> {
             .into_par_iter()
             .map(|_| {
                 let [mut s1, mut s2] = self.selection(cfg.selection);
-                self.crossover(&cfg.crossover, eval, &mut s1, &mut s2);
-                self.mutation(&cfg.mutation, eval, &mut s1);
-                self.mutation(&cfg.mutation, eval, &mut s2);
+                self.crossover(&cfg.crossover, eval, &mut s1, &mut s2).unwrap();
+                self.mutation(&cfg.mutation, eval, &mut s1).unwrap();
+                self.mutation(&cfg.mutation, eval, &mut s2).unwrap();
                 vec![s1, s2].into_iter()
             })
             .flatten_iter()
             .collect::<Vec<_>>();
         new_states.extend(reproduced.into_iter().take(remaining));
-        UnevaluatedGen::new(new_states)
+        Ok(UnevaluatedGen::new(new_states))
     }
 }

@@ -25,6 +25,7 @@ impl Knapsack {
 impl Evaluator for Knapsack {
     type Genome = State;
 
+
     fn crossover(&self, s1: &mut State, s2: &mut State, idx: usize) {
         match idx {
             0 => {}
@@ -66,7 +67,7 @@ pub fn knapsack_runner(cfg: Cfg) -> Runner<Knapsack> {
 
     let mut r = rand::thread_rng();
     let initial = rand_vec(cfg.pop_size, || rand_vec(NUM_ITEMS, || r.gen::<bool>()));
-    let gen = UnevaluatedGen::initial(initial);
+    let gen = UnevaluatedGen::initial(initial, &cfg);
     let items = rand_vec(NUM_ITEMS, || {
         let w = r.gen_range(0.0..MAX_W);
         let v = r.gen_range(0.1..10.0) * w;

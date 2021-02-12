@@ -5,7 +5,6 @@
     bool_to_option,
     const_fn,
     destructuring_assignment,
-    iterator_fold_self,
     map_first_last,
     option_result_contains,
     option_unwrap_none,
@@ -27,13 +26,15 @@ pub mod hyper;
 pub mod ops;
 pub mod runner;
 
-pub trait Genome = fmt::Debug + Clone + Send + Sync + PartialOrd + PartialEq;
-pub type State<E> = (<E as Evaluator>::Genome, Params);
-
+pub trait Genome = Clone + Send + Sync + PartialOrd + PartialEq + fmt::Debug;
 pub trait FitnessFn<G: Genome> = Fn(&G) -> f64 + Sync + Send + Clone;
+
+pub type State<E> = (<E as Evaluator>::Genome, Params);
 
 pub trait Evaluator: Clone + Send + Sync {
     type Genome: Genome;
+    const NUM_CROSSOVER: usize = 2; // Specify the number of crossover operators.
+    const NUM_MUTATION: usize = 2; // Specify the number of mutation operators.
 
     // |idx| specifies which crossover or mutation function to use. 0 is conventionally do nothing,
     // with actual crossover/mutation starting from index 1.
