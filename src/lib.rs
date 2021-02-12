@@ -5,7 +5,6 @@
     bool_to_option,
     const_fn,
     destructuring_assignment,
-    iterator_fold_self,
     map_first_last,
     option_result_contains,
     option_unwrap_none,
@@ -71,7 +70,8 @@ pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
     // Start from a base with all keys available.
     let initial = load_layout("data/all_keys.layout")?;
     let initial = (0..cfg.pop_size).map(|_| initial.clone()).collect();
-    let mut runner = Runner::new(eval.clone(), cfg, UnevaluatedGen::initial(initial));
+    let initial = UnevaluatedGen::initial(initial, &cfg);
+    let mut runner = Runner::new(eval.clone(), cfg, initial);
 
     for i in 0..eval.cnst.runs {
         let detail = i % 10 == 0;
@@ -98,8 +98,8 @@ pub fn run() -> Result<()> {
     let eval = LayoutEval::from_args(&args)?;
     // Remember to update these values if add more mutation/crossover strategies.
     let cfg = Cfg::new(eval.cnst.pop_size)
-        .with_mutation(Mutation::Adaptive(4))
-        .with_crossover(Crossover::Adaptive(3))
+        .with_mutation(Mutation::Adaptive)
+        .with_crossover(Crossover::Adaptive)
         .with_survival(Survival::SpeciesTopProportion(0.1))
         .with_species(Species::TargetNumber(10))
         .with_niching(Niching::SharedFitness);
