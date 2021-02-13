@@ -117,8 +117,8 @@ impl<E: Evaluator> UnevaluatedGen<E> {
                 let alpha = self.species_radius / self.num_species as f64;
                 let n = self.states.len();
                 let mut fitness = self.base_fitness.clone();
-                // Compute fitness as F'(i) = F(i) / sum of 1 - (d(i, j) / species_radius) ^ alpha.
 
+                // Compute fitness as F'(i) = F(i) / sum of 1 - (d(i, j) / species_radius) ^ alpha.
                 fitness.par_iter_mut().enumerate().for_each(|(i, f)| {
                     let denom = (0..n)
                         .into_par_iter()

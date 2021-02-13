@@ -80,7 +80,7 @@ impl LayoutEval {
 impl Evaluator for LayoutEval {
     type Genome = Layout;
     const NUM_CROSSOVER: usize = 3;
-    const NUM_MUTATION: usize = 4;
+    const NUM_MUTATION: usize = 3;
 
     fn crossover(&self, s1: &mut Layout, s2: &mut Layout, idx: usize) {
         let mut r = rand::thread_rng();
@@ -110,19 +110,18 @@ impl Evaluator for LayoutEval {
         let swap = r.gen::<f64>() < rate;
 
         match idx {
-            0 => {} // Do nothing.
-            1 => {
+            0 => {
                 // Mutate random available key.
                 mutate_rate(&mut s.layers[lidx].keys, rate, |_| rand_kcset(&self.cnst));
             }
-            2 => {
+            1 => {
                 // Swap random layer.
                 if swap {
                     let swap_idx = r.gen_range(0..s.layers.len());
                     s.layers.swap(lidx, swap_idx);
                 }
             }
-            3 => {
+            2 => {
                 // Swap random key
                 if swap {
                     let tmp = s.layers[lidx].keys[kidx];

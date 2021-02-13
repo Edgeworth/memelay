@@ -9,7 +9,7 @@ use crate::{Evaluator, FitnessFn};
 
 pub type FuncState = Vec<f64>;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, PartialOrd)]
 pub struct FuncEvaluator<F: FitnessFn<FuncState>> {
     dim: usize,
     st: f64,
@@ -36,8 +36,7 @@ impl<F: FitnessFn<FuncState>> Evaluator for FuncEvaluator<F> {
 
     fn mutate(&self, s: &mut FuncState, rate: f64, idx: usize) {
         match idx {
-            0 => {}
-            1 => mutate_rate(s, 1.0, |v| mutate_normal(v, rate).clamp(self.st, self.en)),
+            0 => mutate_rate(s, 1.0, |v| mutate_normal(v, rate).clamp(self.st, self.en)),
             _ => panic!("bug"),
         };
     }

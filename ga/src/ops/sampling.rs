@@ -1,3 +1,4 @@
+use rand::prelude::IteratorRandom;
 use rand::Rng;
 use std::iter::Iterator;
 
@@ -18,12 +19,12 @@ pub fn multi_rws(w: &[f64], k: usize) -> Vec<usize> {
 pub fn multi_rws_rng<R: Rng + ?Sized>(w: &[f64], k: usize, r: &mut R) -> Vec<usize> {
     let sum = w.iter().sum();
     if sum == 0.0 {
-        return vec![];
+        return (0..w.len()).choose_multiple(r, k);
     }
 
     let mut idxs = Vec::new();
     for _ in 0..k {
-        let cursor = r.gen_range(0.0..sum);
+        let cursor = r.gen_range(0.0..=sum);
         let mut cursum = 0.0;
         for (i, v) in w.iter().enumerate() {
             cursum += v;
@@ -44,14 +45,17 @@ pub fn sus(w: &[f64], k: usize) -> Vec<usize> {
 
 pub fn sus_rng<R: Rng + ?Sized>(w: &[f64], k: usize, r: &mut R) -> Vec<usize> {
     let sum: f64 = w.iter().sum();
-    if k == 0 || sum == 0.0 {
+    if k == 0 {
         return vec![];
+    }
+    if sum == 0.0 {
+        return (0..w.len()).choose_multiple(r, k);
     }
     let step = sum / k as f64;
     let mut idxs = Vec::new();
     let mut idx = 0;
     let mut cursum = 0.0;
-    let mut cursor = r.gen_range(0.0..step);
+    let mut cursor = r.gen_range(0.0..=step);
     for _ in 0..k {
         while cursum + w[idx] < cursor {
             cursum += w[idx];

@@ -1,104 +1,170 @@
 use crate::cfg::{Cfg, Crossover, Mutation, Niching, Species, Survival};
 use crate::gen::unevaluated::UnevaluatedGen;
 use crate::ops::distance::{dist2, dist_abs};
+use crate::ops::mutation::{mutate_creep, mutate_normal, mutate_rate};
 use crate::ops::util::rand_vec;
 use crate::runner::{Runner, RunnerFn};
-use crate::{Evaluator, Genome};
+use crate::Evaluator;
 use rand::Rng;
-use rand_distr::{Distribution, Standard};
 use std::marker::PhantomData;
+use std::mem::swap;
 use std::time::{Duration, Instant};
 
-// TODO: GA for optimising hyper-params of a GA, i.e:
-// Cfg settings + which crossover and mutation operators etc to use
+const MAX_POP: usize = 1000;
+
 // Also try with average of all example problems.
 
 #[derive(Debug, Clone, PartialEq, PartialOrd)]
-pub struct State<E: Evaluator> {
+pub struct State {
     cfg: Cfg,
     crossover: Vec<f64>, // Weights for fixed crossover.
     mutation: Vec<f64>,  // Weights for fixed mutation.
-    _e: PhantomData<E>,
 }
 
-impl<E: Evaluator> Distribution<State<E>> for Standard {
-    fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> State<E> {
-        let crossover = rand_vec(E::NUM_CROSSOVER, || r.gen());
-        let mutation = rand_vec(E::NUM_MUTATION, || r.gen());
-        // TODO: randomise cfg too.
-        State { cfg: Cfg::new(100), crossover, mutation, _e: PhantomData }
-    }
+fn rand_state<E: Evaluator>() -> State {
+    let mut r = rand::thread_rng();
+    let crossover = rand_vec(E::NUM_CROSSOVER, || r.gen());
+    let mutation = rand_vec(E::NUM_MUTATION, || r.gen());
+    let mut cfg = Cfg::new(r.gen_range(5..MAX_POP));
+    cfg.survival = r.gen();
+    cfg.selection = r.gen();
+    cfg.niching = r.gen();
+    cfg.species = r.gen();
+    State { cfg, crossover, mutation }
 }
 
 #[derive(Debug, Clone)]
-pub struct HyperAlg<F: RunnerFn<E>, E: Evaluator + Genome> {
+pub struct HyperAlg<F: RunnerFn<E>, E: Evaluator> {
     runner: F,
     _e: PhantomData<E>,
 }
 
-impl<F: RunnerFn<E>, E: Evaluator + Genome> HyperAlg<F, E> {
+impl<F: RunnerFn<E>, E: Evaluator> HyperAlg<F, E> {
     pub fn new(runner: F) -> Self {
         Self { runner, _e: PhantomData }
     }
 }
 
-impl<F: RunnerFn<E>, E: Evaluator + Genome> Evaluator for HyperAlg<F, E> {
-    type Genome = State<E>;
+impl<F: RunnerFn<E>, E: Evaluator> Evaluator for HyperAlg<F, E> {
+    type Genome = State;
     const NUM_CROSSOVER: usize = 2;
-    const NUM_MUTATION: usize = 7;
+    const NUM_MUTATION: usize = 10;
 
-    fn crossover(&self, s1: &mut State<E>, s2: &mut State<E>, idx: usize) {
-        match idx {
-            0 => {}
-            1 => {}
-            _ => panic!("bug"),
-        }
-    }
-
-    fn mutate(&self, s: &mut State<E>, rate: f64, idx: usize) {
+    fn crossover(&self, s1: &mut State, s2: &mut State, idx: usize) {
         let mut r = rand::thread_rng();
         match idx {
             0 => {}
             1 => {
-                // Mutate crossover
-                s.cfg.crossover = r.gen();
-            }
-            2 => {
-                // Mutate mutation
-                s.cfg.mutation = r.gen();
-            }
-            3 => {
-                // Mutate survival
-                s.cfg.survival = r.gen();
-            }
-            4 => {
-                // Mutate selection
-                s.cfg.selection = r.gen();
-            }
-            5 => {
-                // Mutate niching
-                s.cfg.niching = r.gen();
-            }
-            6 => {
-                // Mutate species
-                s.cfg.species = r.gen();
+                // Uniform crossover-like operation:
             }
             _ => panic!("bug"),
         }
     }
 
-    fn fitness(&self, s: &State<E>) -> f64 {
-        const SAMPLES: usize = 30;
-        const SAMPLE_DUR: Duration = Duration::from_millis(100);
+    fn mutate(&self, s: &mut State, rate: f64, idx: usize) {
+        let mut r = rand::thread_rng();
+        match idx {
+            0 => {
+                // Mutate crossover - change type
+                if r.gen_bool(rate) {
+                    match &s.cfg.crossover {
+                        Crossover::Fixed(v) => {
+                            s.crossover = v.clone();
+                            s.cfg.crossover = Crossover::Adaptive;
+                        }
+                        Crossover::Adaptive => {
+                            s.cfg.crossover = Crossover::Fixed(s.crossover.clone());
+                        }
+                    }
+                }
+            }
+            1 => {
+                // Mutate crossover - modify weights
+                match &mut s.cfg.crossover {
+                    Crossover::Fixed(v) => {
+                        mutate_rate(v, 1.0, |v| mutate_normal(v, rate).max(0.0));
+                    }
+                    Crossover::Adaptive => {
+                        mutate_rate(&mut s.crossover, 1.0, |v| mutate_normal(v, rate).max(0.0));
+                    }
+                }
+            }
+            2 => {
+                // Mutate mutation - change type
+                if r.gen_bool(rate) {
+                    match &s.cfg.mutation {
+                        Mutation::Fixed(v) => {
+                            s.mutation = v.clone();
+                            s.cfg.mutation = Mutation::Adaptive;
+                        }
+                        Mutation::Adaptive => {
+                            s.cfg.mutation = Mutation::Fixed(s.mutation.clone());
+                        }
+                    }
+                }
+            }
+            3 => {
+                // Mutate mutation - modify weights
+                match &mut s.cfg.mutation {
+                    Mutation::Fixed(v) => {
+                        mutate_rate(v, 1.0, |v| mutate_normal(v, rate).max(0.0));
+                    }
+                    Mutation::Adaptive => {
+                        mutate_rate(&mut s.mutation, 1.0, |v| mutate_normal(v, rate).max(0.0));
+                    }
+                }
+            }
+            4 => {
+                if r.gen_bool(rate) {
+                    s.cfg.survival = r.gen()
+                }
+            }
+            5 => {
+                if r.gen_bool(rate) {
+                    s.cfg.selection = r.gen()
+                }
+            }
+            6 => {
+                if r.gen_bool(rate) {
+                    s.cfg.niching = r.gen()
+                }
+            }
+            7 => {
+                if r.gen_bool(rate) {
+                    s.cfg.species = r.gen()
+                }
+            }
+            8 => {
+                if r.gen_bool(rate) {
+                    s.cfg.pop_size = mutate_creep(s.cfg.pop_size, 10).clamp(2, MAX_POP);
+                }
+            }
+            9 => {
+                if r.gen_bool(rate) {
+                    s.cfg.pop_size = r.gen_range(2..MAX_POP)
+                }
+            }
+            _ => panic!("bug"),
+        }
+    }
+
+    fn fitness(&self, s: &State) -> f64 {
+        const SAMPLES: usize = 100;
+        const SAMPLE_DUR: Duration = Duration::from_millis(10);
         let mut score = 0.0;
         for _ in 0..SAMPLES {
             let mut runner = (self.runner)(s.cfg.clone());
             let st = Instant::now();
+            // Get the last run that ran in time.
+            let mut r1 = None;
+            let mut r2 = None;
             while (Instant::now() - st) < SAMPLE_DUR {
-                runner.run_iter(false).unwrap();
+                swap(&mut r1, &mut r2);
+                r2 = Some(runner.run_iter(true).unwrap().stats.unwrap());
             }
-            let r = runner.run_iter(true).unwrap().stats.unwrap();
-            score += r.best_fitness;
+            if let Some(r) = r2 {
+                score += r.mean_fitness;
+            }
             // TODO: Need multi-objective GA here.
 
             // g.add(&format!("{}:{}:best fitness", name, cfg_name), run_id, r.best_fitness);
@@ -110,7 +176,7 @@ impl<F: RunnerFn<E>, E: Evaluator + Genome> Evaluator for HyperAlg<F, E> {
         score / SAMPLES as f64
     }
 
-    fn distance(&self, s1: &State<E>, s2: &State<E>) -> f64 {
+    fn distance(&self, s1: &State, s2: &State) -> f64 {
         let mut dist = dist_abs(s1.cfg.pop_size, s2.cfg.pop_size) as f64;
 
         let s1_cross = if let Crossover::Fixed(v) = &s1.cfg.crossover { v } else { &s1.crossover };
@@ -125,15 +191,14 @@ impl<F: RunnerFn<E>, E: Evaluator + Genome> Evaluator for HyperAlg<F, E> {
     }
 }
 
-pub fn hyper_runner<F: RunnerFn<E>, E: Evaluator + Genome>(runner: F) -> Runner<HyperAlg<F, E>> {
-    let mut r = rand::thread_rng();
+pub fn hyper_runner<F: RunnerFn<E>, E: Evaluator>(runner: F) -> Runner<HyperAlg<F, E>> {
     let cfg = Cfg::new(100)
         .with_mutation(Mutation::Adaptive)
         .with_crossover(Crossover::Adaptive)
         .with_survival(Survival::SpeciesTopProportion(0.1))
         .with_species(Species::TargetNumber(10))
-        .with_niching(Niching::SharedFitness);
-    let initial = rand_vec(cfg.pop_size, || r.gen()); // TODO fix
+        .with_niching(Niching::None);
+    let initial = rand_vec(cfg.pop_size, rand_state::<E>); // TODO fix
     let gen = UnevaluatedGen::initial(initial, &cfg);
     Runner::new(HyperAlg::new(runner), cfg, gen)
 }

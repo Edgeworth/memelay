@@ -36,8 +36,7 @@ impl Evaluator for TargetString {
     fn mutate(&self, s: &mut State, rate: f64, idx: usize) {
         let mut r = rand::thread_rng();
         match idx {
-            0 => {}
-            1 => mutate_rate(s, rate, |_| r.sample(PrintableAscii)),
+            0 => mutate_rate(s, rate, |_| r.sample(PrintableAscii)),
             _ => panic!("bug"),
         };
     }

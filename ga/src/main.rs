@@ -6,7 +6,8 @@ use ga::examples::knapsack::knapsack_runner;
 use ga::examples::rastrigin::rastrigin_runner;
 use ga::examples::target_string::target_string_runner;
 use ga::examples::{all_cfg, none_cfg};
-use ga::runner::RunnerFn;
+use ga::hyper::hyper_runner;
+use ga::runner::{Runner, RunnerFn};
 use ga::Evaluator;
 use grapher::Grapher;
 
@@ -50,10 +51,9 @@ fn run_grapher<E: Evaluator>(
     Ok(())
 }
 
-fn run_once<E: Evaluator>(cfg: Cfg, runner_fn: &impl RunnerFn<E>) -> Result<()> {
-    let mut runner = runner_fn(cfg);
-    for i in 0..100 {
-        let detail = i % 10 == 0;
+fn run_once<E: Evaluator>(mut runner: Runner<E>) -> Result<()> {
+    for i in 0..1000 {
+        let detail = true; // i % 10 == 0;
         let r = runner.run_iter(detail)?;
         println!("Generation {}: {}", i + 1, r.gen.best().base_fitness);
         if detail {
@@ -64,12 +64,17 @@ fn run_once<E: Evaluator>(cfg: Cfg, runner_fn: &impl RunnerFn<E>) -> Result<()> 
 }
 
 fn main() -> Result<()> {
-    let cfg = none_cfg();
+    // let cfg = none_cfg();
     // let cfg = all_cfg();
-    run_grapher("knapsack", cfg.clone(), &knapsack_runner)?;
-    run_grapher("rastrigin", cfg.clone(), &|cfg| rastrigin_runner(2, cfg))?;
-    run_grapher("griewank", cfg.clone(), &|cfg| griewank_runner(2, cfg))?;
-    run_grapher("ackley", cfg.clone(), &|cfg| ackley_runner(2, cfg))?;
-    run_grapher("string", cfg, &target_string_runner)?;
+    // run_grapher("knapsack", cfg.clone(), &knapsack_runner)?;
+    // run_grapher("rastrigin", cfg.clone(), &|cfg| rastrigin_runner(2, cfg))?;
+    // run_grapher("griewank", cfg.clone(), &|cfg| griewank_runner(2, cfg))?;
+    // run_grapher("ackley", cfg.clone(), &|cfg| ackley_runner(2, cfg))?;
+    // run_grapher("string", cfg, &target_string_runner)?;
+    // run_once(rastrigin_runner(2, all_cfg()))?;
+    run_once(hyper_runner(&|cfg| rastrigin_runner(2, cfg)))?;
+    // run_once(hyper_runner(&knapsack_runner))?;
+    // run_once(hyper_runner(&target_string_runner))?;
+    // run_once(hyper_runner(&|cfg| ackley_runner(2, cfg)))?;
     Ok(())
 }
