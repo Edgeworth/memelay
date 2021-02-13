@@ -56,6 +56,33 @@ impl<F: RunnerFn<E>, E: Evaluator> Evaluator for HyperAlg<F, E> {
             0 => {}
             1 => {
                 // Uniform crossover-like operation:
+                if r.gen::<bool>() {
+                    swap(&mut s1.cfg.pop_size, &mut s2.cfg.pop_size);
+                }
+                if r.gen::<bool>() {
+                    swap(&mut s1.cfg.crossover, &mut s2.cfg.crossover);
+                }
+                if r.gen::<bool>() {
+                    swap(&mut s1.cfg.mutation, &mut s2.cfg.mutation);
+                }
+                if r.gen::<bool>() {
+                    swap(&mut s1.cfg.survival, &mut s2.cfg.survival);
+                }
+                if r.gen::<bool>() {
+                    swap(&mut s1.cfg.selection, &mut s2.cfg.selection);
+                }
+                if r.gen::<bool>() {
+                    swap(&mut s1.cfg.niching, &mut s2.cfg.niching);
+                }
+                if r.gen::<bool>() {
+                    swap(&mut s1.cfg.species, &mut s2.cfg.species);
+                }
+                if r.gen::<bool>() {
+                    swap(&mut s1.crossover, &mut s2.crossover);
+                }
+                if r.gen::<bool>() {
+                    swap(&mut s1.mutation, &mut s2.mutation);
+                }
             }
             _ => panic!("bug"),
         }
