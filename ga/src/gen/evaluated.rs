@@ -91,6 +91,18 @@ impl<E: Evaluator> EvaluatedGen<E> {
         [self.mems[idxs[0]].state.clone(), self.mems[idxs[1]].state.clone()]
     }
 
+    fn check_weights(weights: &[f64], l: usize) -> Result<()> {
+        if weights.len() != l {
+            return Err(eyre!("number of fixed weights {} doesn't match {}", weights.len(), l));
+        }
+        for &v in weights.iter() {
+            if v < 0.0 {
+                return Err(eyre!("weights must all be non-negative: {}", v));
+            }
+        }
+        Ok(())
+    }
+
     fn crossover(
         &self,
         crossover: &Crossover,
@@ -100,13 +112,8 @@ impl<E: Evaluator> EvaluatedGen<E> {
     ) -> Result<()> {
         match crossover {
             Crossover::Fixed(rates) => {
-                if rates.len() != E::NUM_CROSSOVER {
-                    return Err(eyre!(
-                        "number of fixed crossover weights {} doesn't match NUM_CROSSOVER {}",
-                        rates.len(),
-                        E::NUM_CROSSOVER
-                    ));
-                }
+                s1.1.crossover = rates.clone();
+                s2.1.crossover = rates.clone();
             }
             Crossover::Adaptive => {
                 // We need to generate one crossover rate vector from two parents.
@@ -115,6 +122,8 @@ impl<E: Evaluator> EvaluatedGen<E> {
                 clamp_vec(&mut s1.1.crossover, Some(0.0), None);
             }
         };
+        Self::check_weights(&s1.1.crossover, E::NUM_CROSSOVER)?;
+        Self::check_weights(&s2.1.crossover, E::NUM_CROSSOVER)?;
         let idx = rws(&s1.1.crossover).unwrap();
         eval.crossover(&mut s1.0, &mut s2.0, idx);
         Ok(())
@@ -123,21 +132,16 @@ impl<E: Evaluator> EvaluatedGen<E> {
     fn mutation(&self, mutation: &Mutation, eval: &E, s: &mut State<E>) -> Result<()> {
         match mutation {
             Mutation::Fixed(rates) => {
-                if rates.len() != E::NUM_MUTATION {
-                    return Err(eyre!(
-                        "number of fixed mutation weights {} doesn't match NUM_MUTATION {}",
-                        rates.len(),
-                        E::NUM_MUTATION
-                    ));
-                }
+                s.1.mutation = rates.clone();
             }
             Mutation::Adaptive => {
                 // Apply every mutation with the given rate.
                 // c' = c * e^(learning rate * N(0, 1))
                 let lrate = 1.0 / (self.size() as f64).sqrt();
-                mutate_rate(&mut s.1.mutation, 1.0, |v| mutate_lognorm(v, lrate).max(0.0));
+                mutate_rate(&mut s.1.mutation, 1.0, |v| mutate_lognorm(v, lrate).clamp(0.0, 1.0));
             }
         };
+        Self::check_weights(&s.1.mutation, E::NUM_MUTATION)?;
         for (idx, &rate) in s.1.mutation.iter().enumerate() {
             eval.mutate(&mut s.0, rate, idx);
         }

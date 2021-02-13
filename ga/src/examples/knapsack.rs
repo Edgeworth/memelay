@@ -37,8 +37,7 @@ impl Evaluator for Knapsack {
     fn mutate(&self, s: &mut State, rate: f64, idx: usize) {
         let mut r = rand::thread_rng();
         match idx {
-            0 => {}
-            1 => mutate_rate(s, rate, |_| r.gen::<bool>()),
+            0 => mutate_rate(s, rate, |_| r.gen::<bool>()),
             _ => panic!("bug"),
         };
     }
