@@ -55,6 +55,6 @@ pub fn target_string_runner(cfg: Cfg) -> Runner<TargetString> {
     let mut r = rand::thread_rng();
     let initial =
         rand_vec(cfg.pop_size, || rand_vec(TARGET.len(), || r.sample::<char, _>(PrintableAscii)));
-    let gen = UnevaluatedGen::initial(initial, &cfg);
+    let gen = UnevaluatedGen::initial::<TargetString>(initial, &cfg);
     Runner::new(TargetString::new(TARGET), cfg, gen)
 }

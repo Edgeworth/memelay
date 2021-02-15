@@ -50,14 +50,14 @@ impl<F: FitnessFn<FuncState>> Evaluator for FuncEvaluator<F> {
     }
 }
 
-pub fn func_runner(
+pub fn func_runner<F: FitnessFn<FuncState>>(
     dim: usize,
     st: f64,
     en: f64,
-    f: impl FitnessFn<FuncState>,
+    f: F,
     cfg: Cfg,
-) -> Runner<FuncEvaluator<impl FitnessFn<FuncState>>> {
+) -> Runner<FuncEvaluator<F>> {
     let initial = rand_vec(cfg.pop_size, || rand_vec(dim, || mutate_uniform(st, en)));
-    let gen = UnevaluatedGen::initial(initial, &cfg);
+    let gen = UnevaluatedGen::initial::<FuncEvaluator<F>>(initial, &cfg);
     Runner::new(FuncEvaluator::new(dim, st, en, f), cfg, gen)
 }

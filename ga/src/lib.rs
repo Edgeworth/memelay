@@ -8,7 +8,6 @@
     map_first_last,
     option_result_contains,
     option_unwrap_none,
-    partition_point,
     stmt_expr_attributes,
     trait_alias,
     type_alias_impl_trait
@@ -29,9 +28,9 @@ pub mod runner;
 pub trait Genome = Clone + Send + Sync + PartialOrd + PartialEq + fmt::Debug;
 pub trait FitnessFn<G: Genome> = Fn(&G) -> f64 + Sync + Send + Clone;
 
-pub type State<E> = (<E as Evaluator>::Genome, Params);
+pub type State<T> = (T, Params);
 
-pub trait Evaluator: Clone + Send + Sync {
+pub trait Evaluator: Send + Sync {
     type Genome: Genome;
     const NUM_CROSSOVER: usize = 2; // Specify the number of crossover operators.
     const NUM_MUTATION: usize = 1; // Specify the number of mutation operators.

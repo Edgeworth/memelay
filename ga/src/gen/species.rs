@@ -8,7 +8,7 @@ pub struct DistCache {
 }
 
 impl DistCache {
-    pub fn new<E: Evaluator>(eval: &E, s: &[State<E>]) -> Self {
+    pub fn new<E: Evaluator>(eval: &E, s: &[State<E::Genome>]) -> Self {
         let cache = (0..s.len())
             .into_par_iter()
             .map(|i| {
