@@ -1,10 +1,10 @@
 use crate::gen::evaluated::EvaluatedGen;
 use crate::gen::unevaluated::UnevaluatedGen;
-use crate::{Cfg, Evaluator};
+use crate::{Cfg, Evaluator, Genome};
 use derive_more::Display;
 use eyre::Result;
 
-pub trait RunnerFn<E: Evaluator> = Fn(Cfg) -> Runner<E> + Sync + Send + Clone;
+pub trait RunnerFn<E: Evaluator> = Fn(Cfg) -> Runner<E> + Sync + Send + Clone + 'static;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Stats {
@@ -17,23 +17,23 @@ pub struct Stats {
 
 #[derive(Display, Clone, PartialEq)]
 #[display(fmt = "Run({})", gen)]
-pub struct RunResult<E: Evaluator> {
-    pub gen: EvaluatedGen<E>,
+pub struct RunResult<T: Genome> {
+    pub gen: EvaluatedGen<T>,
     pub stats: Option<Stats>,
 }
 
 pub struct Runner<E: Evaluator> {
     eval: E,
     cfg: Cfg,
-    gen: UnevaluatedGen<E>,
+    gen: UnevaluatedGen<E::Genome>,
 }
 
 impl<E: Evaluator> Runner<E> {
-    pub fn new(eval: E, cfg: Cfg, gen: UnevaluatedGen<E>) -> Self {
+    pub fn new(eval: E, cfg: Cfg, gen: UnevaluatedGen<E::Genome>) -> Self {
         Self { eval, cfg, gen }
     }
 
-    pub fn run_iter(&mut self, compute_stats: bool) -> Result<RunResult<E>> {
+    pub fn run_iter(&mut self, compute_stats: bool) -> Result<RunResult<E::Genome>> {
         let mut evaluated = self.gen.evaluate(&self.cfg, &self.eval)?;
         let mut stats = None;
         if compute_stats {
