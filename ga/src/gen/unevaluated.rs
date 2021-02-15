@@ -2,14 +2,14 @@ use crate::cfg::{Cfg, Crossover, Mutation, Niching, Species, EP};
 use crate::gen::evaluated::{EvaluatedGen, Member};
 use crate::gen::species::DistCache;
 use crate::gen::Params;
-use crate::{Evaluator, State};
+use crate::{Evaluator, Genome, State};
 use eyre::{eyre, Result};
 use rayon::prelude::*;
 use std::cmp::Ordering;
 
 #[derive(Clone, PartialOrd, PartialEq)]
-pub struct UnevaluatedGen<E: Evaluator> {
-    states: Vec<State<E>>,
+pub struct UnevaluatedGen<T: Genome> {
+    states: Vec<State<T>>,
     base_fitness: Vec<f64>,
     species: Vec<i32>,
     num_species: usize,
@@ -17,8 +17,8 @@ pub struct UnevaluatedGen<E: Evaluator> {
     dists: DistCache,
 }
 
-impl<E: Evaluator> UnevaluatedGen<E> {
-    pub fn initial(genomes: Vec<E::Genome>, cfg: &Cfg) -> Self {
+impl<T: Genome> UnevaluatedGen<T> {
+    pub fn initial<E: Evaluator>(genomes: Vec<T>, cfg: &Cfg) -> Self {
         let mutation = if let Mutation::Fixed(v) = &cfg.mutation {
             v.clone()
         } else {
@@ -38,7 +38,7 @@ impl<E: Evaluator> UnevaluatedGen<E> {
         Self::new(states)
     }
 
-    pub fn new(states: Vec<State<E>>) -> Self {
+    pub fn new(states: Vec<State<T>>) -> Self {
         if states.is_empty() {
             panic!("Generation must not be empty");
         }
@@ -52,7 +52,7 @@ impl<E: Evaluator> UnevaluatedGen<E> {
         }
     }
 
-    fn ensure_dists(&mut self, eval: &E) {
+    fn ensure_dists<E: Evaluator<Genome = T>>(&mut self, eval: &E) {
         if self.dists.is_empty() {
             self.dists = DistCache::new(eval, &self.states);
         }
@@ -77,7 +77,11 @@ impl<E: Evaluator> UnevaluatedGen<E> {
         num_species
     }
 
-    pub fn evaluate(&mut self, cfg: &Cfg, eval: &E) -> Result<EvaluatedGen<E>> {
+    pub fn evaluate<E: Evaluator<Genome = T>>(
+        &mut self,
+        cfg: &Cfg,
+        eval: &E,
+    ) -> Result<EvaluatedGen<T>> {
         // First compute plain fitnesses.
         self.base_fitness = self.states.par_iter_mut().map(|s| eval.fitness(&s.0)).collect();
 

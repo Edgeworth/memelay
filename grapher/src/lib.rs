@@ -8,7 +8,6 @@
     map_first_last,
     option_result_contains,
     option_unwrap_none,
-    partition_point,
     stmt_expr_attributes,
     trait_alias,
     type_alias_impl_trait

@@ -8,7 +8,6 @@
     map_first_last,
     option_result_contains,
     option_unwrap_none,
-    partition_point,
     stmt_expr_attributes,
     trait_alias,
     type_alias_impl_trait
@@ -70,7 +69,7 @@ pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
     // Start from a base with all keys available.
     let initial = load_layout("data/all_keys.layout")?;
     let initial = (0..cfg.pop_size).map(|_| initial.clone()).collect();
-    let initial = UnevaluatedGen::initial(initial, &cfg);
+    let initial = UnevaluatedGen::initial::<LayoutEval>(initial, &cfg);
     let mut runner = Runner::new(eval.clone(), cfg, initial);
 
     for i in 0..eval.cnst.runs {

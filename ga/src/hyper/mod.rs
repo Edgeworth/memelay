@@ -1,12 +1,16 @@
 use crate::cfg::{Cfg, Crossover, Mutation, Niching, Species, Survival};
+use crate::examples::ackley::ackley_runner;
+use crate::examples::griewank::griewank_runner;
+use crate::examples::knapsack::knapsack_runner;
+use crate::examples::rastrigin::rastrigin_runner;
+use crate::examples::target_string::target_string_runner;
 use crate::gen::unevaluated::UnevaluatedGen;
 use crate::ops::distance::{dist2, dist_abs};
 use crate::ops::mutation::{mutate_creep, mutate_normal, mutate_rate};
 use crate::ops::util::rand_vec;
-use crate::runner::{Runner, RunnerFn};
+use crate::runner::{Runner, RunnerFn, Stats};
 use crate::Evaluator;
 use rand::Rng;
-use std::marker::PhantomData;
 use std::mem::swap;
 use std::time::{Duration, Instant};
 
@@ -21,31 +25,19 @@ pub struct State {
     mutation: Vec<f64>,  // Weights for fixed mutation.
 }
 
-fn rand_state<E: Evaluator>() -> State {
-    let mut r = rand::thread_rng();
-    let crossover = rand_vec(E::NUM_CROSSOVER, || r.gen());
-    let mutation = rand_vec(E::NUM_MUTATION, || r.gen());
-    let mut cfg = Cfg::new(r.gen_range(5..MAX_POP));
-    cfg.survival = r.gen();
-    cfg.selection = r.gen();
-    cfg.niching = r.gen();
-    cfg.species = r.gen();
-    State { cfg, crossover, mutation }
+trait StatFn = Fn(Cfg) -> Option<Stats> + Send + Sync;
+
+pub struct HyperAlg {
+    stat_fns: Vec<Box<dyn StatFn>>,
 }
 
-#[derive(Debug, Clone)]
-pub struct HyperAlg<F: RunnerFn<E>, E: Evaluator> {
-    runner: F,
-    _e: PhantomData<E>,
-}
-
-impl<F: RunnerFn<E>, E: Evaluator> HyperAlg<F, E> {
-    pub fn new(runner: F) -> Self {
-        Self { runner, _e: PhantomData }
+impl HyperAlg {
+    pub fn new(stat_fns: Vec<Box<dyn StatFn>>) -> Self {
+        Self { stat_fns }
     }
 }
 
-impl<F: RunnerFn<E>, E: Evaluator> Evaluator for HyperAlg<F, E> {
+impl Evaluator for HyperAlg {
     type Genome = State;
     const NUM_CROSSOVER: usize = 2;
     const NUM_MUTATION: usize = 10;
@@ -177,20 +169,12 @@ impl<F: RunnerFn<E>, E: Evaluator> Evaluator for HyperAlg<F, E> {
 
     fn fitness(&self, s: &State) -> f64 {
         const SAMPLES: usize = 100;
-        const SAMPLE_DUR: Duration = Duration::from_millis(10);
         let mut score = 0.0;
         for _ in 0..SAMPLES {
-            let mut runner = (self.runner)(s.cfg.clone());
-            let st = Instant::now();
-            // Get the last run that ran in time.
-            let mut r1 = None;
-            let mut r2 = None;
-            while (Instant::now() - st) < SAMPLE_DUR {
-                swap(&mut r1, &mut r2);
-                r2 = Some(runner.run_iter(true).unwrap().stats.unwrap());
-            }
-            if let Some(r) = r2 {
-                score += r.mean_fitness;
+            for f in self.stat_fns.iter() {
+                if let Some(r) = f(s.cfg.clone()) {
+                    score += r.mean_fitness;
+                }
             }
             // TODO: Need multi-objective GA here.
 
@@ -218,14 +202,71 @@ impl<F: RunnerFn<E>, E: Evaluator> Evaluator for HyperAlg<F, E> {
     }
 }
 
-pub fn hyper_runner<F: RunnerFn<E>, E: Evaluator>(runner: F) -> Runner<HyperAlg<F, E>> {
-    let cfg = Cfg::new(100)
-        .with_mutation(Mutation::Adaptive)
-        .with_crossover(Crossover::Adaptive)
-        .with_survival(Survival::SpeciesTopProportion(0.1))
-        .with_species(Species::TargetNumber(10))
-        .with_niching(Niching::None);
-    let initial = rand_vec(cfg.pop_size, rand_state::<E>); // TODO fix
-    let gen = UnevaluatedGen::initial(initial, &cfg);
-    Runner::new(HyperAlg::new(runner), cfg, gen)
+pub struct HyperBuilder {
+    stat_fns: Vec<Box<dyn StatFn>>,
+    num_crossover: usize,
+    num_mutation: usize,
+    sample_dur: Duration,
+}
+
+impl HyperBuilder {
+    pub fn new(sample_dur: Duration) -> Self {
+        Self { stat_fns: Vec::new(), num_crossover: 0, num_mutation: 0, sample_dur }
+    }
+
+    fn rand_state(&self) -> State {
+        let mut r = rand::thread_rng();
+        let crossover = rand_vec(self.num_crossover, || r.gen());
+        let mutation = rand_vec(self.num_mutation, || r.gen());
+        let mut cfg = Cfg::new(r.gen_range(5..MAX_POP));
+        cfg.survival = r.gen();
+        cfg.selection = r.gen();
+        cfg.niching = r.gen();
+        cfg.species = r.gen();
+        State { cfg, crossover, mutation }
+    }
+
+    pub fn add<F: RunnerFn<E>, E: Evaluator>(&mut self, max_fitness: f64, f: F) {
+        self.num_crossover = self.num_crossover.max(E::NUM_CROSSOVER);
+        self.num_mutation = self.num_mutation.max(E::NUM_MUTATION);
+        let sample_dur = self.sample_dur;
+        self.stat_fns.push(Box::new(move |cfg| {
+            let mut runner = f(cfg);
+            let st = Instant::now();
+            let mut r1 = None;
+            let mut r2 = None;
+            while (Instant::now() - st) < sample_dur {
+                swap(&mut r1, &mut r2);
+                if let Some(mut r) = runner.run_iter(true).unwrap().stats {
+                    r.best_fitness /= max_fitness;
+                    r.mean_fitness /= max_fitness;
+                    // TODO: Divide distance as well?
+                    r2 = Some(r);
+                }
+            }
+            r1 // Get the last run that ran in time.
+        }));
+    }
+
+    pub fn build(self) -> Runner<HyperAlg> {
+        let cfg = Cfg::new(100)
+            .with_mutation(Mutation::Adaptive)
+            .with_crossover(Crossover::Adaptive)
+            .with_survival(Survival::SpeciesTopProportion(0.1))
+            .with_species(Species::TargetNumber(10))
+            .with_niching(Niching::None);
+        let initial = rand_vec(cfg.pop_size, || self.rand_state());
+        let gen = UnevaluatedGen::initial::<HyperAlg>(initial, &cfg);
+        Runner::new(HyperAlg::new(self.stat_fns), cfg, gen)
+    }
+}
+
+pub fn hyper_all() -> Runner<HyperAlg> {
+    let mut builder = HyperBuilder::new(Duration::from_millis(10));
+    builder.add(1.0, &|cfg| rastrigin_runner(2, cfg));
+    builder.add(1.0, &|cfg| griewank_runner(2, cfg));
+    builder.add(1.0, &|cfg| ackley_runner(2, cfg));
+    builder.add(1000.0, &knapsack_runner);
+    builder.add(12.0, &target_string_runner);
+    builder.build()
 }
