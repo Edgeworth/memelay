@@ -1,6 +1,6 @@
 use crate::constants::Constants;
 use crate::models::count_map::CountMap;
-use crate::types::{KeyEv, PhysEv, Kc};
+use crate::types::{Kc, KeyEv, PhysEv};
 use smallvec::SmallVec;
 
 pub mod count_map;

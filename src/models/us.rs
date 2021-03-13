@@ -3,7 +3,7 @@ use crate::models::count_map::CountMap;
 use crate::models::key_automata::KeyAutomata;
 use crate::models::layout::{Layer, Layout};
 use crate::models::Model;
-use crate::types::{KcSet, KeyEv, PhysEv, Kc};
+use crate::types::{Kc, KcSet, KeyEv, PhysEv};
 use derive_more::Display;
 use enumset::enum_set;
 use lazy_static::lazy_static;

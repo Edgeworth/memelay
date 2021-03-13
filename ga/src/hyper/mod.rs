@@ -1,4 +1,4 @@
-use crate::cfg::{Cfg, Crossover, Mutation, Niching, Species, Survival};
+use crate::cfg::{Cfg, Crossover, Mutation, Niching, Selection, Species, Survival};
 use crate::examples::ackley::ackley_runner;
 use crate::examples::griewank::griewank_runner;
 use crate::examples::knapsack::knapsack_runner;
@@ -14,7 +14,7 @@ use rand::Rng;
 use std::mem::swap;
 use std::time::{Duration, Instant};
 
-const MAX_POP: usize = 1000;
+const MAX_POP: usize = 100;
 
 // Also try with average of all example problems.
 
@@ -168,7 +168,7 @@ impl Evaluator for HyperAlg {
     }
 
     fn fitness(&self, s: &State) -> f64 {
-        const SAMPLES: usize = 100;
+        const SAMPLES: usize = 10;
         let mut score = 0.0;
         for _ in 0..SAMPLES {
             for f in self.stat_fns.iter() {
@@ -226,7 +226,12 @@ impl HyperBuilder {
         State { cfg, crossover, mutation }
     }
 
-    pub fn add<F: RunnerFn<E>, E: Evaluator>(&mut self, max_fitness: f64, f: F) {
+    pub fn add<F: RunnerFn<E>, E: Evaluator>(
+        &mut self,
+        max_fitness: f64,
+        f: F,
+        _name: &'static str,
+    ) {
         self.num_crossover = self.num_crossover.max(E::NUM_CROSSOVER);
         self.num_mutation = self.num_mutation.max(E::NUM_MUTATION);
         let sample_dur = self.sample_dur;
@@ -235,16 +240,23 @@ impl HyperBuilder {
             let st = Instant::now();
             let mut r1 = None;
             let mut r2 = None;
+            let mut count = 0;
             while (Instant::now() - st) < sample_dur {
                 swap(&mut r1, &mut r2);
-                if let Some(mut r) = runner.run_iter(true).unwrap().stats {
-                    r.best_fitness /= max_fitness;
-                    r.mean_fitness /= max_fitness;
-                    // TODO: Divide distance as well?
-                    r2 = Some(r);
-                }
+                r2 = Some(runner.run_iter().unwrap());
+                count += 1;
             }
-            r1 // Get the last run that ran in time.
+            // warn!("{} ran for {} iters", name, count);
+
+            // Get the last run that ran in time.
+            if let Some(mut r) = r1 {
+                let mut stats = Stats::from_run(&mut r, runner.eval());
+                stats.best_fitness /= max_fitness;
+                stats.mean_fitness /= max_fitness;
+                Some(stats)
+            } else {
+                None
+            }
         }));
     }
 
@@ -252,8 +264,9 @@ impl HyperBuilder {
         let cfg = Cfg::new(100)
             .with_mutation(Mutation::Adaptive)
             .with_crossover(Crossover::Adaptive)
-            .with_survival(Survival::SpeciesTopProportion(0.1))
-            .with_species(Species::TargetNumber(10))
+            .with_survival(Survival::TopProportion(0.25))
+            .with_selection(Selection::Sus)
+            .with_species(Species::None)
             .with_niching(Niching::None);
         let initial = rand_vec(cfg.pop_size, || self.rand_state());
         let gen = UnevaluatedGen::initial::<HyperAlg>(initial, &cfg);
@@ -262,11 +275,11 @@ impl HyperBuilder {
 }
 
 pub fn hyper_all() -> Runner<HyperAlg> {
-    let mut builder = HyperBuilder::new(Duration::from_millis(10));
-    builder.add(1.0, &|cfg| rastrigin_runner(2, cfg));
-    builder.add(1.0, &|cfg| griewank_runner(2, cfg));
-    builder.add(1.0, &|cfg| ackley_runner(2, cfg));
-    builder.add(1000.0, &knapsack_runner);
-    builder.add(12.0, &target_string_runner);
+    let mut builder = HyperBuilder::new(Duration::from_millis(100));
+    builder.add(1.0, &|cfg| rastrigin_runner(2, cfg), "rastringin");
+    builder.add(1.0, &|cfg| griewank_runner(2, cfg), "griewank");
+    builder.add(1.0, &|cfg| ackley_runner(2, cfg), "ackley");
+    builder.add(1000.0, &knapsack_runner, "knapsack");
+    builder.add(12.0, &target_string_runner, "targetstr");
     builder.build()
 }

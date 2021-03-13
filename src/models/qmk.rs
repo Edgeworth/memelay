@@ -3,7 +3,7 @@ use crate::models::count_map::CountMap;
 use crate::models::key_automata::KeyAutomata;
 use crate::models::layout::Layout;
 use crate::models::Model;
-use crate::types::{KcSet, KcSetExt, KeyEv, PhysEv, Kc};
+use crate::types::{Kc, KcSet, KcSetExt, KeyEv, PhysEv};
 use derive_more::Display;
 use smallvec::SmallVec;
 use vec_map::VecMap;

@@ -1,6 +1,6 @@
 use crate::constants::Constants;
 use crate::models::count_map::CountMap;
-use crate::types::{KeyEv, Kc};
+use crate::types::{Kc, KeyEv};
 use derive_more::Display;
 use enumset::enum_set;
 use smallvec::SmallVec;
