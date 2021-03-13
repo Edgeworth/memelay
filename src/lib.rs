@@ -19,7 +19,7 @@ use crate::layout_eval::LayoutEval;
 use eyre::Result;
 use ga::cfg::{Cfg, Crossover, Mutation, Niching, Species, Survival};
 use ga::gen::unevaluated::UnevaluatedGen;
-use ga::runner::Runner;
+use ga::runner::{Runner, Stats};
 use ga::Evaluator;
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
@@ -73,11 +73,10 @@ pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
     let mut runner = Runner::new(eval.clone(), cfg, initial);
 
     for i in 0..eval.cnst.runs {
-        let detail = i % 10 == 0;
-        let r = runner.run_iter(detail)?;
+        let mut r = runner.run_iter()?;
         println!("Generation {}: {}", i + 1, r.gen.best().base_fitness);
-        if detail {
-            println!("Stats: {:?}", r.stats.unwrap());
+        if i % 10 == 0 {
+            println!("Stats: {:?}", Stats::from_run(&mut r, runner.eval()));
             println!("{}", eval.layout_cfg.format(&r.gen.best().state.0));
         }
     }

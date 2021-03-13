@@ -15,11 +15,22 @@ pub struct Stats {
     pub num_species: usize,
 }
 
+impl Stats {
+    pub fn from_run<T: Genome, E: Evaluator<Genome = T>>(r: &mut RunResult<T>, eval: &E) -> Self {
+        Self {
+            best_fitness: r.gen.best().base_fitness,
+            mean_fitness: r.gen.mean_base_fitness(),
+            num_dup: r.gen.num_dup(),
+            mean_distance: r.gen.dists(eval).mean(),
+            num_species: r.gen.num_species(),
+        }
+    }
+}
+
 #[derive(Display, Clone, PartialEq)]
 #[display(fmt = "Run({})", gen)]
 pub struct RunResult<T: Genome> {
     pub gen: EvaluatedGen<T>,
-    pub stats: Option<Stats>,
 }
 
 pub struct Runner<E: Evaluator> {
@@ -33,20 +44,14 @@ impl<E: Evaluator> Runner<E> {
         Self { eval, cfg, gen }
     }
 
-    pub fn run_iter(&mut self, compute_stats: bool) -> Result<RunResult<E::Genome>> {
-        let mut evaluated = self.gen.evaluate(&self.cfg, &self.eval)?;
-        let mut stats = None;
-        if compute_stats {
-            stats = Some(Stats {
-                best_fitness: evaluated.best().base_fitness,
-                mean_fitness: evaluated.mean_base_fitness(),
-                num_dup: evaluated.num_dup(),
-                mean_distance: evaluated.dists(&self.eval).mean(),
-                num_species: evaluated.num_species(),
-            });
-        }
+    pub fn run_iter(&mut self) -> Result<RunResult<E::Genome>> {
+        let evaluated = self.gen.evaluate(&self.cfg, &self.eval)?;
         let mut gen = evaluated.next_gen(&self.cfg, &self.eval)?;
         std::mem::swap(&mut gen, &mut self.gen);
-        Ok(RunResult { gen: evaluated, stats })
+        Ok(RunResult { gen: evaluated })
+    }
+
+    pub fn eval(&self) -> &E {
+        &self.eval
     }
 }

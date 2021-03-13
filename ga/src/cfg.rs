@@ -98,7 +98,7 @@ impl Cfg {
             pop_size,
             crossover: Crossover::Adaptive,
             mutation: Mutation::Adaptive,
-            survival: Survival::TopProportion(0.1),
+            survival: Survival::TopProportion(0.2),
             selection: Selection::Sus,
             niching: Niching::None,
             species: Species::None,
