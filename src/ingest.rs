@@ -1,7 +1,7 @@
 use crate::layout_eval::LayoutCfg;
 use crate::models::layout::{Layer, Layout};
 use crate::models::us::US_LAYER;
-use crate::types::{Finger, KcSet, PhysEv, Kc};
+use crate::types::{Finger, Kc, KcSet, PhysEv};
 use enumset::enum_set;
 use eyre::{eyre, Result, WrapErr};
 use std::fs;

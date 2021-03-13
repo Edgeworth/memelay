@@ -17,3 +17,10 @@ rand_distr = "*"
 rayon = "*"
 serde = {version = "*", features = ["derive"]}
 smallvec = "*"
+
+[dev-dependencies]
+criterion = {version = "*", features = ["real_blackbox"]}
+
+[[bench]]
+harness = false
+name = "examples"

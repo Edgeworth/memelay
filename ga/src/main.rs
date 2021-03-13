@@ -1,13 +1,8 @@
 use eyre::Result;
 use ga::cfg::Cfg;
-use ga::examples::ackley::ackley_runner;
-use ga::examples::griewank::griewank_runner;
-use ga::examples::knapsack::knapsack_runner;
-use ga::examples::rastrigin::rastrigin_runner;
-use ga::examples::target_string::target_string_runner;
-use ga::examples::{all_cfg, none_cfg};
+use ga::examples::all_cfg;
 use ga::hyper::hyper_all;
-use ga::runner::{Runner, RunnerFn};
+use ga::runner::{Runner, RunnerFn, Stats};
 use ga::Evaluator;
 use grapher::Grapher;
 
@@ -24,10 +19,9 @@ fn eval_run<E: Evaluator>(
         for (cfg_name, cfg) in cfgs.iter() {
             let mut runner = runner_fn(cfg.clone());
             for _ in 0..100 {
-                runner.run_iter(false)?;
+                runner.run_iter()?;
             }
-            let r = runner.run_iter(true)?.stats.unwrap();
-
+            let r = Stats::from_run(&mut runner.run_iter()?, runner.eval());
             g.add(&format!("{}:{}:best fitness", name, cfg_name), run_id, r.best_fitness);
             g.add(&format!("{}:{}:mean fitness", name, cfg_name), run_id, r.mean_fitness);
             g.add(&format!("{}:{}:dupes", name, cfg_name), run_id, r.num_dup as f64);
@@ -53,17 +47,22 @@ fn run_grapher<E: Evaluator>(
 
 fn run_once<E: Evaluator>(mut runner: Runner<E>) -> Result<()> {
     for i in 0..1000 {
-        let detail = true; // i % 10 == 0;
-        let r = runner.run_iter(detail)?;
+        let mut r = runner.run_iter()?;
         println!("Generation {}: {}", i + 1, r.gen.best().base_fitness);
-        if detail {
-            println!("  {:?}\n  best: {:?}", r.stats.unwrap(), r.gen.best().state);
+        if i % 10 == 0 {
+            println!(
+                "  {:?}\n  best: {:?}",
+                Stats::from_run(&mut r, runner.eval()),
+                r.gen.best().state
+            );
         }
     }
     Ok(())
 }
 
 fn main() -> Result<()> {
+    pretty_env_logger::init_timed();
+    color_eyre::install()?;
     // let cfg = none_cfg();
     // let cfg = all_cfg();
     // run_grapher("knapsack", cfg.clone(), &knapsack_runner)?;

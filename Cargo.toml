@@ -37,4 +37,3 @@ name = "path"
 
 [profile.release]
 debug = 1 # line tables only
-lto = false
