@@ -1,7 +1,9 @@
+use std::time::Duration;
+
 use eyre::Result;
 use ga::cfg::Cfg;
 use ga::examples::all_cfg;
-use ga::hyper::hyper_all;
+use ga::hyper::hyper_runner;
 use ga::runner::{Runner, RunnerFn, Stats};
 use ga::Evaluator;
 use grapher::Grapher;
@@ -67,7 +69,7 @@ fn main() -> Result<()> {
     // run_grapher("ackley", cfg.clone(), &|cfg| ackley_runner(2, cfg))?;
     // run_grapher("string", cfg, &target_string_runner)?;
     // run_once(rastrigin_runner(2, all_cfg()))?;
-    run_once(hyper_all())?;
+    run_once(hyper_runner(Duration::from_millis(10)))?;
     // run_once(hyper_runner(&knapsack_runner))?;
     // run_once(hyper_runner(&target_string_runner))?;
     // run_once(hyper_runner))?;
