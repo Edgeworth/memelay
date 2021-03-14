@@ -10,7 +10,7 @@ use lazy_static::lazy_static;
 use smallvec::SmallVec;
 
 lazy_static! {
-    pub static ref US_LAYOUT: Layout = Layout::new(&[
+    pub static ref US_LAYOUT: Layout = Layout::new(vec![
         enum_set!(Kc::Num0),
         enum_set!(Kc::Num1),
         enum_set!(Kc::Num2),

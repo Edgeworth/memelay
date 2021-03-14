@@ -2,7 +2,6 @@ use crate::constants::Constants;
 use crate::models::count_map::CountMap;
 use crate::types::{rand_kcset, KcSet, KcSetExt};
 use derive_more::Display;
-use enumset::enum_set;
 
 #[derive(Debug, Clone, Default, Eq, PartialEq, Ord, PartialOrd, Hash, Display)]
 #[display(fmt = "{:?}", keys)]
@@ -27,9 +26,8 @@ impl Layout {
     pub fn normalise(&mut self, cnst: &Constants) {
         // Remove same keys and excess mod keys.
         let mut cm: CountMap<KcSet> = CountMap::new();
-        let mut keys = Vec::new();
         let mut mod_count = 0;
-        for mut kcset in self.keys.iter().copied() {
+        for kcset in self.keys.iter_mut() {
             let mods = kcset.mods();
             if !mods.is_empty() {
                 mod_count += 1;
@@ -37,13 +35,10 @@ impl Layout {
                     kcset.remove_all(mods);
                 }
             }
-            if cm.adjust_count(kcset, true) <= cnst.max_phys_dup as i32 {
-                keys.push(kcset);
-            } else {
-                keys.push(enum_set!());
+            if cm.adjust_count(*kcset, true) > cnst.max_phys_dup as i32 {
+                kcset.clear();
             }
         }
-        Self { keys }
     }
 }
 
@@ -51,6 +46,7 @@ impl Layout {
 mod tests {
     use super::*;
     use crate::types::Kc;
+    use enumset::enum_set;
     use lazy_static::lazy_static;
 
     const CTRL_C: KcSet = enum_set!(Kc::C | Kc::Ctrl);
@@ -61,22 +57,22 @@ mod tests {
 
     #[test]
     fn normalise_mod() {
-        let mut l = Layout::new(&[CTRL_C]);
+        let mut l = Layout::new(vec![CTRL_C]);
         l.normalise(&CNST);
-        assert_eq!(l, Layout::new(&[C]));
+        assert_eq!(l, Layout::new(vec![C]));
     }
 
     #[test]
     fn normalise_same() {
-        let mut l = Layout::new(&[C, C]);
+        let mut l = Layout::new(vec![C, C]);
         l.normalise(&CNST);
-        assert_eq!(l, Layout::new(&[C, enum_set!()]));
+        assert_eq!(l, Layout::new(vec![C, enum_set!()]));
     }
 
     #[test]
     fn normalise_mod_same() {
-        let mut l = Layout::new(&[CTRL_C, C]);
+        let mut l = Layout::new(vec![CTRL_C, C]);
         l.normalise(&CNST);
-        assert_eq!(l, Layout::new(&[C, enum_set!()]));
+        assert_eq!(l, Layout::new(vec![C, enum_set!()]));
     }
 }

@@ -11,7 +11,6 @@ use ga::ops::crossover::crossover_kpx;
 use ga::ops::fitness::count_different;
 use ga::ops::mutation::{mutate_rate, mutate_swap};
 use ga::Evaluator;
-use rand::Rng;
 
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct LayoutCfg {
@@ -64,7 +63,7 @@ impl LayoutEval {
 
     fn layout_cost(&self, l: &Layout) -> f64 {
         // Penalise more keys.
-        l.keys.iter().map(|kcset| kcset.len()).sum() as f64
+        l.keys.iter().map(|kcset| kcset.len()).sum::<usize>() as f64
     }
 }
 
@@ -74,7 +73,6 @@ impl Evaluator for LayoutEval {
     const NUM_MUTATION: usize = 2;
 
     fn crossover(&self, s1: &mut Layout, s2: &mut Layout, idx: usize) {
-        let mut r = rand::thread_rng();
         match idx {
             0 => {} // Do nothing.
             1 => {

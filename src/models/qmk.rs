@@ -3,7 +3,7 @@ use crate::models::count_map::CountMap;
 use crate::models::key_automata::KeyAutomata;
 use crate::models::layout::Layout;
 use crate::models::Model;
-use crate::types::{Kc, KcSet, KcSetExt, KeyEv, PhysEv};
+use crate::types::{KeyEv, PhysEv};
 use derive_more::Display;
 use smallvec::SmallVec;
 
@@ -64,7 +64,7 @@ impl<'a> Model for QmkModel<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::KcSet;
+    use crate::types::{Kc, KcSet};
     use enumset::enum_set;
     use lazy_static::lazy_static;
 
@@ -97,24 +97,11 @@ mod tests {
         );
         assert_eq!(
             m.key_ev_edges(KeyEv::new(A, true)),
-            SmallVec::from_buf([SmallVec::from_buf([
-                PhysEv::new(3, true),
-                PhysEv::new(3, false),
-                PhysEv::new(2, true)
-            ])])
+            SmallVec::from_buf([SmallVec::from_buf([PhysEv::new(3, true),])])
         );
-        // May return invalid edges however.
         assert_eq!(
             m.key_ev_edges(KeyEv::new(C, false)),
             SmallVec::from_buf([SmallVec::from_buf([PhysEv::new(2, false)])])
-        );
-    }
-    #[test]
-    fn kev_edges_does_not_use_none_keys() {
-        let m = QmkModel::new(&LAYOUT);
-        assert_eq!(
-            m.key_ev_edges(KeyEv::new(C, true)),
-            SmallVec::from_buf([SmallVec::from_buf([PhysEv::new(2, true)])])
         );
     }
 }
