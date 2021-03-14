@@ -1,41 +1,6 @@
 ## Model
-
-Key types/features - by priority:
-- Each key can send modifiers - no need for specific meh or hyper key.
-- Once a key is pressed, it keeps the same keycode - changing layers won't send a release and another press.
-- OSM one shot modifier
-- Mod tap - hold key gives modifier
- - IGNORE_MOD_TAP_INTERRUPT
-  ignore other keys (interrupts) for triggering mod behaviour - instead use TAPPING_TERM
- - PERMISSIVE_HOLD: e.g. if a is mod: a down, x down, x up, a up = mod x, regardless of TAPPING_TERM
- - TAPPING_FORCE_HOLD: normally tap then hold does auto-repeat. instead, do mod x.
- - RETRO_TAPPING: NO
-- Auto shift - hold key gives shifted version
- - AUTO_SHIFT_MODIFIERS, AUTO_SHIFT_TIMEOUT
-- Combos - hit sequence within TAPPING_TERM maps to a new key.
-- Tap dance - tap # of times for different functions.
- - Can also TO or TG a layer
- - e.g. space on one tap, enter on two.
-- Grave escape: NO
-- Leader key:   NO
-- Left/Right modifier distinction: NO
-
-Layer types/features - by priority:
-- Transparent key - looks at next active layer below.
-- OSL one shot layer
-- TO active layer and deactive others except default
-- MO momentary activation
-- LM momentary + modifier
-- LT momentary when held, sends different key press when tapped; similar to mod tap
-- TG toggle layer - NO, having multiple layers active is too complex.
-- DF switch default layer - NO
-- TT MO or 5 taps and toggle layer - NO
-
 Ideas:
- - Define a per key penalty
- - Use fitness penalty to get rid of redundant key assignments.
  - Deal with state - runs etc
- - Have priorities in fitness - e.g. similar to qwerty would be lowest priority but a tie-breaker.
 
 Context independent:
 1. Per key penalty

@@ -101,10 +101,9 @@ lazy_static! {
 }
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Display)]
-#[display(fmt = "phys: {}, key state: {}", phys, ks)]
+#[display(fmt = "key state: {}", ks)]
 pub struct UsModel {
     layout: &'static Layout,
-    phys: CountMap<usize>,
     ks: KeyAutomata,
 }
 
@@ -116,19 +115,12 @@ impl Default for UsModel {
 
 impl UsModel {
     pub fn new() -> Self {
-        Self { layout: &US_LAYOUT, phys: CountMap::new(), ks: KeyAutomata::new() }
-    }
-
-    pub fn get_key(&self, phys: usize) -> KcSet {
-        self.layout.keys[phys as usize]
+        Self { layout: &US_LAYOUT, ks: KeyAutomata::new() }
     }
 }
 
 impl Model for UsModel {
     fn event(&mut self, pev: PhysEv, cnst: &Constants) -> Option<SmallVec<[KeyEv; 4]>> {
-        if !(0..=1).contains(&self.phys.adjust_count(pev.phys, pev.press)) {
-            return None;
-        }
-        self.ks.event(KeyEv::new(self.get_key(pev.phys), pev.press), cnst)
+        self.ks.event(KeyEv::new(self.layout.keys[pev.phys as usize], pev.press), cnst)
     }
 }

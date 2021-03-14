@@ -8,10 +8,9 @@ use derive_more::Display;
 use smallvec::SmallVec;
 
 #[derive(Debug, Clone, Display)]
-#[display(fmt = "phys {} ks {}", phys, ks)]
+#[display(fmt = "{}", ks)]
 pub struct QmkModel<'a> {
     l: &'a Layout,
-    phys: CountMap<usize>, // Holds # of times physical key pressed.
     ks: KeyAutomata,
 }
 
@@ -19,23 +18,22 @@ impl Eq for QmkModel<'_> {}
 
 impl PartialEq for QmkModel<'_> {
     fn eq(&self, o: &Self) -> bool {
-        self.l == o.l && self.phys == o.phys && self.ks == o.ks
+        self.l == o.l && self.ks == o.ks
     }
 }
 
 impl std::hash::Hash for QmkModel<'_> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        // Small set of things to hash that should distinguish the majority of cases.
-        self.phys.hash(state);
+        self.ks.hash(state);
     }
 }
 
 impl<'a> QmkModel<'a> {
     pub fn new(layout: &'a Layout) -> Self {
-        Self { l: layout, phys: CountMap::new(), ks: KeyAutomata::new() }
+        Self { l: layout, ks: KeyAutomata::new() }
     }
 
-    pub fn key_ev_edges(&self, kev: KeyEv) -> SmallVec<[SmallVec<[PhysEv; 8]>; 8]> {
+    pub fn key_ev_edges(&self, kev: KeyEv) -> SmallVec<[SmallVec<[PhysEv; 1]>; 4]> {
         let mut edges = SmallVec::new();
         for (phys, &kcset) in self.l.keys.iter().enumerate() {
             // Only try pressing this key if it makes progress to |kev| without pressing other stuff.
@@ -52,12 +50,7 @@ impl<'a> QmkModel<'a> {
 
 impl<'a> Model for QmkModel<'a> {
     fn event(&mut self, pev: PhysEv, cnst: &Constants) -> Option<SmallVec<[KeyEv; 4]>> {
-        if !(0..=1).contains(&self.phys.adjust_count(pev.phys, pev.press)) {
-            return None; // Don't allow pressing the same physical key multiple times.
-        }
-
-        let kev = KeyEv::new(self.l.keys[pev.phys as usize], pev.press);
-        self.ks.event(kev, cnst)
+        self.ks.event(KeyEv::new(self.l.keys[pev.phys as usize], pev.press), cnst)
     }
 }
 

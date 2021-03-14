@@ -8,7 +8,6 @@ use smallvec::SmallVec;
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Display)]
 #[display(fmt = "count: {}", kcm)]
 pub struct KeyAutomata {
-    // TODO: Is this still needed?
     kcm: CountMap<Kc>,
 }
 
