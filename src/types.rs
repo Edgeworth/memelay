@@ -7,20 +7,6 @@ use smallvec::SmallVec;
 use strum::IntoEnumIterator;
 use strum_macros::{Display as StrumDisplay, EnumIter, EnumString};
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, EnumString, StrumDisplay)]
-pub enum Finger {
-    Lp,
-    Lr,
-    Lm,
-    Li,
-    Lt,
-    Rp,
-    Rr,
-    Rm,
-    Ri,
-    Rt,
-}
-
 pub trait KcSetExt {
     fn reg(&self) -> KcSet;
     fn mods(&self) -> KcSet;

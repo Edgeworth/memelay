@@ -1,7 +1,7 @@
 use crate::layout_eval::LayoutCfg;
 use crate::models::layout::Layout;
 use crate::models::us::US_LAYOUT;
-use crate::types::{Finger, Kc, KcSet, PhysEv};
+use crate::types::{Kc, KcSet, PhysEv};
 use enumset::enum_set;
 use eyre::{eyre, Result, WrapErr};
 use std::fs;
@@ -12,7 +12,6 @@ use std::str::FromStr;
 enum State {
     Layout,
     Cost,
-    Finger,
 }
 
 pub fn load_layout<P: AsRef<Path>>(layout_path: P) -> Result<Layout> {
@@ -40,13 +39,11 @@ pub fn load_layout_cfg<P: AsRef<Path>>(cfg_path: P) -> Result<LayoutCfg> {
     let mut state = State::Layout;
     let mut layout = String::new();
     let mut cost = Vec::new();
-    let mut fing = Vec::new();
     for i in fs::read_to_string(cfg_path)?.lines() {
         let mut updated = true;
         match i.trim() {
             "layout" => state = State::Layout,
             "cost" => state = State::Cost,
-            "finger" => state = State::Finger,
             _ => updated = false,
         }
         if updated {
@@ -63,18 +60,13 @@ pub fn load_layout_cfg<P: AsRef<Path>>(cfg_path: P) -> Result<LayoutCfg> {
                 }
                 match state {
                     State::Cost => cost.push(filtered.parse::<u64>().unwrap()),
-                    State::Finger => fing.push(Finger::from_str(&filtered).unwrap()),
                     State::Layout => {}
                 };
             }
         }
     }
 
-    if cost.len() != fing.len() {
-        Err(eyre!("{} costs does not match {} fingers", cost.len(), fing.len()))
-    } else {
-        Ok(LayoutCfg { layout, cost, fing })
-    }
+    Ok(LayoutCfg { layout, cost })
 }
 
 pub fn load_corpus<P: AsRef<Path>>(corpus_path: P) -> Result<Vec<PhysEv>> {
