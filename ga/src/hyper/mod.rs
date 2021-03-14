@@ -10,7 +10,6 @@ use crate::ops::mutation::{mutate_creep, mutate_normal, mutate_rate};
 use crate::ops::util::rand_vec;
 use crate::runner::{Runner, RunnerFn, Stats};
 use crate::Evaluator;
-use log::warn;
 use rand::Rng;
 use std::mem::swap;
 use std::time::{Duration, Instant};
@@ -178,12 +177,6 @@ impl Evaluator for HyperAlg {
                 }
             }
             // TODO: Need multi-objective GA here.
-
-            // g.add(&format!("{}:{}:best fitness", name, cfg_name), run_id, r.best_fitness);
-            // g.add(&format!("{}:{}:mean fitness", name, cfg_name), run_id, r.mean_fitness);
-            // g.add(&format!("{}:{}:dupes", name, cfg_name), run_id, r.num_dup as f64);
-            // g.add(&format!("{}:{}:mean dist", name, cfg_name), run_id, r.mean_distance);
-            // g.add(&format!("{}:{}:species", name, cfg_name), run_id, r.num_species as f64);
         }
         score / SAMPLES as f64
     }

@@ -4,7 +4,7 @@ use crate::models::compute_kevs;
 use crate::models::layout::Layout;
 use crate::models::us::UsModel;
 use crate::path::PathFinder;
-use crate::types::{rand_kcset, Finger, PhysEv};
+use crate::types::{rand_kcset, Finger, KeyEv};
 use crate::Args;
 use eyre::Result;
 use ga::ops::crossover::crossover_kpx;
@@ -53,7 +53,7 @@ impl LayoutCfg {
 #[derive(Debug, Clone, PartialEq)]
 pub struct LayoutEval {
     pub layout_cfg: LayoutCfg,
-    pub corpus: Vec<PhysEv>,
+    pub kevs: Vec<KeyEv>,
     pub cnst: Constants,
 }
 
@@ -61,7 +61,8 @@ impl LayoutEval {
     pub fn from_args(args: &Args) -> Result<Self> {
         let layout_cfg = load_layout_cfg(&args.cfg_path)?;
         let corpus = load_corpus(&args.corpus_path)?;
-        Ok(Self { layout_cfg, corpus, cnst: args.cnst.clone() })
+        let kevs = compute_kevs(UsModel::new(), &corpus, &args.cnst);
+        Ok(Self { layout_cfg, kevs, cnst: args.cnst.clone() })
     }
 
     fn layout_cost(&self, l: &Layout) -> f64 {
@@ -135,25 +136,14 @@ impl Evaluator for LayoutEval {
     }
 
     fn fitness(&self, s: &Layout) -> f64 {
-        let mut path_cost_mean = 0.0;
-        let mut r = rand::thread_rng();
-        let block_size = self.cnst.batch_size.min(self.corpus.len());
-        let start_idx = r.gen_range(0..=(self.corpus.len() - block_size));
-        for _ in 0..self.cnst.batch_num {
-            let kevs = compute_kevs(
-                UsModel::new(),
-                &self.corpus[start_idx..(start_idx + block_size)],
-                &self.cnst,
-            );
-            let res = PathFinder::new(&self.layout_cfg, &kevs, &self.cnst, s).path();
-            // TODO: Need multi-objective EAs here.
-            path_cost_mean += 100.0 * res.kevs_found as f64;
-            if res.kevs_found == kevs.len() {
-                path_cost_mean += kevs.len() as f64 * 100.0 - res.cost as f64;
-                path_cost_mean += 10000.0 - self.layout_cost(s);
-            }
+        let mut fit = 0.0;
+        let res = PathFinder::new(&self.layout_cfg, &self.kevs, &self.cnst, s).path();
+        // TODO: Need multi-objective EAs here.
+        fit += res.kevs_found as f64 / self.kevs.len() as f64;
+        if res.kevs_found == self.kevs.len() {
+            fit += 1.0 / (res.cost as f64 + self.layout_cost(s) + 1.0);
         }
-        path_cost_mean / self.cnst.batch_num as f64
+        fit
     }
 
     fn distance(&self, s1: &Layout, s2: &Layout) -> f64 {

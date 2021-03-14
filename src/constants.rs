@@ -5,16 +5,22 @@ pub struct Constants {
     #[structopt(short, long, default_value = "100", help = "Population size for GA")]
     pub pop_size: usize,
 
-    #[structopt(short, long, default_value = "100", help = "Number of generations to run for GA")]
+    #[structopt(
+        short,
+        long,
+        default_value = "10000",
+        help = "Number of generations to run for GA"
+    )]
     pub runs: usize,
 
-    #[structopt(long, default_value = "20000", help = "Batch size for GA fitness")]
-    pub batch_size: usize,
-
-    #[structopt(long, default_value = "1", help = "Number of batches to run for GA fitness")]
-    pub batch_num: usize,
-
     // Runtime search restrictions:
+    #[structopt(
+        long,
+        default_value = "3",
+        help = "Maximum number of physical keys to press on average to make one key event"
+    )]
+    pub max_phys_per_kev: usize,
+
     // TODO: Can remove these since we always output a keyev ?
     #[structopt(
         long,

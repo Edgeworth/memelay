@@ -4,6 +4,7 @@ Current fitnesses for selection don't change probabilities that much for actual 
 multi-objective optimization - currently just does weird fitness combinations
 
 ## TODO
+- evolve user data (vec of floats)
 
 ## Selection strategies
 1. SUS based on fitness
