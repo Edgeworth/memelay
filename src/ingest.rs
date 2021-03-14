@@ -1,6 +1,6 @@
 use crate::layout_eval::LayoutCfg;
-use crate::models::layout::{Layer, Layout};
-use crate::models::us::US_LAYER;
+use crate::models::layout::Layout;
+use crate::models::us::US_LAYOUT;
 use crate::types::{Finger, Kc, KcSet, PhysEv};
 use enumset::enum_set;
 use eyre::{eyre, Result, WrapErr};
@@ -18,15 +18,7 @@ enum State {
 pub fn load_layout<P: AsRef<Path>>(layout_path: P) -> Result<Layout> {
     const SKIP: &str = "|\\/";
     let mut keys = Vec::new();
-    let mut l = Layout::new();
     for i in fs::read_to_string(layout_path)?.lines() {
-        if i.starts_with("layer") {
-            if !keys.is_empty() {
-                l = l.with_layer(Layer::new(&keys));
-                keys.clear();
-            }
-            continue;
-        }
         for item in i.split(|c: char| c.is_whitespace() || SKIP.contains(c)) {
             if item.is_empty() {
                 continue;
@@ -40,13 +32,7 @@ pub fn load_layout<P: AsRef<Path>>(layout_path: P) -> Result<Layout> {
             keys.push(kcset);
         }
     }
-    l = l.with_layer(Layer::new(&keys));
-
-    if l.layers.windows(2).any(|a| a[0].keys.len() != a[1].keys.len()) {
-        Err(eyre!("not all layers have the same size"))
-    } else {
-        Ok(l)
-    }
+    Ok(Layout::new(keys))
 }
 
 pub fn load_layout_cfg<P: AsRef<Path>>(cfg_path: P) -> Result<LayoutCfg> {
@@ -188,7 +174,7 @@ pub fn load_corpus<P: AsRef<Path>>(corpus_path: P) -> Result<Vec<PhysEv>> {
             "RSHIFT" => Kc::Shift,
             _ => return Err(eyre!("unrecognised corpus key {}", kc)),
         });
-        let index = US_LAYER.keys.iter().position(|&x| x == kcset).unwrap();
+        let index = US_LAYOUT.keys.iter().position(|&x| x == kcset).unwrap();
         corpus.push(PhysEv::new(index, pressed));
     }
     Ok(corpus)

@@ -4,15 +4,15 @@ use crate::types::{rand_kcset, KcSet, KcSetExt};
 use derive_more::Display;
 use enumset::enum_set;
 
-#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Display)]
+#[derive(Debug, Clone, Default, Eq, PartialEq, Ord, PartialOrd, Hash, Display)]
 #[display(fmt = "{:?}", keys)]
-pub struct Layer {
+pub struct Layout {
     pub keys: Vec<KcSet>,
 }
 
-impl Layer {
-    pub fn new(keys: &[KcSet]) -> Self {
-        Self { keys: keys.to_vec() }
+impl Layout {
+    pub fn new(keys: Vec<KcSet>) -> Self {
+        Self { keys }
     }
 
     pub fn rand_with_size(len: usize, cnst: &Constants) -> Self {
@@ -23,6 +23,7 @@ impl Layer {
         self.keys.len()
     }
 
+    // Gets rid of useless layout features.
     pub fn normalise(&mut self, cnst: &Constants) {
         // Remove same keys and excess mod keys.
         let mut cm: CountMap<KcSet> = CountMap::new();
@@ -32,66 +33,17 @@ impl Layer {
             let mods = kcset.mods();
             if !mods.is_empty() {
                 mod_count += 1;
-                if mod_count > cnst.max_phys_mod_per_layer {
+                if mod_count > cnst.max_phys_mod {
                     kcset.remove_all(mods);
                 }
             }
-            if cm.adjust_count(kcset, true) <= cnst.max_phys_duplicate_per_layer as i32 {
+            if cm.adjust_count(kcset, true) <= cnst.max_phys_dup as i32 {
                 keys.push(kcset);
             } else {
                 keys.push(enum_set!());
             }
         }
-        self.keys = keys;
-    }
-}
-
-#[derive(Debug, Clone, Default, Eq, PartialEq, Ord, PartialOrd, Hash)]
-pub struct Layout {
-    pub layers: Vec<Layer>,
-}
-
-impl std::fmt::Display for Layout {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for (i, v) in self.layers.iter().enumerate() {
-            writeln!(f, "  Layer {}: {}", i, v)?;
-        }
-        Ok(())
-    }
-}
-
-impl Layout {
-    pub fn new() -> Self {
-        Self { layers: vec![] }
-    }
-
-    pub fn from_layers(layers: &[Layer]) -> Self {
-        Self { layers: layers.to_vec() }
-    }
-
-    pub fn rand_with_size(size: usize, num_layers: usize, cnst: &Constants) -> Self {
-        let mut l = Layout::new();
-        for _ in 0..num_layers {
-            l = l.with_layer(Layer::rand_with_size(size, cnst));
-        }
-        l.normalise(&cnst);
-        l
-    }
-
-    pub fn with_layer(mut self, l: Layer) -> Self {
-        self.layers.push(l);
-        self
-    }
-
-    pub fn num_physical(&self) -> usize {
-        self.layers.get(0).map(|x| x.num_physical()).unwrap_or(0)
-    }
-
-    // Gets rid of useless layout features.
-    pub fn normalise(&mut self, cnst: &Constants) {
-        for layer in self.layers.iter_mut() {
-            layer.normalise(cnst);
-        }
+        Self { keys }
     }
 }
 
@@ -104,28 +56,27 @@ mod tests {
     const CTRL_C: KcSet = enum_set!(Kc::C | Kc::Ctrl);
     const C: KcSet = enum_set!(Kc::C);
     lazy_static! {
-        static ref CNST: Constants =
-            Constants { max_phys_duplicate_per_layer: 1, ..Default::default() };
+        static ref CNST: Constants = Constants { max_phys_dup: 1, ..Default::default() };
     }
 
     #[test]
     fn normalise_mod() {
-        let mut l = Layer::new(&[CTRL_C]);
+        let mut l = Layout::new(&[CTRL_C]);
         l.normalise(&CNST);
-        assert_eq!(l, Layer::new(&[C]));
+        assert_eq!(l, Layout::new(&[C]));
     }
 
     #[test]
     fn normalise_same() {
-        let mut l = Layer::new(&[C, C]);
+        let mut l = Layout::new(&[C, C]);
         l.normalise(&CNST);
-        assert_eq!(l, Layer::new(&[C, enum_set!()]));
+        assert_eq!(l, Layout::new(&[C, enum_set!()]));
     }
 
     #[test]
     fn normalise_mod_same() {
-        let mut l = Layer::new(&[CTRL_C, C]);
+        let mut l = Layout::new(&[CTRL_C, C]);
         l.normalise(&CNST);
-        assert_eq!(l, Layer::new(&[C, enum_set!()]));
+        assert_eq!(l, Layout::new(&[C, enum_set!()]));
     }
 }

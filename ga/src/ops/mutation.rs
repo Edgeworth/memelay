@@ -24,6 +24,14 @@ pub fn mutate_rate<T: Copy>(s: &mut [T], rate: f64, mut f: impl FnMut(T) -> T) {
     }
 }
 
+// Mutate by swapping
+pub fn mutate_swap<T: Copy>(s: &mut [T], rate: f64) {
+    let mut r = rand::thread_rng();
+    if r.gen::<f64>() < rate {
+        s.swap(r.gen_range(0..s.len()), r.gen_range(0..s.len()));
+    }
+}
+
 // Real mutation operators:
 // Random value taken from the uniform distribution on |range|.
 pub fn mutate_uniform(st: f64, en: f64) -> f64 {

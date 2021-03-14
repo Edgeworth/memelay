@@ -24,7 +24,6 @@ pub enum Finger {
 pub trait KcSetExt {
     fn reg(&self) -> KcSet;
     fn mods(&self) -> KcSet;
-    fn layers(&self) -> KcSet;
 }
 
 pub type KcSet = EnumSet<Kc>;
@@ -36,10 +35,6 @@ impl KcSetExt for KcSet {
 
     fn mods(&self) -> KcSet {
         self.iter().filter(|x| x.is_mod()).collect()
-    }
-
-    fn layers(&self) -> KcSet {
-        self.iter().filter(|x| x.is_layer()).collect()
     }
 }
 
@@ -205,26 +200,10 @@ pub enum Kc {
     F10,
     F11,
     F12,
-
-    // Layer control:
-    Layer0,
-    Layer1,
 }
 
 impl Kc {
     pub fn is_mod(&self) -> bool {
         [Kc::Ctrl, Kc::Shift, Kc::Alt, Kc::Super].contains(self)
-    }
-
-    pub fn is_layer(&self) -> bool {
-        self.layer_num().is_some()
-    }
-
-    pub fn layer_num(&self) -> Option<usize> {
-        match self {
-            Kc::Layer0 => Some(0),
-            Kc::Layer1 => Some(1),
-            _ => None,
-        }
     }
 }

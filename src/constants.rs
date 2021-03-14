@@ -14,51 +14,20 @@ pub struct Constants {
     pub runs: usize,
 
     // Runtime search restrictions:
-    #[structopt(
-        long,
-        default_value = "3",
-        help = "Maximum number of physical keys to press on average to make one key event"
-    )]
-    pub max_phys_per_kev: usize,
-
-    // TODO: Can remove these since we always output a keyev ?
-    #[structopt(
-        long,
-        default_value = "4",
-        help = "Maximum number of physical keys to press at a time"
-    )]
-    pub max_phys_pressed: usize,
-
-    // Value of 2 allows e.g. ctrl + shift to be pressed, then a letter key, but not
-    // three modifiers.
-    #[structopt(
-        long,
-        default_value = "2",
-        help = "Maximum number of physical key-strokes without generating any keycodes"
-    )]
-    pub max_phys_idle: usize,
-
-    #[structopt(
-        long,
-        default_value = "1",
-        help = "Maximum number of duplicate mod keycodes pressed"
-    )]
-    pub max_mod_pressed: usize,
-
     // Layout restrictions:
     #[structopt(
         long,
         default_value = "20",
-        help = "Maximum number of physical keys with mod keycodes per layer"
+        help = "Maximum number of physical keys with mod keycodes"
     )]
-    pub max_phys_mod_per_layer: usize,
+    pub max_phys_mod: usize,
 
     #[structopt(
         long,
         default_value = "2",
-        help = "Maximum number of physical keys with identical keycode sets per layer"
+        help = "Maximum number of physical keys with identical keycode sets"
     )]
-    pub max_phys_duplicate_per_layer: usize,
+    pub max_phys_dup: usize,
 
     // Roulette distributions for controlling randomness in various places:
     #[structopt(

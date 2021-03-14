@@ -1,7 +1,7 @@
 use crate::constants::Constants;
 use crate::models::count_map::CountMap;
 use crate::models::key_automata::KeyAutomata;
-use crate::models::layout::{Layer, Layout};
+use crate::models::layout::Layout;
 use crate::models::Model;
 use crate::types::{Kc, KcSet, KeyEv, PhysEv};
 use derive_more::Display;
@@ -10,7 +10,7 @@ use lazy_static::lazy_static;
 use smallvec::SmallVec;
 
 lazy_static! {
-    pub static ref US_LAYER: Layer = Layer::new(&[
+    pub static ref US_LAYOUT: Layout = Layout::new(&[
         enum_set!(Kc::Num0),
         enum_set!(Kc::Num1),
         enum_set!(Kc::Num2),
@@ -98,7 +98,6 @@ lazy_static! {
         enum_set!(Kc::Ctrl),
         enum_set!(Kc::Shift),
     ]);
-    pub static ref US_LAYOUT: Layout = Layout::new().with_layer(US_LAYER.clone());
 }
 
 #[derive(Debug, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Display)]
@@ -121,7 +120,7 @@ impl UsModel {
     }
 
     pub fn get_key(&self, phys: usize) -> KcSet {
-        self.layout.layers[0].keys[phys as usize]
+        self.layout.keys[phys as usize]
     }
 }
 
@@ -131,9 +130,5 @@ impl Model for UsModel {
             return None;
         }
         self.ks.event(KeyEv::new(self.get_key(pev.phys), pev.press), cnst)
-    }
-
-    fn kc_counts(&self) -> &CountMap<Kc> {
-        self.ks.kc_counts()
     }
 }

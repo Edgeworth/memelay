@@ -23,18 +23,11 @@ impl KeyAutomata {
         Self { kcm: CountMap::new() }
     }
 
-    pub fn kc_counts(&self) -> &CountMap<Kc> {
-        &self.kcm
-    }
-
     pub fn event(&mut self, kev: KeyEv, cnst: &Constants) -> Option<SmallVec<[KeyEv; 4]>> {
         let mut evs = SmallVec::new();
 
         for kc in kev.kcset {
             let count = self.kcm.adjust_count(kc, kev.press);
-            if kc.is_mod() && count > cnst.max_mod_pressed as i32 {
-                return None;
-            }
             if count < 0 {
                 return None;
             }
@@ -56,7 +49,7 @@ mod tests {
     const C: KcSet = enum_set!(Kc::C);
     const CTRL_C: KcSet = enum_set!(Kc::C | Kc::Ctrl);
     lazy_static! {
-        static ref CNST: Constants = Constants { max_mod_pressed: 5, ..Default::default() };
+        static ref CNST: Constants = Default::default();
     }
 
     #[test]
