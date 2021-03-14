@@ -7,7 +7,6 @@ use crate::types::{KeyEv, PhysEv};
 use derive_more::Display;
 use priority_queue::PriorityQueue;
 use smallvec::SmallVec;
-use std::collections::HashSet;
 use std::usize;
 
 #[derive(Debug, Clone, Eq, Display)]
@@ -82,21 +81,25 @@ impl<'a> PathFinder<'a> {
 
     pub fn path(&self) -> PathResult {
         let mut q: PriorityQueue<Node<'_>, i64> = PriorityQueue::new();
-        let mut seen: HashSet<Node<'_>> = HashSet::new();
         let mut best = (0, 0);
 
         let st = Node::new(self.l);
         q.push(st.clone(), 0);
-        // let mut cnt = 0;
-        while let Some((n, _pri)) = q.pop() {
-            seen.insert(n.clone());
-            // cnt += 1;
+        let mut cnt = 0;
+        while let Some((n, pri)) = q.pop() {
+            // We don't use a seen check - the extra hash and clone is expensive.
+            // Cost can never decrease and we can't revisit the same state,
+            // because we use only try sequences of physical events that progress
+            // the key state.
+
+            // Remove finished states to keep access quick.
+            q.remove(&n);
+            cnt += 1;
 
             // println!(
-            //     "pri: {}, dijk: {}, seen: {}, get to: {}",
-            //     _pri,
+            //     "pri: {}, dijk: {}, get to: {}",
+            //     pri,
             //     n,
-            //     seen.len(),
             //     self.kevs
             //         .get(n.idx)
             //         .map(|kev| kev.to_string())
@@ -109,18 +112,16 @@ impl<'a> PathFinder<'a> {
             if n.idx >= self.kevs.len() {
                 break;
             }
+
             // Try pressing and releasing physical keys.
             for pevs in n.qmk.key_ev_edges(self.kevs[n.idx]).into_iter() {
                 // println!("  try edges: {:?}", pevs);
                 let next = n.clone();
                 if let Some(mut next) = self.try_pevs(next, &pevs) {
-                    if seen.contains(&next) {
-                        continue;
-                    }
                     next.cost += self.phys_cost(&pevs);
-                    let pri = next.cost;
-                    // let pri =
-                    // next.cost + NotNan::new(self.kevs.len() as f64 - next.idx as f64).unwrap();
+                    // Small heuristic - have to press at least # remaining key event number of
+                    // physical key events to finish.
+                    let pri = next.cost + self.kevs.len() as u64 - next.idx as u64;
                     q.push_increase(next, -(pri as i64));
                 }
             }

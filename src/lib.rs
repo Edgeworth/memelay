@@ -80,13 +80,6 @@ pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
             println!("{}", eval.layout_cfg.format(&r.gen.best().state.0));
         }
     }
-    // let fitness = Fitness::new(eval.clone());
-    // for (idx, mem) in pop.members_mut().iter().take(10).enumerate() {
-    //     let mut l = mem.member.write().unwrap();
-    //     let val = fitness.solve(&mut l);
-    //     let fmt = eval.layout_cfg.format_solution(&l);
-    //     println!("Soln {} fitness {}: {}", idx, val, fmt);
-    // }
 
     Ok(())
 }
@@ -98,9 +91,10 @@ pub fn run() -> Result<()> {
     let cfg = Cfg::new(eval.cnst.pop_size)
         .with_mutation(Mutation::Adaptive)
         .with_crossover(Crossover::Adaptive)
-        .with_survival(Survival::SpeciesTopProportion(0.1))
-        .with_species(Species::TargetNumber(10))
-        .with_niching(Niching::SharedFitness);
+        .with_survival(Survival::TopProportion(0.3))
+        .with_species(Species::None)
+        .with_niching(Niching::None)
+        .with_par_fitness(true);
 
     if let Some(p) = args.eval_layout {
         eval_layout(eval, p)?;
