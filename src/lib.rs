@@ -44,7 +44,7 @@ pub struct Args {
 
     #[structopt(
         long,
-        default_value = "data/bench.data",
+        default_value = "data/layer0.data",
         parse(from_os_str),
         help = "Corpus file describing typing data to optimise to"
     )]
@@ -67,7 +67,7 @@ pub fn eval_layout<P: AsRef<Path>>(eval: LayoutEval, p: P) -> Result<()> {
 
 pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
     // Start from a base with all keys available.
-    let initial = load_layout("data/all_keys.layout")?;
+    let initial = load_layout("data/alnum.layout")?;
     let initial = (0..cfg.pop_size).map(|_| initial.clone()).collect();
     let initial = UnevaluatedGen::initial::<LayoutEval>(initial, &cfg);
     let mut runner = Runner::new(eval.clone(), cfg, initial);

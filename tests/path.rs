@@ -5,12 +5,12 @@ use designer::path::PathFinder;
 use eyre::Result;
 
 #[test]
-fn test_all_keys_can_path() -> Result<()> {
+fn test_alnum_layout_can_path() -> Result<()> {
     let layout_cfg = load_layout_cfg("data/moonlander.cfg")?;
-    let corpus = load_corpus("data/all_keys.data")?;
+    let corpus = load_corpus("data/alnum.data")?;
     let cnst = Default::default();
     let kevs = compute_kevs(UsModel::new(), &corpus, &cnst);
-    let l = load_layout("data/all_keys.layout")?;
+    let l = load_layout("data/alnum.layout")?;
     let res = PathFinder::new(&layout_cfg, &kevs, &cnst, &l).path();
     assert_eq!(res.kevs_found, kevs.len());
     Ok(())
