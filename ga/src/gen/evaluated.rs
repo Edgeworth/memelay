@@ -8,7 +8,6 @@ use crate::ops::util::clamp_vec;
 use crate::{Cfg, Evaluator, Genome, State};
 use derive_more::Display;
 use eyre::{eyre, Result};
-use rayon::prelude::*;
 
 #[derive(Display, Clone, PartialOrd, PartialEq)]
 #[display(fmt = "base fitness {:.2}, selection fitness {:.2}", base_fitness, selection_fitness)]
@@ -58,10 +57,10 @@ impl<T: Genome> EvaluatedGen<T> {
         self.mems.iter().map(|mem| mem.species).max().unwrap_or(0) + 1
     }
 
-    pub fn dists<E: Evaluator<Genome = T>>(&mut self, eval: &E) -> &DistCache {
+    pub fn dists<E: Evaluator<Genome = T>>(&mut self, cfg: &Cfg, eval: &E) -> &DistCache {
         if self.cache.is_none() {
             let states = self.mems.iter().map(|mem| mem.state.clone()).collect::<Vec<_>>();
-            self.cache = Some(DistCache::new(eval, &states));
+            self.cache = Some(DistCache::new(eval, &states, cfg.par_dist));
         }
         self.cache.as_ref().unwrap()
     }
@@ -162,19 +161,16 @@ impl<T: Genome> EvaluatedGen<T> {
         // Pick survivors:
         let mut new_states = self.survivors(cfg.survival);
         let remaining = cfg.pop_size - new_states.len();
+        new_states.reserve(remaining);
         // Reproduce:
-        let reproduced = (0..remaining)
-            .into_par_iter()
-            .map(|_| {
-                let [mut s1, mut s2] = self.selection(cfg.selection);
-                self.crossover(&cfg.crossover, eval, &mut s1, &mut s2).unwrap();
-                self.mutation(&cfg.mutation, eval, &mut s1).unwrap();
-                self.mutation(&cfg.mutation, eval, &mut s2).unwrap();
-                vec![s1, s2].into_iter()
-            })
-            .flatten_iter()
-            .collect::<Vec<_>>();
-        new_states.extend(reproduced.into_iter().take(remaining));
+        for _ in 0..((remaining + 1) / 2) {
+            let [mut s1, mut s2] = self.selection(cfg.selection);
+            self.crossover(&cfg.crossover, eval, &mut s1, &mut s2).unwrap();
+            self.mutation(&cfg.mutation, eval, &mut s1).unwrap();
+            self.mutation(&cfg.mutation, eval, &mut s2).unwrap();
+            new_states.push(s1);
+            new_states.push(s2);
+        }
         Ok(UnevaluatedGen::new(new_states))
     }
 }

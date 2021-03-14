@@ -1,5 +1,5 @@
 use crate::{Evaluator, State};
-use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use std::ops::Index;
 
 #[derive(Debug, Clone, PartialOrd, PartialEq)]
@@ -8,15 +8,14 @@ pub struct DistCache {
 }
 
 impl DistCache {
-    pub fn new<E: Evaluator>(eval: &E, s: &[State<E::Genome>]) -> Self {
-        let cache = (0..s.len())
-            .into_par_iter()
-            .map(|i| {
-                (0..s.len()).into_par_iter().map(|j| eval.distance(&s[i].0, &s[j].0)).collect()
-            })
-            .collect();
-
-
+    pub fn new<E: Evaluator>(eval: &E, s: &[State<E::Genome>], par: bool) -> Self {
+        let dist_fn =
+            |i: usize| (0..s.len()).into_iter().map(|j| eval.distance(&s[i].0, &s[j].0)).collect();
+        let cache = if par {
+            (0..s.len()).into_par_iter().map(dist_fn).collect()
+        } else {
+            (0..s.len()).into_iter().map(dist_fn).collect()
+        };
         Self { cache }
     }
 
@@ -30,15 +29,15 @@ impl DistCache {
 
     pub fn mean(&self) -> f64 {
         let n = (self.cache.len() * self.cache.len()) as f64;
-        let sum: f64 = self.cache.par_iter().map::<_, f64>(|v| v.iter().sum()).sum();
+        let sum: f64 = self.cache.iter().map(|v| v.iter().sum::<f64>()).sum();
         sum / n
     }
 
     pub fn max(&self) -> f64 {
         self.cache
-            .par_iter()
-            .map::<_, f64>(|v| v.iter().fold(0.0, |a, &b| a.max(b)))
-            .reduce(|| 0.0, |a, b| a.max(b))
+            .iter()
+            .map(|v| v.iter().fold(0.0, |a: f64, &b| a.max(b)))
+            .fold(0.0, |a, b| a.max(b))
     }
 }
 

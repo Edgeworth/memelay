@@ -16,12 +16,15 @@ pub struct Stats {
 }
 
 impl Stats {
-    pub fn from_run<T: Genome, E: Evaluator<Genome = T>>(r: &mut RunResult<T>, eval: &E) -> Self {
+    pub fn from_run<T: Genome, E: Evaluator<Genome = T>>(
+        r: &mut RunResult<T>,
+        runner: &Runner<E>,
+    ) -> Self {
         Self {
             best_fitness: r.gen.best().base_fitness,
             mean_fitness: r.gen.mean_base_fitness(),
             num_dup: r.gen.num_dup(),
-            mean_distance: r.gen.dists(eval).mean(),
+            mean_distance: r.gen.dists(runner.cfg(), runner.eval()).mean(),
             num_species: r.gen.num_species(),
         }
     }
@@ -49,6 +52,10 @@ impl<E: Evaluator> Runner<E> {
         let mut gen = evaluated.next_gen(&self.cfg, &self.eval)?;
         std::mem::swap(&mut gen, &mut self.gen);
         Ok(RunResult { gen: evaluated })
+    }
+
+    pub fn cfg(&self) -> &Cfg {
+        &self.cfg
     }
 
     pub fn eval(&self) -> &E {
