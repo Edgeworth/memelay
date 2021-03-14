@@ -28,7 +28,7 @@ pub struct EvaluatedGen<T: Genome> {
 
 impl<T: Genome> EvaluatedGen<T> {
     pub fn new(mut mems: Vec<Member<T>>) -> Self {
-        mems.par_sort_unstable_by(|a, b| {
+        mems.sort_unstable_by(|a, b| {
             b.selection_fitness.partial_cmp(&a.selection_fitness).unwrap()
         });
         Self { mems, cache: None }
@@ -48,7 +48,7 @@ impl<T: Genome> EvaluatedGen<T> {
 
     pub fn num_dup(&self) -> usize {
         let mut mems_copy = self.mems.iter().map(|v| &v.state.0).cloned().collect::<Vec<_>>();
-        mems_copy.par_sort_unstable_by(|a, b| a.partial_cmp(b).unwrap());
+        mems_copy.sort_unstable_by(|a, b| a.partial_cmp(b).unwrap());
         mems_copy.dedup();
         self.mems.len() - mems_copy.len()
     }
