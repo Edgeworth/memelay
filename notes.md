@@ -1,24 +1,4 @@
 ## Model
-My qwerty has work arounds - like using different fingers for some 3-grams. e.g. tbt is index + middle.
-
-Allow multiple key assignment
-Hold keys / double tap keys, etc - check home row mod page.
-
-letters and numbers need shift to produce the upper versions.
-can put modifiers on a key though.
-
-Should map printscreen, scrollock to AudioVolDown, AudioVolUp.
-
-can train graph of key to key, e.g. how long on avg to type t and then b? -
-markov model. what is state though? how many keys -> needs more data for more
-keys. or an lstm / some kind of RNN? assume time correlates to strain. would need
-to test on exact keyboard you are using + layout to properly process.
-does this overlap with any existing fitness scores? could use tch-rs, bindings to pytorch?
-
-
-
-Minimize cost to type text given a layout
-- Requires a BFS on all possible keys and actions - press, release
 
 Key types/features - by priority:
 - Each key can send modifiers - no need for specific meh or hyper key.
@@ -92,30 +72,20 @@ Carpalx notes / limitations:
 - balanced hand-use vs right-hand priority (see below)
 - alternating hand-use vs rolling (see below)
 
-## Optimisation
-- Alternating, rolling trigraphs, etc.
- - Alternating and rolling is fastest? vs fully alternating or fully rolling
-- n-grams don't work well for programming? e.g. the 3-gram is common, at] vs in] could be same
-
 ## Ideas
-- Reduce pinky usage
-- Low weight linear switches
 - Shift on thumb keys
 - Multiple uses for thumb keys - e.g. hold, tap, etc
 - Numpad on layer.
-- Portable to planck ez?
 - Arrow keys same key as vim keys?
 - home row modifier keys, vs thumb keys used for layers?
  - https://precondition.github.io/home-row-mods#what-are-home-row-mods
 - Dedicated copy paste keys? hold copy to cut?
-- Bottom row is hard to reach?
 - Long tap or double tap to access symbols etc?
 - Consider left hand kbd + right hand mouse usage
 - one shot modifiers easier than chords; + double tap to stick, third to unstick.
 - leds at top to signal status; leds behind keys to give hints.
 - leader keys - tap and then looks at a sequence of keys
 - qwerty layer: for games and guests.
-- One shot shift
 
 ## Existing layouts
 colemak, colemak dhm
