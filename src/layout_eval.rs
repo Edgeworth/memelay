@@ -4,7 +4,7 @@ use crate::models::compute_kevs;
 use crate::models::layout::Layout;
 use crate::models::us::UsModel;
 use crate::path::PathFinder;
-use crate::types::{rand_kcset, Finger, KeyEv};
+use crate::types::{rand_kcset, KeyEv};
 use crate::Args;
 use eyre::Result;
 use ga::ops::crossover::crossover_kpx;
@@ -16,7 +16,6 @@ use ga::Evaluator;
 pub struct LayoutCfg {
     pub layout: String,
     pub cost: Vec<u64>,
-    pub fing: Vec<Finger>,
 }
 
 impl LayoutCfg {
