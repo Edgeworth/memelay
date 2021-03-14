@@ -1,10 +1,14 @@
-use std::iter::Iterator;
-
 // Calculating fitnesses:
 pub fn count_different<T: PartialEq>(s1: &[T], s2: &[T]) -> usize {
     let min = s1.len().min(s2.len());
     let max = s1.len().max(s2.len());
-    (0..min).map(|i| if s1[i] != s2[i] { 1 } else { 0 }).fold(max - min, |a, b| a + b)
+    let mut count = 0;
+    for i in 0..min {
+        if s1[i] != s2[i] {
+            count += 1;
+        }
+    }
+    count + max - min
 }
 
 #[cfg(test)]

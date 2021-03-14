@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use criterion::{criterion_group, criterion_main, Criterion};
 use ga::cfg::{Cfg, Crossover, Mutation, Niching, Selection, Species, Survival};
 use ga::examples::ackley::ackley_runner;
@@ -5,6 +7,7 @@ use ga::examples::griewank::griewank_runner;
 use ga::examples::knapsack::knapsack_runner;
 use ga::examples::rastrigin::rastrigin_runner;
 use ga::examples::target_string::target_string_runner;
+use ga::hyper::hyper_runner;
 
 fn get_cfg() -> Cfg {
     Cfg::new(100)
@@ -12,8 +15,8 @@ fn get_cfg() -> Cfg {
         .with_crossover(Crossover::Adaptive)
         .with_survival(Survival::TopProportion(0.25))
         .with_selection(Selection::Sus)
-        .with_species(Species::TargetNumber(10))
-        .with_niching(Niching::SharedFitness)
+        .with_species(Species::None)
+        .with_niching(Niching::None)
         .with_par_dist(false)
         .with_par_fitness(false)
 }
@@ -53,5 +56,12 @@ fn target_string(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, rastrigin, griewank, ackley, knapsack, target_string);
+fn hyper(c: &mut Criterion) {
+    c.bench_function("hyper", |b| {
+        let mut r = hyper_runner(Duration::from_millis(1));
+        b.iter(|| r.run_iter())
+    });
+}
+
+criterion_group!(benches, rastrigin, griewank, ackley, knapsack, target_string, hyper);
 criterion_main!(benches);
