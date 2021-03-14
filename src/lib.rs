@@ -16,6 +16,7 @@
 use crate::constants::Constants;
 use crate::ingest::load_layout;
 use crate::layout_eval::LayoutEval;
+use crate::models::layout::Layout;
 use eyre::Result;
 use ga::cfg::{Cfg, Crossover, Mutation, Niching, Species, Survival};
 use ga::gen::unevaluated::UnevaluatedGen;
@@ -36,7 +37,7 @@ pub mod types;
 pub struct Args {
     #[structopt(
         long,
-        default_value = "data/moonlander.cfg",
+        default_value = "data/subset.cfg",
         parse(from_os_str),
         help = "Config file describing target layout and costs"
     )]
@@ -66,9 +67,9 @@ pub fn eval_layout<P: AsRef<Path>>(eval: LayoutEval, p: P) -> Result<()> {
 }
 
 pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
-    // Start from a base with all keys available.
-    let initial = load_layout("data/alnum.layout")?;
-    let initial = (0..cfg.pop_size).map(|_| initial.clone()).collect();
+    let initial = (0..cfg.pop_size)
+        .map(|_| Layout::rand_with_size(eval.layout_cfg.num_physical(), &eval.cnst))
+        .collect();
     let initial = UnevaluatedGen::initial::<LayoutEval>(initial, &cfg);
     let mut runner = Runner::new(eval.clone(), cfg, initial);
 
