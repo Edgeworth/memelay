@@ -10,6 +10,7 @@ use crate::ops::mutation::{mutate_creep, mutate_normal, mutate_rate};
 use crate::ops::util::rand_vec;
 use crate::runner::{Runner, RunnerFn, Stats};
 use crate::Evaluator;
+use log::warn;
 use rand::Rng;
 use std::mem::swap;
 use std::time::{Duration, Instant};
@@ -230,7 +231,7 @@ impl HyperBuilder {
         &mut self,
         max_fitness: f64,
         f: F,
-        _name: &'static str,
+        name: &'static str,
     ) {
         self.num_crossover = self.num_crossover.max(E::NUM_CROSSOVER);
         self.num_mutation = self.num_mutation.max(E::NUM_MUTATION);
@@ -246,7 +247,7 @@ impl HyperBuilder {
                 r2 = Some(runner.run_iter().unwrap());
                 count += 1;
             }
-            // warn!("{} ran for {} iters", name, count);
+            warn!("{} ran for {} iters", name, count);
 
             // Get the last run that ran in time.
             if let Some(mut r) = r1 {
@@ -275,8 +276,8 @@ impl HyperBuilder {
 }
 
 pub fn hyper_all() -> Runner<HyperAlg> {
-    let mut builder = HyperBuilder::new(Duration::from_millis(100));
-    builder.add(1.0, &|cfg| rastrigin_runner(2, cfg), "rastringin");
+    let mut builder = HyperBuilder::new(Duration::from_millis(10));
+    builder.add(1.0, &|cfg| rastrigin_runner(2, cfg), "rastrigin");
     builder.add(1.0, &|cfg| griewank_runner(2, cfg), "griewank");
     builder.add(1.0, &|cfg| ackley_runner(2, cfg), "ackley");
     builder.add(1000.0, &knapsack_runner, "knapsack");
