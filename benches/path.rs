@@ -29,7 +29,7 @@ fn path(c: &mut Criterion) {
         ..Default::default()
     };
     let kevs = compute_kevs(UsModel::new(), &corpus, &cnst);
-    let l = load_layout("data/bench.layout").unwrap();
+    let l = load_layout("data/test.layout").unwrap();
     let cfg = PathFinderCfg { layout_cfg: &layout_cfg, kevs: &kevs, cnst: &cnst, l: &l };
     c.bench_with_input(BenchmarkId::new("path", "bench data"), &cfg, |b, cfg| {
         b.iter(|| compute_path(cfg));

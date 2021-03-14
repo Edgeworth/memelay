@@ -50,7 +50,7 @@ pub fn load_layout<P: AsRef<Path>>(layout_path: P) -> Result<Layout> {
 }
 
 pub fn load_layout_cfg<P: AsRef<Path>>(cfg_path: P) -> Result<LayoutCfg> {
-    const ALLOWED: &str = "RLPMIT-.0123456789X";
+    const ALLOWED: &str = "RLpmitr-.0123456789X";
     let mut state = State::Layout;
     let mut layout = String::new();
     let mut cost = Vec::new();

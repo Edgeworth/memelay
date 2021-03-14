@@ -27,7 +27,7 @@ pub struct QmkModel<'a> {
     cached_key: VecMap<KcSet>,
     layer: usize, // Current active layer.
     ks: KeyAutomata,
-    idle_count: usize,
+    idle_count: usize, // Number of physical keys we have pressed without producing any key codes
     layer_adj: LayerAdjMap, // How to get from layer a -> b.
 }
 
@@ -46,11 +46,9 @@ impl PartialEq for QmkModel<'_> {
 
 impl std::hash::Hash for QmkModel<'_> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.layout.hash(state);
+        // Small set of things to hash that should distinguish the majority of cases.
         self.phys.hash(state);
-        self.cached_key.hash(state);
         self.layer.hash(state);
-        self.ks.hash(state);
         self.idle_count.hash(state);
     }
 }
