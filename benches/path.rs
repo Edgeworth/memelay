@@ -22,12 +22,7 @@ fn compute_path(cfg: &PathFinderCfg<'_>) -> PathResult {
 fn path(c: &mut Criterion) {
     let layout_cfg = load_layout_cfg("data/moonlander.cfg").unwrap();
     let corpus = load_corpus("data/bench.data").unwrap();
-    let cnst = Constants {
-        max_phys_pressed: 4,
-        max_phys_idle: 2,
-        max_mod_pressed: 1,
-        ..Default::default()
-    };
+    let cnst = Default::default();
     let kevs = compute_kevs(UsModel::new(), &corpus, &cnst);
     let l = load_layout("data/test.layout").unwrap();
     let cfg = PathFinderCfg { layout_cfg: &layout_cfg, kevs: &kevs, cnst: &cnst, l: &l };

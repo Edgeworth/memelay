@@ -86,7 +86,7 @@ impl<'a> PathFinder<'a> {
         let st = Node::new(self.l);
         q.push(st.clone(), 0);
         let mut cnt = 0;
-        while let Some((n, pri)) = q.pop() {
+        while let Some((n, _pri)) = q.pop() {
             // We don't use a seen check - the extra hash and clone is expensive.
             // Cost can never decrease and we can't revisit the same state,
             // because we use only try sequences of physical events that progress

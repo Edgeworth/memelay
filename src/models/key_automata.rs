@@ -23,7 +23,7 @@ impl KeyAutomata {
         Self { kcm: CountMap::new() }
     }
 
-    pub fn event(&mut self, kev: KeyEv, cnst: &Constants) -> Option<SmallVec<[KeyEv; 4]>> {
+    pub fn event(&mut self, kev: KeyEv, _cnst: &Constants) -> Option<SmallVec<[KeyEv; 4]>> {
         let mut evs = SmallVec::new();
 
         for kc in kev.kcset {
