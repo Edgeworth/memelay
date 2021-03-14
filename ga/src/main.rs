@@ -21,7 +21,7 @@ fn eval_run<E: Evaluator>(
             for _ in 0..100 {
                 runner.run_iter()?;
             }
-            let r = Stats::from_run(&mut runner.run_iter()?, runner.eval());
+            let r = Stats::from_run(&mut runner.run_iter()?, &runner);
             g.add(&format!("{}:{}:best fitness", name, cfg_name), run_id, r.best_fitness);
             g.add(&format!("{}:{}:mean fitness", name, cfg_name), run_id, r.mean_fitness);
             g.add(&format!("{}:{}:dupes", name, cfg_name), run_id, r.num_dup as f64);
@@ -50,11 +50,7 @@ fn run_once<E: Evaluator>(mut runner: Runner<E>) -> Result<()> {
         let mut r = runner.run_iter()?;
         println!("Generation {}: {}", i + 1, r.gen.best().base_fitness);
         if i % 10 == 0 {
-            println!(
-                "  {:?}\n  best: {:?}",
-                Stats::from_run(&mut r, runner.eval()),
-                r.gen.best().state
-            );
+            println!("  {:?}\n  best: {:?}", Stats::from_run(&mut r, &runner), r.gen.best().state);
         }
     }
     Ok(())

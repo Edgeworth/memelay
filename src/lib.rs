@@ -76,7 +76,7 @@ pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
         let mut r = runner.run_iter()?;
         println!("Generation {}: {}", i + 1, r.gen.best().base_fitness);
         if i % 10 == 0 {
-            println!("Stats: {:?}", Stats::from_run(&mut r, runner.eval()));
+            println!("Stats: {:?}", Stats::from_run(&mut r, &runner));
             println!("{}", eval.layout_cfg.format(&r.gen.best().state.0));
         }
     }

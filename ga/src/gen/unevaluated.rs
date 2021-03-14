@@ -52,9 +52,9 @@ impl<T: Genome> UnevaluatedGen<T> {
         }
     }
 
-    fn ensure_dists<E: Evaluator<Genome = T>>(&mut self, eval: &E) {
+    fn ensure_dists<E: Evaluator<Genome = T>>(&mut self, cfg: &Cfg, eval: &E) {
         if self.dists.is_empty() {
-            self.dists = DistCache::new(eval, &self.states);
+            self.dists = DistCache::new(eval, &self.states, cfg.par_dist);
         }
     }
 
@@ -83,7 +83,11 @@ impl<T: Genome> UnevaluatedGen<T> {
         eval: &E,
     ) -> Result<EvaluatedGen<T>> {
         // First compute plain fitnesses.
-        self.base_fitness = self.states.par_iter_mut().map(|s| eval.fitness(&s.0)).collect();
+        self.base_fitness = if cfg.par_fitness {
+            self.states.par_iter_mut().map(|s| eval.fitness(&s.0)).collect()
+        } else {
+            self.states.iter_mut().map(|s| eval.fitness(&s.0)).collect()
+        };
 
         // Check fitnesses are non-negative.
         if !self.base_fitness.iter().all(|&v| v >= 0.0) {
@@ -94,7 +98,7 @@ impl<T: Genome> UnevaluatedGen<T> {
         match cfg.species {
             Species::None => {}
             Species::TargetNumber(target) => {
-                self.ensure_dists(eval);
+                self.ensure_dists(cfg, eval);
                 let mut lo = 0.0;
                 let mut hi = self.dists.max();
                 // TODO: tests
@@ -115,7 +119,7 @@ impl<T: Genome> UnevaluatedGen<T> {
         let selection_fitness = match cfg.niching {
             Niching::None => self.base_fitness.clone(),
             Niching::SharedFitness => {
-                self.ensure_dists(eval);
+                self.ensure_dists(cfg, eval);
 
                 // Compute alpha as: radius / num_species ^ (1 / dimensionality)
                 let alpha = self.species_radius / self.num_species as f64;
@@ -123,20 +127,16 @@ impl<T: Genome> UnevaluatedGen<T> {
                 let mut fitness = self.base_fitness.clone();
 
                 // Compute fitness as F'(i) = F(i) / sum of 1 - (d(i, j) / species_radius) ^ alpha.
-                fitness.par_iter_mut().enumerate().for_each(|(i, f)| {
-                    let denom = (0..n)
-                        .into_par_iter()
-                        .map(|j| {
-                            let d = self.dists[(i, j)];
-                            if d < self.species_radius {
-                                1.0 - (self.dists[(i, j)] / self.species_radius).powf(alpha)
-                            } else {
-                                0.0
-                            }
-                        })
-                        .sum::<f64>();
-                    *f /= denom;
-                });
+                for i in 0..n {
+                    let mut sum = 0.0;
+                    for j in 0..n {
+                        let d = self.dists[(i, j)];
+                        if d < self.species_radius {
+                            sum += 1.0 - (d / self.species_radius).powf(alpha)
+                        }
+                    }
+                    fitness[i] /= sum;
+                }
                 fitness
             }
         };

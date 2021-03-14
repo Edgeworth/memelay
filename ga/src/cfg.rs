@@ -90,6 +90,8 @@ pub struct Cfg {
     pub selection: Selection,
     pub niching: Niching,
     pub species: Species,
+    pub par_fitness: bool, // Run fitness computations in parallel
+    pub par_dist: bool,    // Run distance computations in parallel
 }
 
 impl Cfg {
@@ -102,6 +104,8 @@ impl Cfg {
             selection: Selection::Sus,
             niching: Niching::None,
             species: Species::None,
+            par_fitness: false,
+            par_dist: false,
         }
     }
 
@@ -131,5 +135,13 @@ impl Cfg {
 
     pub fn with_species(self, species: Species) -> Self {
         Self { species, ..self }
+    }
+
+    pub fn with_par_fitness(self, par_fitness: bool) -> Self {
+        Self { par_fitness, ..self }
+    }
+
+    pub fn with_par_dist(self, par_dist: bool) -> Self {
+        Self { par_dist, ..self }
     }
 }

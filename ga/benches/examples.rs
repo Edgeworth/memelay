@@ -12,8 +12,10 @@ fn get_cfg() -> Cfg {
         .with_crossover(Crossover::Adaptive)
         .with_survival(Survival::TopProportion(0.25))
         .with_selection(Selection::Sus)
-        .with_species(Species::None)
-        .with_niching(Niching::None)
+        .with_species(Species::TargetNumber(10))
+        .with_niching(Niching::SharedFitness)
+        .with_par_dist(false)
+        .with_par_fitness(false)
 }
 
 fn rastrigin(c: &mut Criterion) {
