@@ -41,7 +41,7 @@ impl DistCache {
     }
 
     pub fn mean(&self) -> f64 {
-        self.cache.iter().sum::<f64>() / (self.n as f64)
+        self.cache.iter().sum::<f64>() / ((self.n * self.n) as f64)
     }
 
     pub fn max(&self) -> f64 {
