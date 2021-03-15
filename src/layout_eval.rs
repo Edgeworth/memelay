@@ -7,10 +7,10 @@ use crate::path::PathFinder;
 use crate::types::{rand_kcset, KeyEv};
 use crate::Args;
 use eyre::Result;
-use ga::ops::crossover::crossover_kpx;
-use ga::ops::fitness::count_different;
-use ga::ops::mutation::{mutate_rate, mutate_swap};
-use ga::Evaluator;
+use memega::ops::crossover::crossover_kpx;
+use memega::ops::fitness::count_different;
+use memega::ops::mutation::{mutate_rate, mutate_swap};
+use memega::Evaluator;
 use rand::Rng;
 
 #[derive(Debug, Clone, Default, PartialEq)]
