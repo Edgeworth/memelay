@@ -1,11 +1,8 @@
 [package]
 authors = ["Eliot Courtney <edgeworth.dev@gmail.com>"]
 edition = "2018"
-name = "designer"
+name = "kbd"
 version = "0.1.0"
-
-[workspace]
-members = ["ga"]
 
 [dependencies]
 color-eyre = "*"
@@ -13,9 +10,9 @@ colored = "*"
 derive_more = "*"
 enumset = "*"
 eyre = "*"
-ga = {path = "./ga"}
 lazy_static = "*"
 log = "*"
+memega = {path = "../libs/memega"}
 ordered-float = "*"
 pretty_env_logger = "*"
 priority-queue = "*"
@@ -34,6 +31,3 @@ criterion = {version = "*", features = ["real_blackbox"]}
 [[bench]]
 harness = false
 name = "path"
-
-[profile.release]
-debug = 1 # line tables only

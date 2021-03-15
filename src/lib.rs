@@ -18,10 +18,10 @@ use crate::ingest::load_layout;
 use crate::layout_eval::LayoutEval;
 use crate::models::layout::Layout;
 use eyre::Result;
-use ga::cfg::{Cfg, Crossover, Mutation, Niching, Species, Survival};
-use ga::gen::unevaluated::UnevaluatedGen;
-use ga::runner::{Runner, Stats};
-use ga::Evaluator;
+use memega::cfg::{Cfg, Crossover, Mutation, Niching, Species, Survival};
+use memega::gen::unevaluated::UnevaluatedGen;
+use memega::runner::{Runner, Stats};
+use memega::Evaluator;
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 

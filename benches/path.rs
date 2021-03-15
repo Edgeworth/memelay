@@ -1,12 +1,12 @@
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use designer::constants::Constants;
-use designer::ingest::{load_corpus, load_layout, load_layout_cfg};
-use designer::layout_eval::LayoutCfg;
-use designer::models::compute_kevs;
-use designer::models::layout::Layout;
-use designer::models::us::UsModel;
-use designer::path::{PathFinder, PathResult};
-use designer::types::KeyEv;
+use kbd::constants::Constants;
+use kbd::ingest::{load_corpus, load_layout, load_layout_cfg};
+use kbd::layout_eval::LayoutCfg;
+use kbd::models::compute_kevs;
+use kbd::models::layout::Layout;
+use kbd::models::us::UsModel;
+use kbd::path::{PathFinder, PathResult};
+use kbd::types::KeyEv;
 
 struct PathFinderCfg<'a> {
     layout_cfg: &'a LayoutCfg,

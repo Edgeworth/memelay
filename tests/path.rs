@@ -1,7 +1,7 @@
-use designer::ingest::{load_corpus, load_layout, load_layout_cfg};
-use designer::models::compute_kevs;
-use designer::models::us::UsModel;
-use designer::path::PathFinder;
+use kbd::ingest::{load_corpus, load_layout, load_layout_cfg};
+use kbd::models::compute_kevs;
+use kbd::models::us::UsModel;
+use kbd::path::PathFinder;
 use eyre::Result;
 
 #[test]
