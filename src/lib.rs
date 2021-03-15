@@ -67,9 +67,8 @@ pub fn eval_layout<P: AsRef<Path>>(eval: LayoutEval, p: P) -> Result<()> {
 }
 
 pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
-    let initial = (0..cfg.pop_size)
-        .map(|_| Layout::rand_with_size(eval.layout_cfg.num_physical(), &eval.cnst))
-        .collect();
+    let initial = load_layout("data/layer0.layout")?;
+    let initial = (0..cfg.pop_size).map(|_| initial.clone()).collect();
     let initial = UnevaluatedGen::initial::<LayoutEval>(initial, &cfg);
     let mut runner = Runner::new(eval.clone(), cfg, initial);
 
@@ -90,9 +89,9 @@ pub fn run() -> Result<()> {
     let eval = LayoutEval::from_args(&args)?;
     // Remember to update these values if add more mutation/crossover strategies.
     let cfg = Cfg::new(eval.cnst.pop_size)
-        .with_mutation(Mutation::Adaptive)
-        .with_crossover(Crossover::Adaptive)
-        .with_survival(Survival::TopProportion(0.3))
+        .with_mutation(Mutation::Fixed(vec![0.001, 0.7]))
+        .with_crossover(Crossover::Fixed(vec![0.0]))
+        .with_survival(Survival::TopProportion(0.2))
         .with_species(Species::None)
         .with_niching(Niching::None)
         .with_par_fitness(true);
