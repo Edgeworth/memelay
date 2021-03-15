@@ -505,32 +505,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "designer"
-version = "0.1.0"
-dependencies = [
- "color-eyre",
- "colored",
- "criterion",
- "derive_more",
- "enumset",
- "eyre",
- "ga",
- "lazy_static",
- "log",
- "ordered-float 2.1.1",
- "pretty_env_logger",
- "priority-queue",
- "rand",
- "rayon",
- "serde",
- "smallvec",
- "structopt",
- "strum",
- "strum_macros",
- "vec_map",
-]
-
-[[package]]
 name = "dirs"
 version = "2.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -686,25 +660,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ga"
-version = "0.1.0"
-dependencies = [
- "color-eyre",
- "criterion",
- "derive_more",
- "eyre",
- "grapher",
- "log",
- "num-traits",
- "pretty_env_logger",
- "rand",
- "rand_distr",
- "rayon",
- "serde",
- "smallvec",
-]
-
-[[package]]
 name = "getrandom"
 version = "0.1.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -741,23 +696,6 @@ name = "gimli"
 version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f6503fe142514ca4799d4c26297c4248239fe8838d827db6bd6065c6ed29a6ce"
-
-[[package]]
-name = "grapher"
-version = "0.1.0"
-dependencies = [
- "average",
- "color-eyre",
- "derive_more",
- "eyre",
- "mathru",
- "plotters",
- "pretty_env_logger",
- "rand",
- "rand_distr",
- "rayon",
- "smallvec",
-]
 
 [[package]]
 name = "half"
@@ -899,6 +837,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "kbd"
+version = "0.1.0"
+dependencies = [
+ "color-eyre",
+ "colored",
+ "criterion",
+ "derive_more",
+ "enumset",
+ "eyre",
+ "lazy_static",
+ "log",
+ "memega",
+ "ordered-float 2.1.1",
+ "pretty_env_logger",
+ "priority-queue",
+ "rand",
+ "rayon",
+ "serde",
+ "smallvec",
+ "structopt",
+ "strum",
+ "strum_macros",
+ "vec_map",
+]
+
+[[package]]
 name = "lazy_static"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -945,6 +909,41 @@ name = "memchr"
 version = "2.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ee1c47aaa256ecabcaea351eae4a9b01ef39ed810004e298d2511ed284b1525"
+
+[[package]]
+name = "memega"
+version = "0.1.0"
+dependencies = [
+ "color-eyre",
+ "derive_more",
+ "eyre",
+ "log",
+ "memestat",
+ "num-traits",
+ "pretty_env_logger",
+ "rand",
+ "rand_distr",
+ "rayon",
+ "serde",
+ "smallvec",
+]
+
+[[package]]
+name = "memestat"
+version = "0.1.0"
+dependencies = [
+ "average",
+ "color-eyre",
+ "derive_more",
+ "eyre",
+ "mathru",
+ "plotters",
+ "pretty_env_logger",
+ "rand",
+ "rand_distr",
+ "rayon",
+ "smallvec",
+]
 
 [[package]]
 name = "memoffset"
@@ -1347,9 +1346,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.4.4"
+version = "1.4.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "54fd1046a3107eb58f42de31d656fee6853e5d276c455fd943742dce89fc3dd3"
+checksum = "957056ecddbeba1b26965114e191d2e8589ce74db242b6ea25fc4062427a5c19"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -1597,9 +1596,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.63"
+version = "1.0.64"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8fd9bc7ccc2688b3344c2f48b9b546648b25ce0b20fc717ee7fa7981a8ca9717"
+checksum = "3fd9d1e9976102a03c542daa2eff1b43f9d72306342f3f8b3ed5fb8908195d6f"
 dependencies = [
  "proc-macro2",
  "quote",

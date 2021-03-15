@@ -1,4 +1,4 @@
-use designer::run;
+use kbd::run;
 use eyre::Result;
 
 fn main() -> Result<()> {
