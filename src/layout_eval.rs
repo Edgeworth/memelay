@@ -11,6 +11,7 @@ use ga::ops::crossover::crossover_kpx;
 use ga::ops::fitness::count_different;
 use ga::ops::mutation::{mutate_rate, mutate_swap};
 use ga::Evaluator;
+use rand::Rng;
 
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct LayoutCfg {
@@ -68,16 +69,12 @@ impl LayoutEval {
 
 impl Evaluator for LayoutEval {
     type Genome = Layout;
-    const NUM_CROSSOVER: usize = 2;
+    const NUM_CROSSOVER: usize = 1;
     const NUM_MUTATION: usize = 2;
 
     fn crossover(&self, s1: &mut Layout, s2: &mut Layout, idx: usize) {
         match idx {
             0 => {} // Do nothing.
-            1 => {
-                // 2-pt crossover on keys level;
-                crossover_kpx(&mut s1.keys, &mut s2.keys, 2);
-            }
             _ => panic!("unknown crossover strategy"),
         };
         s1.normalise(&self.cnst);
@@ -100,12 +97,17 @@ impl Evaluator for LayoutEval {
     }
 
     fn fitness(&self, s: &Layout) -> f64 {
+        const BATCH: usize = 100000;
         let mut fit = 0.0;
-        let res = PathFinder::new(&self.layout_cfg, &self.kevs, &self.cnst, s).path();
+        let mut r = rand::thread_rng();
+        let size = BATCH.min(self.kevs.len());
+        let st = r.gen_range(0..=(self.kevs.len() - size));
+        let res =
+            PathFinder::new(&self.layout_cfg, &self.kevs[st..(st + size)], &self.cnst, s).path();
         // TODO: Need multi-objective EAs here.
-        fit += res.kevs_found as f64 / self.kevs.len() as f64;
-        if res.kevs_found == self.kevs.len() {
-            fit += 1.0 / (res.cost as f64 + self.layout_cost(s) + 1.0);
+        fit += res.kevs_found as f64 / size as f64;
+        if res.kevs_found == size {
+            fit += 1000000.0 / (res.cost as f64 + self.layout_cost(s) + 1.0);
         }
         fit
     }
