@@ -47,7 +47,9 @@ impl Distribution<Kc> for Standard {
     Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, EnumIter, EnumString, Hash, StrumDisplay,
 )]
 pub enum Kc {
-    // Mod - these come first on purpose, to make sure e.g. Ctrl-C is generated as Ctrl then C.
+    None,
+
+    // Mod
     Ctrl,
     Shift,
     Alt,
