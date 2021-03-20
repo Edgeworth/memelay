@@ -1,5 +1,5 @@
-use kbd::run;
 use eyre::Result;
+use kbd::run;
 
 fn main() -> Result<()> {
     pretty_env_logger::init_timed();

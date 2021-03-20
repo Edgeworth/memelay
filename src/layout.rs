@@ -1,4 +1,3 @@
-use crate::constants::Constants;
 use crate::types::Kc;
 use derive_more::Display;
 use memega::ops::mutation::mutate_gen;
@@ -14,7 +13,7 @@ impl Layout {
         Self { keys }
     }
 
-    pub fn rand_with_size(len: usize, cnst: &Constants) -> Self {
+    pub fn rand_with_size(len: usize) -> Self {
         Self { keys: (0..len).map(|_| mutate_gen::<Kc>()).collect() }
     }
 
