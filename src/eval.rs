@@ -3,8 +3,7 @@ use crate::ingest::{load_corpus, load_layout_cfg};
 use crate::models::compute_kevs;
 use crate::models::layout::Layout;
 use crate::models::us::UsModel;
-use crate::path::PathFinder;
-use crate::types::{rand_kcset, KeyEv};
+use crate::types::Kc;
 use crate::Args;
 use eyre::Result;
 use memega::ops::crossover::crossover_kpx;
@@ -49,7 +48,7 @@ impl LayoutCfg {
 #[derive(Debug, Clone, PartialEq)]
 pub struct LayoutEval {
     pub layout_cfg: LayoutCfg,
-    pub kevs: Vec<KeyEv>,
+    pub kevs: Vec<Kc>,
     pub cnst: Constants,
 }
 
