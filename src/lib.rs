@@ -19,7 +19,7 @@ use crate::layout::Layout;
 use eyre::Result;
 use memega::cfg::{Cfg, Crossover, Mutation, Niching, Species, Survival};
 use memega::gen::unevaluated::UnevaluatedGen;
-use memega::runner::{Runner, Stats};
+use memega::runner::{Runner};
 use memega::Evaluator;
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
@@ -65,13 +65,13 @@ pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
 
     let initial = (0..cfg.pop_size).map(|_| Layout::rand_with_size(initial.size())).collect();
     let initial = UnevaluatedGen::initial::<LayoutEval>(initial, &cfg);
-    let mut runner = Runner::new(eval.clone(), cfg, initial);
+    let mut runner = Runner::new(eval.clone(), cfg.clone(), initial);
 
     for i in 0..10000 {
         let mut r = runner.run_iter()?;
         println!("Generation {}: {}", i + 1, r.gen.best().base_fitness);
         if i % 10 == 0 {
-            println!("Stats: {:?}", Stats::from_run(&mut r, &runner));
+            println!("{}", runner.summary(&mut r));
             println!("{}", eval.params.format(&r.gen.best().state.0));
         }
     }
@@ -85,9 +85,9 @@ pub fn run() -> Result<()> {
     // Remember to update these values if add more mutation/crossover strategies.
     let cfg = Cfg::new(100)
         .with_mutation(Mutation::Adaptive)
-        .with_crossover(Crossover::Fixed(vec![0.0]))
-        .with_survival(Survival::TopProportion(0.2))
-        .with_species(Species::None)
+        .with_crossover(Crossover::Adaptive)
+        .with_survival(Survival::SpeciesTopProportion(0.2))
+        .with_species(Species::TargetNumber(10))
         .with_niching(Niching::None)
         .with_par_fitness(true);
 
