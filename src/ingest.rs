@@ -33,11 +33,14 @@ pub fn load_layout_cfg<P: AsRef<Path>>(cfg_path: P) -> Result<LayoutCfg> {
     let mut cost = Vec::new();
     for i in fs::read_to_string(cfg_path)?.lines() {
         let mut updated = true;
-        match i.trim() {
-            "layout" => state = State::Layout,
-            "cost" => state = State::Cost,
-            _ => updated = false,
+        if i.starts_with("layout") {
+            state = State::Layout;
+        } else if i.starts_with("cost") {
+            state = State::Cost
+        } else {
+            updated = false;
         }
+
         if updated {
             continue;
         }
@@ -51,13 +54,12 @@ pub fn load_layout_cfg<P: AsRef<Path>>(cfg_path: P) -> Result<LayoutCfg> {
                     continue;
                 }
                 match state {
-                    State::Cost => cost.push(filtered.parse::<u64>().unwrap()),
+                    State::Cost => cost.push(filtered.parse::<f64>().unwrap()),
                     State::Layout => {}
                 };
             }
         }
     }
-
     Ok(LayoutCfg { layout, cost })
 }
 
@@ -143,7 +145,7 @@ pub fn load_keys<P: AsRef<Path>>(path: P) -> Result<Vec<Kc>> {
             "LBRACE" => Kc::LeftBracket,
             "RBRACE" => Kc::RightBracket,
             "BACKSLASH" => Kc::Backslash,
-            "SEMICOLON" => Kc::Semicolon,
+            "SEMICOLON" => Kc::Scolon,
             "APOSTROPHE" => Kc::Quote,
             "GRAVE" => Kc::Grave,
             "COMMA" => Kc::Comma,
