@@ -15,6 +15,7 @@
 
 use crate::eval::LayoutEval;
 use crate::ingest::load_layout;
+use crate::layout::Layout;
 use eyre::Result;
 use memega::cfg::{Cfg, Crossover, Mutation, Niching, Species, Survival};
 use memega::gen::unevaluated::UnevaluatedGen;
@@ -61,7 +62,8 @@ pub fn eval_layout<P: AsRef<Path>>(eval: LayoutEval, p: P) -> Result<()> {
 
 pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
     let initial = load_layout("data/default.layout")?;
-    let initial = (0..cfg.pop_size).map(|_| initial.clone()).collect();
+
+    let initial = (0..cfg.pop_size).map(|_| Layout::rand_with_size(initial.size())).collect();
     let initial = UnevaluatedGen::initial::<LayoutEval>(initial, &cfg);
     let mut runner = Runner::new(eval.clone(), cfg, initial);
 
@@ -82,7 +84,7 @@ pub fn run() -> Result<()> {
     let eval = LayoutEval::from_args(&args)?;
     // Remember to update these values if add more mutation/crossover strategies.
     let cfg = Cfg::new(100)
-        .with_mutation(Mutation::Fixed(vec![0.001, 0.7]))
+        .with_mutation(Mutation::Adaptive)
         .with_crossover(Crossover::Fixed(vec![0.0]))
         .with_survival(Survival::TopProportion(0.2))
         .with_species(Species::None)

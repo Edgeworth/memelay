@@ -6,9 +6,8 @@ use strum_macros::{Display as StrumDisplay, EnumIter, EnumString};
 impl Distribution<Kc> for Standard {
     fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> Kc {
         // Create specific subset:
-        match r.gen_range(0..=30) {
-            0 => Kc::Quote,
-            1 => Kc::Semicolon,
+        match r.gen_range(1..=30) {
+            1 => Kc::Scolon,
             2 => Kc::Comma,
             3 => Kc::Dot,
             4 => Kc::Slash,
@@ -105,7 +104,7 @@ pub enum Kc {
     Backslash,    // \ and |
     Grave,        // ` and ~
     Quote,        // ' and ""
-    Semicolon,    // ; and :
+    Scolon,       // ; and :
     Comma,        // , and <
     Dot,          // . and >
     Slash,        // / and ?

@@ -17,7 +17,7 @@ impl Layout {
         Self { keys: (0..len).map(|_| mutate_gen::<Kc>()).collect() }
     }
 
-    pub fn num_physical(&self) -> usize {
+    pub fn size(&self) -> usize {
         self.keys.len()
     }
 }

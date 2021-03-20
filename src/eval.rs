@@ -10,7 +10,7 @@ use memega::Evaluator;
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct LayoutCfg {
     pub layout: String,
-    pub cost: Vec<u64>,
+    pub cost: Vec<f64>,
 }
 
 impl LayoutCfg {
@@ -38,13 +38,46 @@ impl LayoutCfg {
 pub struct LayoutEval {
     pub layout_cfg: LayoutCfg,
     pub keys: Vec<Kc>,
+    pub match_keys: Vec<Kc>,
 }
 
 impl LayoutEval {
     pub fn from_args(args: &Args) -> Result<Self> {
         let layout_cfg = load_layout_cfg(&args.cfg_path)?;
         let keys = load_keys(&args.data_path)?;
-        Ok(Self { layout_cfg, keys })
+        let match_keys = vec![
+            Kc::Q,
+            Kc::W,
+            Kc::E,
+            Kc::R,
+            Kc::T,
+            Kc::Y,
+            Kc::U,
+            Kc::I,
+            Kc::O,
+            Kc::P,
+            Kc::A,
+            Kc::S,
+            Kc::D,
+            Kc::F,
+            Kc::G,
+            Kc::H,
+            Kc::J,
+            Kc::K,
+            Kc::L,
+            Kc::Scolon,
+            Kc::Z,
+            Kc::X,
+            Kc::C,
+            Kc::V,
+            Kc::B,
+            Kc::N,
+            Kc::M,
+            Kc::Comma,
+            Kc::Dot,
+            Kc::Slash,
+        ];
+        Ok(Self { layout_cfg, keys, match_keys })
     }
 }
 
@@ -75,13 +108,19 @@ impl Evaluator for LayoutEval {
     }
 
     fn fitness(&self, s: &Layout) -> f64 {
-        let mut fitness = 0.0;
-        for kc in self.keys.iter() {
-            if s.keys.contains(kc) {
-                fitness += 1.0;
+        let mut cost = 0.0;
+        for &kc in self.keys.iter() {
+            if let Some(i) = s.keys.iter().position(|&v| v == kc) {
+                cost += self.layout_cfg.cost[i];
+            } else {
+                cost += 1000.0;
             }
         }
-        fitness
+
+        // Tie-breaking: similarity to qwerty:
+        cost += count_different(&s.keys, &self.match_keys) as f64;
+
+        1.0 / (cost + 1.0)
     }
 
     fn distance(&self, s1: &Layout, s2: &Layout) -> f64 {
