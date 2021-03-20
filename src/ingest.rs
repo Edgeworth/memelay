@@ -1,4 +1,5 @@
 use crate::eval::LayoutCfg;
+use crate::layout::Layout;
 use crate::types::Kc;
 use eyre::{eyre, Result, WrapErr};
 use std::fs;
@@ -60,15 +61,15 @@ pub fn load_layout_cfg<P: AsRef<Path>>(cfg_path: P) -> Result<LayoutCfg> {
     Ok(LayoutCfg { layout, cost })
 }
 
-pub fn load_corpus<P: AsRef<Path>>(corpus_path: P) -> Result<Vec<PhysEv>> {
-    let mut corpus = Vec::new();
-    for i in fs::read_to_string(corpus_path)?.lines() {
+pub fn load_keys<P: AsRef<Path>>(path: P) -> Result<Vec<Kc>> {
+    let mut keys = Vec::new();
+    for i in fs::read_to_string(path)?.lines() {
         let items = i.split(char::is_whitespace).collect::<Vec<_>>();
-        if items.len() != 2 {
+        if items.len() != 3 {
             return Err(eyre!("weird corpus line: {}", i));
         }
-        let (kc, pressed) = (items[0], items[1] == "1");
-        let kcset = KcSet::from(match kc {
+        let (_, kcstr, _pressed) = (items[0], items[1], items[2] == "1");
+        let kc = match kcstr {
             "0" => Kc::Num0,
             "1" => Kc::Num1,
             "2" => Kc::Num2,
@@ -155,10 +156,10 @@ pub fn load_corpus<P: AsRef<Path>>(corpus_path: P) -> Result<Vec<PhysEv>> {
             "RALT" => Kc::Alt,
             "RCTRL" => Kc::Ctrl,
             "RSHIFT" => Kc::Shift,
-            _ => return Err(eyre!("unrecognised corpus key {}", kc)),
-        });
-        let index = US_LAYOUT.keys.iter().position(|&x| x == kcset).unwrap();
-        corpus.push(PhysEv::new(index, pressed));
+            "RSUPER" => Kc::Super,
+            _ => return Err(eyre!("unrecognised corpus key {}", kcstr)),
+        };
+        keys.push(kc);
     }
-    Ok(corpus)
+    Ok(keys)
 }

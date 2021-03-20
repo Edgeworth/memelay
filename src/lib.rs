@@ -13,7 +13,6 @@
     type_alias_impl_trait
 )]
 
-use crate::constants::Constants;
 use crate::eval::LayoutEval;
 use crate::ingest::load_layout;
 use eyre::Result;
@@ -24,7 +23,6 @@ use memega::Evaluator;
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
-pub mod constants;
 pub mod eval;
 pub mod ingest;
 pub mod layout;
@@ -35,7 +33,7 @@ pub mod types;
 pub struct Args {
     #[structopt(
         long,
-        default_value = "data/subset.cfg",
+        default_value = "data/layout.cfg",
         parse(from_os_str),
         help = "Config file describing target layout and costs"
     )]
@@ -43,17 +41,14 @@ pub struct Args {
 
     #[structopt(
         long,
-        default_value = "data/layer0.data",
+        default_value = "data/keys.data",
         parse(from_os_str),
-        help = "Corpus file describing typing data to optimise to"
+        help = "Data file describing typing data to optimise to"
     )]
-    pub corpus_path: PathBuf,
+    pub data_path: PathBuf,
 
     #[structopt(short, long, parse(from_os_str), help = "Evaluate a given layout")]
     pub eval_layout: Option<PathBuf>,
-
-    #[structopt(flatten)]
-    pub cnst: Constants,
 }
 
 pub fn eval_layout<P: AsRef<Path>>(eval: LayoutEval, p: P) -> Result<()> {
@@ -65,12 +60,12 @@ pub fn eval_layout<P: AsRef<Path>>(eval: LayoutEval, p: P) -> Result<()> {
 }
 
 pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
-    let initial = load_layout("data/layer0.layout")?;
+    let initial = load_layout("data/default.layout")?;
     let initial = (0..cfg.pop_size).map(|_| initial.clone()).collect();
     let initial = UnevaluatedGen::initial::<LayoutEval>(initial, &cfg);
     let mut runner = Runner::new(eval.clone(), cfg, initial);
 
-    for i in 0..eval.cnst.runs {
+    for i in 0..10000 {
         let mut r = runner.run_iter()?;
         println!("Generation {}: {}", i + 1, r.gen.best().base_fitness);
         if i % 10 == 0 {
@@ -86,7 +81,7 @@ pub fn run() -> Result<()> {
     let args = Args::from_args();
     let eval = LayoutEval::from_args(&args)?;
     // Remember to update these values if add more mutation/crossover strategies.
-    let cfg = Cfg::new(eval.cnst.pop_size)
+    let cfg = Cfg::new(100)
         .with_mutation(Mutation::Fixed(vec![0.001, 0.7]))
         .with_crossover(Crossover::Fixed(vec![0.0]))
         .with_survival(Survival::TopProportion(0.2))
