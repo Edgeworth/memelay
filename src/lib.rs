@@ -34,11 +34,11 @@ pub mod types;
 pub struct Args {
     #[structopt(
         long,
-        default_value = "data/layout.cfg",
+        default_value = "data/params.cfg",
         parse(from_os_str),
         help = "Config file describing target layout and costs"
     )]
-    pub cfg_path: PathBuf,
+    pub params_path: PathBuf,
 
     #[structopt(
         long,
@@ -55,7 +55,7 @@ pub struct Args {
 pub fn eval_layout<P: AsRef<Path>>(eval: LayoutEval, p: P) -> Result<()> {
     let l = load_layout(p)?;
     let fitness = eval.fitness(&l);
-    println!("layout: {}", eval.layout_cfg.format(&l));
+    println!("layout: {}", eval.params.format(&l));
     println!("fitness: {}", fitness);
     Ok(())
 }
@@ -72,7 +72,7 @@ pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
         println!("Generation {}: {}", i + 1, r.gen.best().base_fitness);
         if i % 10 == 0 {
             println!("Stats: {:?}", Stats::from_run(&mut r, &runner));
-            println!("{}", eval.layout_cfg.format(&r.gen.best().state.0));
+            println!("{}", eval.params.format(&r.gen.best().state.0));
         }
     }
 

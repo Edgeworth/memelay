@@ -1,4 +1,4 @@
-use crate::ingest::{load_keys, load_layout_cfg};
+use crate::ingest::{load_keys, load_params};
 use crate::layout::Layout;
 use crate::types::Kc;
 use crate::Args;
@@ -8,12 +8,15 @@ use memega::ops::mutation::{mutate_gen, mutate_rate, mutate_swap};
 use memega::Evaluator;
 
 #[derive(Debug, Clone, Default, PartialEq)]
-pub struct LayoutCfg {
+pub struct Params {
     pub layout: String,
     pub cost: Vec<f64>,
+    pub row: Vec<i32>,
+    pub hand: Vec<i32>,
+    pub finger: Vec<i32>,
 }
 
-impl LayoutCfg {
+impl Params {
     pub fn format(&self, l: &Layout) -> String {
         let mut s = String::new();
         let mut idx = 0;
@@ -28,22 +31,18 @@ impl LayoutCfg {
         s.push('\n');
         s
     }
-
-    pub fn num_physical(&self) -> usize {
-        self.cost.len()
-    }
 }
 
 #[derive(Debug, Clone)]
 pub struct LayoutEval {
-    pub layout_cfg: LayoutCfg,
+    pub params: Params,
     pub keys: Vec<Kc>,
     pub match_keys: Vec<Kc>,
 }
 
 impl LayoutEval {
     pub fn from_args(args: &Args) -> Result<Self> {
-        let layout_cfg = load_layout_cfg(&args.cfg_path)?;
+        let params = load_params(&args.params_path)?;
         let keys = load_keys(&args.data_path)?;
         let match_keys = vec![
             Kc::Q,
@@ -77,7 +76,7 @@ impl LayoutEval {
             Kc::Dot,
             Kc::Slash,
         ];
-        Ok(Self { layout_cfg, keys, match_keys })
+        Ok(Self { params, keys, match_keys })
     }
 }
 
@@ -108,14 +107,49 @@ impl Evaluator for LayoutEval {
     }
 
     fn fitness(&self, s: &Layout) -> f64 {
+        // Indexed by row jump length.
+        const SAME_FING: &[f64] = &[2.5, 3.0, 4.0];
+        const PINKY_RING: &[f64] = &[0.5, 1.0, 1.5];
+        const RING_MID: &[f64] = &[0.1, 0.2, 0.3];
         let mut cost = 0.0;
+
+        let mut prev = Kc::None;
         for &kc in self.keys.iter() {
-            if let Some(i) = s.keys.iter().position(|&v| v == kc) {
-                cost += self.layout_cfg.cost[i];
-            } else {
-                cost += 1000.0;
+            // Finger penalties
+            if let Some(curi) = s.keys.iter().position(|&v| v == kc) {
+                cost += self.params.cost[curi];
+
+                // Bigram penalities
+                if let Some(previ) = s.keys.iter().position(|&v| v == prev) {
+                    // Model from https://colemakmods.github.io/mod-dh/compare.html
+                    let cfing = self.params.finger[curi];
+                    let pfing = self.params.finger[previ];
+                    let crow = self.params.row[curi];
+                    let prow = self.params.row[previ];
+                    let chand = self.params.hand[curi];
+                    let phand = self.params.hand[previ];
+                    let same_hand = chand == phand;
+                    let same_fing = same_hand && cfing == pfing;
+                    let pinky_ring =
+                        same_hand && (cfing == 3 && pfing == 2 || cfing == 2 && pfing == 3);
+                    let ring_mid =
+                        same_hand && (cfing == 2 && pfing == 1 || cfing == 1 && pfing == 2);
+                    let jump_len = (crow - prow).abs() as usize;
+
+                    if same_fing {
+                        cost += SAME_FING[jump_len];
+                    }
+                    if pinky_ring {
+                        cost += PINKY_RING[jump_len];
+                    }
+                    if ring_mid {
+                        cost += RING_MID[jump_len];
+                    }
+                }
             }
+            prev = kc;
         }
+
 
         // Tie-breaking: similarity to qwerty:
         cost += count_different(&s.keys, &self.match_keys) as f64;
