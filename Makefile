@@ -11,10 +11,7 @@ fix:
 	cargo fix --workspace --all-features --all-targets --edition-idioms
 	cargo clippy --workspace --all-targets --all-features --fix -Z unstable-options
 	cargo fmt --all
-
-check: test
 	cargo outdated --workspace
-	cargo audit
 	cargo udeps --all-features --all-targets --workspace
 
 update-deps:

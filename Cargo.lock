@@ -855,7 +855,6 @@ dependencies = [
  "rand",
  "rand_distr",
  "rayon",
- "serde",
  "smallvec",
 ]
 
