@@ -1,7 +1,7 @@
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use kbd::constants::Constants;
 use kbd::ingest::{load_corpus, load_layout, load_layout_cfg};
-use kbd::layout_eval::LayoutCfg;
+use kbd::eval::LayoutCfg;
 use kbd::models::compute_kevs;
 use kbd::models::layout::Layout;
 use kbd::models::us::UsModel;

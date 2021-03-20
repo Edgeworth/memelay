@@ -1,8 +1,5 @@
-use crate::layout_eval::LayoutCfg;
-use crate::models::layout::Layout;
-use crate::models::us::US_LAYOUT;
-use crate::types::{Kc, KcSet, PhysEv};
-use enumset::enum_set;
+use crate::eval::LayoutCfg;
+use crate::types::Kc;
 use eyre::{eyre, Result, WrapErr};
 use std::fs;
 use std::path::Path;
@@ -18,17 +15,11 @@ pub fn load_layout<P: AsRef<Path>>(layout_path: P) -> Result<Layout> {
     const SKIP: &str = "|\\/";
     let mut keys = Vec::new();
     for i in fs::read_to_string(layout_path)?.lines() {
-        for item in i.split(|c: char| c.is_whitespace() || SKIP.contains(c)) {
-            if item.is_empty() {
+        for kc in i.split(|c: char| c.is_whitespace() || SKIP.contains(c)) {
+            if kc.is_empty() {
                 continue;
             }
-            let mut kcset = enum_set!();
-            for kc in item.split('+') {
-                if kc != "-" {
-                    kcset |= Kc::from_str(kc).wrap_err(eyre!("could not find {}", kc))?;
-                }
-            }
-            keys.push(kcset);
+            keys.push(Kc::from_str(kc).wrap_err(eyre!("could not find {}", kc))?);
         }
     }
     Ok(Layout::new(keys))
