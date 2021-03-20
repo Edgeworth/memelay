@@ -14,9 +14,8 @@
 )]
 
 use crate::constants::Constants;
+use crate::eval::LayoutEval;
 use crate::ingest::load_layout;
-use crate::layout_eval::LayoutEval;
-use crate::models::layout::Layout;
 use eyre::Result;
 use memega::cfg::{Cfg, Crossover, Mutation, Niching, Species, Survival};
 use memega::gen::unevaluated::UnevaluatedGen;
@@ -26,10 +25,9 @@ use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
 pub mod constants;
+pub mod eval;
 pub mod ingest;
-pub mod layout_eval;
-pub mod models;
-pub mod path;
+pub mod layout;
 pub mod types;
 
 #[derive(Debug, StructOpt)]
