@@ -1,4 +1,4 @@
-use crate::eval::LayoutCfg;
+use crate::eval::Params;
 use crate::layout::Layout;
 use crate::types::Kc;
 use eyre::{eyre, Result, WrapErr};
@@ -10,6 +10,9 @@ use std::str::FromStr;
 enum State {
     Layout,
     Cost,
+    Row,
+    Hand,
+    Finger,
 }
 
 pub fn load_layout<P: AsRef<Path>>(layout_path: P) -> Result<Layout> {
@@ -26,41 +29,54 @@ pub fn load_layout<P: AsRef<Path>>(layout_path: P) -> Result<Layout> {
     Ok(Layout::new(keys))
 }
 
-pub fn load_layout_cfg<P: AsRef<Path>>(cfg_path: P) -> Result<LayoutCfg> {
+pub fn load_params<P: AsRef<Path>>(cfg_path: P) -> Result<Params> {
     const ALLOWED: &str = "RLpmitr-.0123456789X";
     let mut state = State::Layout;
     let mut layout = String::new();
     let mut cost = Vec::new();
+    let mut row = Vec::new();
+    let mut hand = Vec::new();
+    let mut finger = Vec::new();
     for i in fs::read_to_string(cfg_path)?.lines() {
         let mut updated = true;
         if i.starts_with("layout") {
             state = State::Layout;
         } else if i.starts_with("cost") {
-            state = State::Cost
+            state = State::Cost;
+        } else if i.starts_with("row") {
+            state = State::Row;
+        } else if i.starts_with("hand") {
+            state = State::Hand;
+        } else if i.starts_with("finger") {
+            state = State::Finger;
         } else {
             updated = false;
         }
 
-        if updated {
+        if updated || i.starts_with('#') {
             continue;
         }
         if state == State::Layout {
             layout += i;
             layout.push('\n');
-        } else {
-            for item in i.split(char::is_whitespace) {
-                let filtered: String = item.chars().filter(|&c| ALLOWED.contains(c)).collect();
-                if filtered.is_empty() {
-                    continue;
-                }
-                match state {
-                    State::Cost => cost.push(filtered.parse::<f64>().unwrap()),
-                    State::Layout => {}
-                };
+            continue;
+        }
+        for item in i.split(char::is_whitespace) {
+            let filtered: String = item.chars().filter(|&c| ALLOWED.contains(c)).collect();
+            if filtered.is_empty() {
+                continue;
             }
+            match state {
+                State::Layout => {}
+                State::Cost => cost.push(filtered.parse::<f64>().unwrap()),
+                State::Row => row.push(filtered.parse::<i32>().unwrap()),
+                State::Hand => hand.push(filtered.parse::<i32>().unwrap()),
+                State::Finger => finger.push(filtered.parse::<i32>().unwrap()),
+            };
         }
     }
-    Ok(LayoutCfg { layout, cost })
+
+    Ok(Params { layout, cost, row, hand, finger })
 }
 
 pub fn load_keys<P: AsRef<Path>>(path: P) -> Result<Vec<Kc>> {
