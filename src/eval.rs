@@ -3,9 +3,13 @@ use crate::layout::Layout;
 use crate::types::Kc;
 use crate::Args;
 use eyre::Result;
+use memega::ops::crossover::{crossover_cycle, crossover_pmx};
 use memega::ops::fitness::count_different;
-use memega::ops::mutation::{mutate_gen, mutate_rate, mutate_swap};
+use memega::ops::mutation::{
+    mutate_gen, mutate_insert, mutate_inversion, mutate_rate, mutate_scramble, mutate_swap,
+};
 use memega::Evaluator;
+use rand::Rng;
 
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Params {
@@ -82,25 +86,49 @@ impl LayoutEval {
 
 impl Evaluator for LayoutEval {
     type Genome = Layout;
-    const NUM_CROSSOVER: usize = 1;
-    const NUM_MUTATION: usize = 2;
+    const NUM_CROSSOVER: usize = 3;
+    const NUM_MUTATION: usize = 5;
 
-    fn crossover(&self, _s1: &mut Layout, _s2: &mut Layout, idx: usize) {
+    fn crossover(&self, s1: &mut Layout, s2: &mut Layout, idx: usize) {
         match idx {
             0 => {} // Do nothing.
+            1 => {
+                crossover_pmx(&mut s1.keys, &mut s2.keys);
+            }
+            2 => {
+                crossover_cycle(&mut s1.keys, &mut s2.keys);
+            }
             _ => panic!("unknown crossover strategy"),
         };
     }
 
     fn mutate(&self, s: &mut Layout, rate: f64, idx: usize) {
+        let mut r = rand::thread_rng();
+        let mutate = r.gen::<f64>() < rate;
         match idx {
             0 => {
                 // Mutate random available key.
                 mutate_rate(&mut s.keys, rate, |_| mutate_gen());
             }
             1 => {
-                // Swap random key
-                mutate_swap(&mut s.keys, rate);
+                if mutate {
+                    mutate_swap(&mut s.keys);
+                }
+            }
+            2 => {
+                if mutate {
+                    mutate_insert(&mut s.keys);
+                }
+            }
+            3 => {
+                if mutate {
+                    mutate_scramble(&mut s.keys);
+                }
+            }
+            4 => {
+                if mutate {
+                    mutate_inversion(&mut s.keys);
+                }
             }
             _ => panic!("unknown mutation strategy"),
         }
@@ -119,7 +147,7 @@ impl Evaluator for LayoutEval {
             if let Some(curi) = s.keys.iter().position(|&v| v == kc) {
                 cost += self.params.cost[curi];
 
-                // Bigram penalities
+                // Bi-gram penalities
                 if let Some(previ) = s.keys.iter().position(|&v| v == prev) {
                     // Model from https://colemakmods.github.io/mod-dh/compare.html
                     let cfing = self.params.finger[curi];
@@ -146,6 +174,8 @@ impl Evaluator for LayoutEval {
                         cost += RING_MID[jump_len];
                     }
                 }
+            } else {
+                cost += 100.0; // Penalise for not being able to type characters.
             }
             prev = kc;
         }

@@ -42,6 +42,12 @@ impl Distribution<Kc> for Standard {
     }
 }
 
+impl Default for Kc {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
 // Based on QMK keycodes.
 #[derive(
     Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, EnumIter, EnumString, Hash, StrumDisplay,
