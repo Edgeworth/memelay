@@ -266,6 +266,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "concurrent_lru"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7feb5cb312f774e8a24540e27206db4e890f7d488563671d24a16389cf4c2e4e"
+dependencies = [
+ "once_cell",
+]
+
+[[package]]
 name = "constant_time_eq"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -546,6 +555,12 @@ name = "float-ord"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7bad48618fdb549078c333a7a8528acb57af271d0433bdecd523eb620628364e"
+
+[[package]]
+name = "float-pretty-print"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5251eae93541dccf57e6f7e5590a76a652eb4e4ddd44f851a32162e1bb203e81"
 
 [[package]]
 name = "font-kit"
@@ -846,8 +861,10 @@ name = "memega"
 version = "0.1.0"
 dependencies = [
  "color-eyre",
+ "concurrent_lru",
  "derive_more",
  "eyre",
+ "float-pretty-print",
  "log",
  "memestat",
  "num-traits",
