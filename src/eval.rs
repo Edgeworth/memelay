@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::ingest::{load_keys, load_params};
-use crate::layout::Layout;
+use crate::layout::{Layout, COLEMAK_DHM_KEYS};
 use crate::types::Kc;
 use crate::Args;
 use eyre::Result;
@@ -68,43 +68,11 @@ impl LayoutEval {
     pub fn from_args(args: &Args) -> Result<Self> {
         let params = load_params(&args.params_path)?;
         let keys = load_keys(&args.data_path)?;
-        let match_keys = vec![
-            Kc::Q,
-            Kc::W,
-            Kc::E,
-            Kc::R,
-            Kc::T,
-            Kc::Y,
-            Kc::U,
-            Kc::I,
-            Kc::O,
-            Kc::P,
-            Kc::A,
-            Kc::S,
-            Kc::D,
-            Kc::F,
-            Kc::G,
-            Kc::H,
-            Kc::J,
-            Kc::K,
-            Kc::L,
-            Kc::Semicolon,
-            Kc::Z,
-            Kc::X,
-            Kc::C,
-            Kc::V,
-            Kc::B,
-            Kc::N,
-            Kc::M,
-            Kc::Comma,
-            Kc::Dot,
-            Kc::Slash,
-        ];
         Ok(Self {
             params,
             unigrams: Self::build_unigrams(&keys),
             bigrams: Self::build_bigrams(&keys),
-            match_keys,
+            match_keys: COLEMAK_DHM_KEYS.to_vec(),
         })
     }
 }
@@ -225,8 +193,12 @@ impl Evaluator for LayoutEval {
 
             // Special case: same key incurs zero cost for bigrams.
             // Index finger can be used twice on the same row with different keys.
-            let percost =
-                if same_hand && kc1 != kc2 { BIGRAM_MAP[pfing][cfing][jump_len] } else { 0.0 };
+            let percost = if same_hand && kc1 != kc2 {
+                // Divide bigram cost by 10 - treat unigram finger cost as more important.
+                BIGRAM_MAP[pfing][cfing][jump_len] / 10.0
+            } else {
+                0.0
+            };
             cost += percost * count as f64;
         }
 
