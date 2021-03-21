@@ -137,31 +137,57 @@ pub enum Kc {
     Slash, // / and ?
 
     // Letters
+    #[strum(serialize = "a")]
     A,
+    #[strum(serialize = "b")]
     B,
+    #[strum(serialize = "c")]
     C,
+    #[strum(serialize = "d")]
     D,
+    #[strum(serialize = "e")]
     E,
+    #[strum(serialize = "f")]
     F,
+    #[strum(serialize = "g")]
     G,
+    #[strum(serialize = "h")]
     H,
+    #[strum(serialize = "i")]
     I,
+    #[strum(serialize = "j")]
     J,
+    #[strum(serialize = "k")]
     K,
+    #[strum(serialize = "l")]
     L,
+    #[strum(serialize = "m")]
     M,
+    #[strum(serialize = "n")]
     N,
+    #[strum(serialize = "o")]
     O,
+    #[strum(serialize = "p")]
     P,
+    #[strum(serialize = "q")]
     Q,
+    #[strum(serialize = "r")]
     R,
+    #[strum(serialize = "s")]
     S,
+    #[strum(serialize = "t")]
     T,
+    #[strum(serialize = "u")]
     U,
+    #[strum(serialize = "v")]
     V,
+    #[strum(serialize = "w")]
     W,
+    #[strum(serialize = "x")]
     X,
+    #[strum(serialize = "y")]
     Y,
+    #[strum(serialize = "z")]
     Z,
 
     // F keys

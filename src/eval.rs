@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::ingest::{load_keys, load_params};
+use crate::ingest::{load_histograms, load_params};
 use crate::layout::{Layout, COLEMAK_DHM_KEYS};
 use crate::types::Kc;
 use crate::Args;
@@ -40,11 +40,16 @@ impl Params {
 }
 
 #[derive(Debug, Clone)]
-pub struct LayoutEval {
-    pub params: Params,
+pub struct Histograms {
     pub unigrams: HashMap<Kc, u32>,
     pub bigrams: HashMap<(Kc, Kc), u32>,
+}
+
+#[derive(Debug, Clone)]
+pub struct LayoutEval {
+    pub params: Params,
     pub match_keys: Vec<Kc>,
+    pub hist: Histograms,
 }
 
 impl LayoutEval {
@@ -67,13 +72,8 @@ impl LayoutEval {
 
     pub fn from_args(args: &Args) -> Result<Self> {
         let params = load_params(&args.params_path)?;
-        let keys = load_keys(&args.data_path)?;
-        Ok(Self {
-            params,
-            unigrams: Self::build_unigrams(&keys),
-            bigrams: Self::build_bigrams(&keys),
-            match_keys: COLEMAK_DHM_KEYS.to_vec(),
-        })
+        let hist = load_histograms(&args.unigrams_path, &args.bigrams_path)?;
+        Ok(Self { params, hist, match_keys: COLEMAK_DHM_KEYS.to_vec() })
     }
 }
 
@@ -163,10 +163,16 @@ impl Evaluator for LayoutEval {
                 [3.0, 4.0, 5.5],  // Pinkie - same row val only used for different key locations
             ],
         ];
-        let mut cost = 0.0;
+        const SWITCH_HAND: f64 = -2.0;
+        const SAME_KEY: f64 = -0.5;
+        // Treat bigram data as less important than unigram.
+        // Equally, trigram would be less important than bigram.
+        const BIGRAM_MULT: f64 = 0.5;
 
+        let mut cost = 0.0;
+        let mut total_possible = 0.0;
         // Check unigrams:
-        for (&kc, &count) in self.unigrams.iter() {
+        for (&kc, &count) in self.hist.unigrams.iter() {
             // Finger penalties - penalise for not being able to type characters.
             let percost = if let Some(curi) = s.keys.iter().position(|&v| v == kc) {
                 self.params.cost[curi]
@@ -174,11 +180,12 @@ impl Evaluator for LayoutEval {
                 100.0
             };
             cost += percost * count as f64;
+            total_possible += count as f64;
         }
 
         // Check bi-grams
-        for (&(kc1, kc2), &count) in self.bigrams.iter() {
-            // Model from https://colemakmods.github.io/mod-dh/compare.html
+        for (&(kc1, kc2), &count) in self.hist.bigrams.iter() {
+            // Model adapted from https://colemakmods.github.io/mod-dh/compare.html
             let previ = s.keys.iter().position(|&v| v == kc1);
             let curi = s.keys.iter().position(|&v| v == kc2);
             if previ.is_none() || curi.is_none() {
@@ -193,19 +200,19 @@ impl Evaluator for LayoutEval {
 
             // Special case: same key incurs zero cost for bigrams.
             // Index finger can be used twice on the same row with different keys.
-            let percost = if same_hand && kc1 != kc2 {
-                // Divide bigram cost by 10 - treat unigram finger cost as more important.
-                BIGRAM_MAP[pfing][cfing][jump_len] / 10.0
+            let percost = if same_hand {
+                if kc1 != kc2 { BIGRAM_MAP[pfing][cfing][jump_len] } else { SAME_KEY }
             } else {
-                0.0
+                SWITCH_HAND
             };
-            cost += percost * count as f64;
+            cost += percost * BIGRAM_MULT * count as f64;
         }
 
-        // Tie-breaking: similarity to qwerty:
+        // Tie-breaking: similarity to given existing layout:
         cost += count_different(&s.keys, &self.match_keys) as f64;
 
-        1.0 / (cost + 1.0)
+        //total_possible / (cost + 1.0)
+        (-cost / total_possible).exp()
     }
 
     fn distance(&self, s1: &Layout, s2: &Layout) -> f64 {

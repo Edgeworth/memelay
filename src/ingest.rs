@@ -1,7 +1,8 @@
-use crate::eval::Params;
+use crate::eval::{Histograms, Params};
 use crate::layout::Layout;
 use crate::types::Kc;
 use eyre::{eyre, Result, WrapErr};
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 use std::str::FromStr;
@@ -79,105 +80,29 @@ pub fn load_params<P: AsRef<Path>>(cfg_path: P) -> Result<Params> {
     Ok(Params { layout, cost, row, hand, finger })
 }
 
-pub fn load_keys<P: AsRef<Path>>(path: P) -> Result<Vec<Kc>> {
-    let mut keys = Vec::new();
-    for i in fs::read_to_string(path)?.lines() {
+pub fn load_histograms<P: AsRef<Path>>(unigrams_path: P, bigrams_path: P) -> Result<Histograms> {
+    let mut unigrams: HashMap<Kc, u32> = HashMap::new();
+    let mut bigrams: HashMap<(Kc, Kc), u32> = HashMap::new();
+    for i in fs::read_to_string(unigrams_path)?.lines() {
+        let items = i.split(char::is_whitespace).collect::<Vec<_>>();
+        if items.len() != 2 {
+            return Err(eyre!("weird unigrams line: {}", i));
+        }
+        let (kcstr, count) = (items[0], items[1].parse::<u32>()?);
+        let kc = Kc::from_str(kcstr)?;
+        unigrams.insert(kc, count).expect_none("duplicate unigram");
+    }
+
+    for i in fs::read_to_string(bigrams_path)?.lines() {
         let items = i.split(char::is_whitespace).collect::<Vec<_>>();
         if items.len() != 3 {
-            return Err(eyre!("weird corpus line: {}", i));
+            return Err(eyre!("weird unigrams line: {}", i));
         }
-        let (_, kcstr, _pressed) = (items[0], items[1], items[2] == "1");
-        let kc = match kcstr {
-            "0" => Kc::Num0,
-            "1" => Kc::Num1,
-            "2" => Kc::Num2,
-            "3" => Kc::Num3,
-            "4" => Kc::Num4,
-            "5" => Kc::Num5,
-            "6" => Kc::Num6,
-            "7" => Kc::Num7,
-            "8" => Kc::Num8,
-            "9" => Kc::Num9,
-            "A" => Kc::A,
-            "B" => Kc::B,
-            "C" => Kc::C,
-            "D" => Kc::D,
-            "E" => Kc::E,
-            "F" => Kc::F,
-            "G" => Kc::G,
-            "H" => Kc::H,
-            "I" => Kc::I,
-            "J" => Kc::J,
-            "K" => Kc::K,
-            "L" => Kc::L,
-            "M" => Kc::M,
-            "N" => Kc::N,
-            "O" => Kc::O,
-            "P" => Kc::P,
-            "Q" => Kc::Q,
-            "R" => Kc::R,
-            "S" => Kc::S,
-            "T" => Kc::T,
-            "U" => Kc::U,
-            "V" => Kc::V,
-            "W" => Kc::W,
-            "X" => Kc::X,
-            "Y" => Kc::Y,
-            "Z" => Kc::Z,
-            "F1" => Kc::F1,
-            "F2" => Kc::F2,
-            "F3" => Kc::F3,
-            "F4" => Kc::F4,
-            "F5" => Kc::F5,
-            "F6" => Kc::F6,
-            "F7" => Kc::F7,
-            "F8" => Kc::F8,
-            "F9" => Kc::F9,
-            "F10" => Kc::F10,
-            "F11" => Kc::F11,
-            "F12" => Kc::F12,
-            "ENTER" => Kc::Enter,
-            "ESC" => Kc::Esc,
-            "BACKSPACE" => Kc::Backspace,
-            "TAB" => Kc::Tab,
-            "SPACE" => Kc::Space,
-            "INS" => Kc::Insert,
-            "DEL" => Kc::Delete,
-            "HOME" => Kc::Home,
-            "END" => Kc::End,
-            "PGUP" => Kc::PageUp,
-            "PGDN" => Kc::PageDn,
-            "UARROW" => Kc::Up,
-            "DARROW" => Kc::Down,
-            "LARROW" => Kc::Left,
-            "RARROW" => Kc::Right,
-            "NUMLOCK" => Kc::NumLock,
-            "SCROLLLOCK" => Kc::ScrollLock,
-            "PSSR" => Kc::MediaVolDown,
-            "PABR" => Kc::Pause,
-            "MENU" => Kc::App,
-            "MINUS" => Kc::Minus,
-            "EQUAL" => Kc::Equals,
-            "LBRACE" => Kc::LeftBracket,
-            "RBRACE" => Kc::RightBracket,
-            "BACKSLASH" => Kc::Backslash,
-            "SEMICOLON" => Kc::Semicolon,
-            "APOSTROPHE" => Kc::Quote,
-            "GRAVE" => Kc::Grave,
-            "COMMA" => Kc::Comma,
-            "DOT" => Kc::Dot,
-            "SLASH" => Kc::Slash,
-            "LALT" => Kc::Alt,
-            "LCTRL" => Kc::Ctrl,
-            "LSHIFT" => Kc::Shift,
-            "LSUPER" => Kc::Super,
-            "RALT" => Kc::Alt,
-            "RCTRL" => Kc::Ctrl,
-            "RSHIFT" => Kc::Shift,
-            "RSUPER" => Kc::Super,
-            _ => return Err(eyre!("unrecognised corpus key {}", kcstr)),
-        };
-        keys.push(kc);
+        let (kcstr1, kcstr2, count) = (items[0], items[1], items[2].parse::<u32>()?);
+        let kc1 = Kc::from_str(kcstr1)?;
+        let kc2 = Kc::from_str(kcstr2)?;
+        bigrams.insert((kc1, kc2), count).expect_none("duplicate bigram");
     }
-    Ok(keys)
+
+    Ok(Histograms { unigrams, bigrams })
 }

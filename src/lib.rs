@@ -6,6 +6,7 @@
     const_fn,
     destructuring_assignment,
     map_first_last,
+    option_expect_none,
     option_result_contains,
     option_unwrap_none,
     stmt_expr_attributes,
@@ -44,11 +45,19 @@ pub struct Args {
 
     #[structopt(
         long,
-        default_value = "data/keys.data",
+        default_value = "data/unigrams.data",
         parse(from_os_str),
-        help = "Data file describing typing data to optimise to"
+        help = "Data file describing unigrams"
     )]
-    pub data_path: PathBuf,
+    pub unigrams_path: PathBuf,
+
+    #[structopt(
+        long,
+        default_value = "data/bigrams.data",
+        parse(from_os_str),
+        help = "Data file describing bigrams"
+    )]
+    pub bigrams_path: PathBuf,
 
     #[structopt(short, long, parse(from_os_str), help = "Evaluate a given layout")]
     pub eval_layout: Option<PathBuf>,
