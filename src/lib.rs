@@ -14,13 +14,15 @@
 )]
 
 use crate::eval::LayoutEval;
-use crate::ingest::load_layout;
+use crate::ingest::{load_layout, load_params};
 use crate::layout::Layout;
 use eyre::Result;
 use memega::cfg::{Cfg, Crossover, Mutation, Niching, Species, Stagnation, Survival};
+use memega::hyper::HyperBuilder;
 use memega::runner::Runner;
 use memega::{CachedEvaluator, Evaluator};
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 use structopt::StructOpt;
 
 pub mod eval;
@@ -51,7 +53,9 @@ pub struct Args {
     pub eval_layout: Option<PathBuf>,
 }
 
-pub fn eval_layout<P: AsRef<Path>>(eval: LayoutEval, p: P) -> Result<()> {
+pub fn eval_layout<P: AsRef<Path>>(p: P) -> Result<()> {
+    let args = Args::from_args();
+    let eval = LayoutEval::from_args(&args)?;
     let l = load_layout(p)?;
     let fitness = eval.fitness(&l);
     println!("layout: {}", eval.params.format(&l));
@@ -59,18 +63,43 @@ pub fn eval_layout<P: AsRef<Path>>(eval: LayoutEval, p: P) -> Result<()> {
     Ok(())
 }
 
-pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
+pub fn layout_runner(cfg: Cfg) -> Result<Runner<CachedEvaluator<LayoutEval>>> {
+    let args = Args::from_args();
+    let eval = LayoutEval::from_args(&args)?;
     let initial = load_layout("data/default.layout")?;
-    let mut runner = Runner::new(CachedEvaluator::new(eval.clone(), 1000), cfg, move || {
+    Ok(Runner::new(CachedEvaluator::new(eval, 1000), cfg, move || {
         Layout::rand_with_size(initial.size())
-    });
+    }))
+}
+
+pub fn evolve(cfg: Cfg) -> Result<()> {
+    let args = Args::from_args();
+    let params = load_params(&args.params_path)?;
+    let mut runner = layout_runner(cfg)?;
 
     for i in 0..10000 {
         let mut r = runner.run_iter()?;
         println!("Generation {}: {}", i + 1, r.gen.best().base_fitness);
         if i % 10 == 0 {
             println!("{}", runner.summary(&mut r));
-            println!("{}", eval.params.format(&r.gen.best().state.0));
+            println!("{}", params.format(&r.gen.best().state.0));
+        }
+    }
+
+    Ok(())
+}
+
+pub fn hyper_evolve() -> Result<()> {
+    let mut builder = HyperBuilder::new(Duration::from_millis(10));
+    builder.add(1.0, &|cfg| layout_runner(cfg).unwrap());
+    let mut runner = builder.build();
+
+    for i in 0..10000 {
+        let mut r = runner.run_iter()?;
+        println!("Generation {}: {}", i + 1, r.gen.best().base_fitness);
+        if i % 10 == 0 {
+            println!("{}", runner.summary(&mut r));
+            println!("{:?}", r.gen.best().state);
         }
     }
 
@@ -79,23 +108,23 @@ pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
 
 pub fn run() -> Result<()> {
     let args = Args::from_args();
-    let eval = LayoutEval::from_args(&args)?;
     // Remember to update these values if add more mutation/crossover strategies.
-    let cfg = Cfg::new(100)
+    let cfg = Cfg::new(1000)
         .with_mutation(Mutation::Adaptive)
         .with_crossover(Crossover::Adaptive)
         // .with_survival(Survival::TopProportion(0.2))
         // .with_species(Species::None)
         .with_survival(Survival::SpeciesTopProportion(0.2))
-        .with_species(Species::TargetNumber(10))
+        .with_species(Species::TargetNumber(100))
         .with_niching(Niching::None)
-        .with_stagnation(Stagnation::NumGenerations(50))
+        .with_stagnation(Stagnation::NumGenerations(100))
         .with_par_fitness(true);
 
     if let Some(p) = args.eval_layout {
-        eval_layout(eval, p)?;
+        eval_layout(p)?;
     } else {
-        evolve(eval, cfg)?;
+        evolve(cfg)?;
+        // hyper_evolve()?;
     }
 
     Ok(())
