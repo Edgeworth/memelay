@@ -1,13 +1,13 @@
 use rand::distributions::Standard;
 use rand::prelude::Distribution;
 use rand::Rng;
-use strum_macros::{Display as StrumDisplay, EnumIter, EnumString};
+use strum_macros::{Display as StrumDisplay, EnumString};
 
 impl Distribution<Kc> for Standard {
     fn sample<R: Rng + ?Sized>(&self, r: &mut R) -> Kc {
         // Create specific subset:
         match r.gen_range(1..=30) {
-            1 => Kc::Scolon,
+            1 => Kc::Semicolon,
             2 => Kc::Comma,
             3 => Kc::Dot,
             4 => Kc::Slash,
@@ -49,9 +49,7 @@ impl Default for Kc {
 }
 
 // Based on QMK keycodes.
-#[derive(
-    Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, EnumIter, EnumString, Hash, StrumDisplay,
-)]
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, EnumString, Hash, StrumDisplay)]
 pub enum Kc {
     None,
 
@@ -62,15 +60,25 @@ pub enum Kc {
     Super,
 
     // Numbers:
+    #[strum(serialize = "0")]
     Num0,
+    #[strum(serialize = "1")]
     Num1,
+    #[strum(serialize = "2")]
     Num2,
+    #[strum(serialize = "3")]
     Num3,
+    #[strum(serialize = "4")]
     Num4,
+    #[strum(serialize = "5")]
     Num5,
+    #[strum(serialize = "6")]
     Num6,
+    #[strum(serialize = "7")]
     Num7,
+    #[strum(serialize = "8")]
     Num8,
+    #[strum(serialize = "9")]
     Num9,
 
     // Navigation:
@@ -105,17 +113,28 @@ pub enum Kc {
     MediaStop,
 
     // Symbols:
-    Minus,        // - and _
-    Equals,       // = and +
-    LeftBracket,  // [ and {
+    #[strum(serialize = "-")]
+    Minus, // - and _
+    #[strum(serialize = "=")]
+    Equals, // = and +
+    #[strum(serialize = "[")]
+    LeftBracket, // [ and {
+    #[strum(serialize = "]")]
     RightBracket, // ] and }
-    Backslash,    // \ and |
-    Grave,        // ` and ~
-    Quote,        // ' and ""
-    Scolon,       // ; and :
-    Comma,        // , and <
-    Dot,          // . and >
-    Slash,        // / and ?
+    #[strum(serialize = "\\")]
+    Backslash, // \ and |
+    #[strum(serialize = "`")]
+    Grave, // ` and ~
+    #[strum(serialize = "'")]
+    Quote, // ' and ""
+    #[strum(serialize = ";")]
+    Semicolon, // ; and :
+    #[strum(serialize = ",")]
+    Comma, // , and <
+    #[strum(serialize = ".")]
+    Dot, // . and >
+    #[strum(serialize = "/")]
+    Slash, // / and ?
 
     // Letters
     A,
