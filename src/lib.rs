@@ -17,10 +17,9 @@ use crate::eval::LayoutEval;
 use crate::ingest::load_layout;
 use crate::layout::Layout;
 use eyre::Result;
-use memega::cfg::{Cfg, Crossover, Mutation, Niching, Species, Survival};
-use memega::gen::unevaluated::UnevaluatedGen;
-use memega::runner::{Runner};
-use memega::Evaluator;
+use memega::cfg::{Cfg, Crossover, Mutation, Niching, Species, Stagnation, Survival};
+use memega::runner::Runner;
+use memega::{CachedEvaluator, Evaluator};
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 
@@ -62,10 +61,9 @@ pub fn eval_layout<P: AsRef<Path>>(eval: LayoutEval, p: P) -> Result<()> {
 
 pub fn evolve(eval: LayoutEval, cfg: Cfg) -> Result<()> {
     let initial = load_layout("data/default.layout")?;
-
-    let initial = (0..cfg.pop_size).map(|_| Layout::rand_with_size(initial.size())).collect();
-    let initial = UnevaluatedGen::initial::<LayoutEval>(initial, &cfg);
-    let mut runner = Runner::new(eval.clone(), cfg.clone(), initial);
+    let mut runner = Runner::new(CachedEvaluator::new(eval.clone(), 1000), cfg, move || {
+        Layout::rand_with_size(initial.size())
+    });
 
     for i in 0..10000 {
         let mut r = runner.run_iter()?;
@@ -86,9 +84,12 @@ pub fn run() -> Result<()> {
     let cfg = Cfg::new(100)
         .with_mutation(Mutation::Adaptive)
         .with_crossover(Crossover::Adaptive)
+        // .with_survival(Survival::TopProportion(0.2))
+        // .with_species(Species::None)
         .with_survival(Survival::SpeciesTopProportion(0.2))
         .with_species(Species::TargetNumber(10))
         .with_niching(Niching::None)
+        .with_stagnation(Stagnation::NumGenerations(50))
         .with_par_fitness(true);
 
     if let Some(p) = args.eval_layout {
