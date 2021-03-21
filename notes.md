@@ -117,3 +117,40 @@ best: 1.7720799e-8, mean: 1.757082e-8, dupes: 319, dist: 25.366938, species: 36
 Q V I L Z B N O M J
 K T A D H P W E S Y
 , G U R X ; C . F /
+
+
+Generation 45951: 0.000000017721895301693754
+best: 1.7721895e-8, mean: 1.7501762e-8, pop: 1000, dupes: 0, dist: 28.075424, species: 183
+  mutation weights: 0.0010587656, 0.5423815848, 0.0749318569, 0.0294563184, 0.0445809463,
+  crossover weights: 0.8112543144, 0.0, 0.1203843616, 0.0898067333,
+
+Q F O M B K L I N J
+Y T E S G H D A W Z
+/ V . C ; X R U P ,
+
+Generation 23951: 0.00000001772217413349654
+best: 1.7722174e-8, mean: 1.7572964e-8, pop: 1000, dupes: 0, dist: 27.634012, species: 152
+  mutation weights: 1.5454318e-4, 0.7439534528, 0.0149772551, 0.0123769231, 0.0382499484,
+  crossover weights: 3.2050652478, 0.0034198844, 0.1463196867, 0.2128033286,
+
+Q C O U , K M R P J
+Y S A E X H D W T B
+/ V . I ; F N L G Z
+
+Generation 124251: 0.000000017722376934339183
+best: 1.7722377e-8, mean: 1.7549232e-8, pop: 1000, dupes: 0, dist: 26.053654, species: 86
+  mutation weights: 4.8359775e-4, 0.600397245, 0.031473309, 0.0175294612, 0.0036372428,
+  crossover weights: 5.9604017958, 1.5583383658, 0.0, 0.336201654,
+
+/ L I . Z K V M C Q
+B R E A X P D W S Y
+J H U O ; G T N F ,
+
+Generation 200001: 0.000000017722377248421832
+best: 1.7722377e-8, mean: 1.7560213e-8, pop: 1001, dupes: 0, dist: 23.953435176, species: 129
+  mutation weights: 2.645697e-4, 0.5342245253, 0.0230543205, 5.8773751e-4, 0.0026292764,
+  crossover weights: 7.860426523, 1.0757608449, 0.1753768871, 0.5600487665,
+
+Q C M V K Z . I L /
+Y S W D P X A E R B
+, F N T G ; O U H J
