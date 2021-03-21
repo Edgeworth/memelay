@@ -28,7 +28,7 @@ impl Params {
         let mut idx = 0;
         for c in self.layout.chars() {
             if c == 'X' {
-                s += &format!("{:?}", l.keys[idx]);
+                s += &format!("{}", l.keys[idx]);
                 idx += 1;
             } else {
                 s.push(c);
@@ -88,7 +88,7 @@ impl LayoutEval {
             Kc::J,
             Kc::K,
             Kc::L,
-            Kc::Scolon,
+            Kc::Semicolon,
             Kc::Z,
             Kc::X,
             Kc::C,
@@ -132,7 +132,7 @@ impl Evaluator for LayoutEval {
 
     fn mutate(&self, s: &mut Layout, rate: f64, idx: usize) {
         let mut r = rand::thread_rng();
-        let mutate = r.gen::<f64>() < rate;
+        let mutate = r.gen::<f64>() < rate + 0.01; // TODO is this useful?
         match idx {
             0 => {
                 // Mutate random available key.
