@@ -16,7 +16,7 @@ enum State {
 }
 
 pub fn load_layout<P: AsRef<Path>>(layout_path: P) -> Result<Layout> {
-    const SKIP: &str = "|\\/";
+    const SKIP: &str = "|\\";
     let mut keys = Vec::new();
     for i in fs::read_to_string(layout_path)?.lines() {
         for kc in i.split(|c: char| c.is_whitespace() || SKIP.contains(c)) {
@@ -161,7 +161,7 @@ pub fn load_keys<P: AsRef<Path>>(path: P) -> Result<Vec<Kc>> {
             "LBRACE" => Kc::LeftBracket,
             "RBRACE" => Kc::RightBracket,
             "BACKSLASH" => Kc::Backslash,
-            "SEMICOLON" => Kc::Scolon,
+            "SEMICOLON" => Kc::Semicolon,
             "APOSTROPHE" => Kc::Quote,
             "GRAVE" => Kc::Grave,
             "COMMA" => Kc::Comma,

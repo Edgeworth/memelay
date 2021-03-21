@@ -19,8 +19,10 @@ use crate::layout::Layout;
 use eyre::Result;
 use memega::cfg::{Cfg, Crossover, Mutation, Niching, Species, Stagnation, Survival};
 use memega::hyper::HyperBuilder;
+use memega::ops::mutation::mutate_scramble;
 use memega::runner::Runner;
 use memega::{CachedEvaluator, Evaluator};
+use rand::prelude::SliceRandom;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 use structopt::StructOpt;
@@ -66,9 +68,11 @@ pub fn eval_layout<P: AsRef<Path>>(p: P) -> Result<()> {
 pub fn layout_runner(cfg: Cfg) -> Result<Runner<CachedEvaluator<LayoutEval>>> {
     let args = Args::from_args();
     let eval = LayoutEval::from_args(&args)?;
-    let initial = load_layout("data/default.layout")?;
+    let initial_keys = load_layout("data/default.layout")?.keys;
     Ok(Runner::new(CachedEvaluator::new(eval, 1000), cfg, move || {
-        Layout::rand_with_size(initial.size())
+        let mut keys = initial_keys.clone();
+        keys.shuffle(&mut rand::thread_rng());
+        Layout::new(keys)
     }))
 }
 
@@ -77,10 +81,10 @@ pub fn evolve(cfg: Cfg) -> Result<()> {
     let params = load_params(&args.params_path)?;
     let mut runner = layout_runner(cfg)?;
 
-    for i in 0..10000 {
+    for i in 0..200001 {
         let mut r = runner.run_iter()?;
-        println!("Generation {}: {}", i + 1, r.gen.best().base_fitness);
-        if i % 10 == 0 {
+        if i % 50 == 0 {
+            println!("Generation {}: {}", i + 1, r.gen.best().base_fitness);
             println!("{}", runner.summary(&mut r));
             println!("{}", params.format(&r.gen.best().state.0));
         }
@@ -94,7 +98,7 @@ pub fn hyper_evolve() -> Result<()> {
     builder.add(1.0, &|cfg| layout_runner(cfg).unwrap());
     let mut runner = builder.build();
 
-    for i in 0..10000 {
+    for i in 0..10001 {
         let mut r = runner.run_iter()?;
         println!("Generation {}: {}", i + 1, r.gen.best().base_fitness);
         if i % 10 == 0 {
@@ -117,8 +121,9 @@ pub fn run() -> Result<()> {
         .with_survival(Survival::SpeciesTopProportion(0.2))
         .with_species(Species::TargetNumber(100))
         .with_niching(Niching::None)
-        .with_stagnation(Stagnation::NumGenerations(100))
-        .with_par_fitness(true);
+        .with_stagnation(Stagnation::None)
+        .with_par_fitness(true)
+        .with_par_dist(true);
 
     if let Some(p) = args.eval_layout {
         eval_layout(p)?;

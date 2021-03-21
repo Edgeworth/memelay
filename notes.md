@@ -1,0 +1,99 @@
+62379 A
+60834 D
+57691 S
+54237 E
+53779 W
+39347 T
+29820 O
+29199 I
+29052 R
+27174 N
+23040 C
+20125 L
+17843 M
+16484 U
+13476 P
+12884 V
+12249 F
+11695 H
+10860 DOT
+10245 G
+8608 Y
+8227 X
+7784 0
+7614 SEMICOLON
+7590 K
+6758 B
+5460 Z
+4922 COMMA
+4302 SLASH
+2915 J
+2033 Q
+
+
+0.000000017546976145997666
+Q	F	I	C	B	|	Z	V	N	L	J
+K	T	E	W	X	|	Dot	A	S	D	Y
+Slash	P	U	R	G	|	Scolon	O	M	H	Comma
+
+Generation 1651: 0.00000001754727635007565
+Stats: Stats { best_fitness: 0.00000001754727635007565, mean_fitness: 0.000000017383331992823527, num_dup: 78, mean_distance: 1.5508, num_species: 6 }
+J	U	O	L	Scolon	|	Y	V	N	P	Q
+Z	E	A	D	H	|	G	W	S	T	B
+Comma	Dot	I	R	K	|	X	C	M	F	Slash
+
+Generation 2221: 0.00000001754784593479463
+best: 1.7547846e-8, mean: 1.7425652e-8, dupes: 58, dist: 20.34231938, species: 10
+  mutation weights: 1.9529659e-4, 0.0172276534, 0.0505456726, 0.0332538959, 0.0090477207,
+  crossover weights: 3.7761286573, 0.0210525234, 17.702758115,
+
+Q	P	N	Dot	Z	|	X	L	I	C	J
+Y	T	S	A	G	|	H	D	E	W	B
+Slash	V	M	O	Scolon	|	K	R	U	F	Comma
+
+
+Generation 9991: 0.00000001754759279174087
+best: 1.7547593e-8, mean: 1.7394453e-8, dupes: 371, dist: 26.50974999, species: 207
+  mutation weights: 1.106568e-4, 0.0036461031, 0.0204436777, 0.0283442609, 6.4191794e-4,
+  crossover weights: 4.9067818954, 0.2139031544, 0.0, 0.0880004906,
+
+Q	L	I	C	B	|	Z	Dot	N	P	J
+K	D	E	W	V	|	X	A	S	T	Y
+Comma	H	U	R	G	|	Scolon	O	M	F	Slash
+
+Generation 9991: 0.000000017548322680164862
+best: 1.7548323e-8, mean: 1.7424057e-8, dupes: 423, dist: 26.414144, species: 192
+  mutation weights: 6.525159e-5, 0.0589685193, 0.0025946869, 0.006483045, 0.0013803799,
+  crossover weights: 4.4550712108, 0.102545598, 0.0366495712, 0.0049682807,
+
+Q	P	N	L	X	|	Scolon	C	O	U	J
+B	T	S	D	H	|	Y	W	A	E	Z
+Comma	V	M	R	K	|	G	I	Dot	F	Slash
+
+
+Generation 9991: 0.000000017548400220713242
+best: 1.75484e-8, mean: 1.6180595e-8, dupes: 393, dist: 26.625248, species: 217
+  mutation weights: 5.9517029e-4, 0.0124331501, 0.0170438775, 0.0042640334, 0.0177807171,
+  crossover weights: 2.9331079012, 0.2620446638, 0.0771081522, 0.2657011157,
+
+Q	P	N	C	Scolon	|	K	L	O	U	J
+B	T	S	W	Y	|	V	D	A	E	Z
+Comma	G	M	I	X	|	H	R	Dot	F	Slash
+
+Generation 9951: 0.000000017548422084931363
+best: 1.7548422e-8, mean: 1.7396622e-8, dupes: 402, dist: 26.628055261, species: 35
+  mutation weights: 3.9160553e-4, 0.002723268, 0.0014581882, 0.0386494071, 0.0173821769,
+  crossover weights: 4.8724616385, 0.0300488102, 0.255309795, 0.2766249714,
+
+J	C	O	M	Scolon	|	X	L	I	F	Q
+B	S	A	W	V	|	H	D	E	T	Z
+Comma	G	Dot	N	Y	|	K	R	U	P	Slash
+
+Generation 116051: 0.000000017548173297982136
+best: 1.7548173e-8, mean: 1.7444728e-8, dupes: 529, dist: 25.341555547, species: 166
+  mutation weights: 1.7345043e-6, 0.0037170329, 1.1088146e-6, 4.6184857e-5, 4.068897e-5,
+  crossover weights: 20.764409557, 0.3024682245, 0.8678103996, 0.4499047113,
+
+Q P C L X ; M I O J
+B T S D H F W A E Z
+/ G V R K Y N U . ,
