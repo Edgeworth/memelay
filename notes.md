@@ -97,3 +97,23 @@ best: 1.7548173e-8, mean: 1.7444728e-8, dupes: 529, dist: 25.341555547, species:
 Q P C L X ; M I O J
 B T S D H F W A E Z
 / G V R K Y N U . ,
+
+
+---- switched to new evaluation - added all finger pair penalties
+Generation 10701: 0.000000017720252514165374
+best: 1.7720253e-8, mean: 1.7569625e-8, dupes: 429, dist: 26.765727779, species: 161
+  mutation weights: 1.8885452e-4, 0.0025551899, 0.0138497011, 0.0029327903, 0.0066514971,
+  crossover weights: 6.2959777627, 0.1201307614, 0.094768131, 0.0827094316,
+
+J M O R K B C U P Q
+Z D A W G V S E T Y
+, H . L X ; N I F /
+
+Generation 11251: 0.000000017720798903799893
+best: 1.7720799e-8, mean: 1.757082e-8, dupes: 319, dist: 25.366938, species: 36
+  mutation weights: 1.4197325e-4, 0.0593660433, 0.0694963612, 0.01790769, 0.0246899181,
+  crossover weights: 3.3494780264, 0.1288041, 0.1195249261, 0.1122587094,
+
+Q V I L Z B N O M J
+K T A D H P W E S Y
+, G U R X ; C . F /
