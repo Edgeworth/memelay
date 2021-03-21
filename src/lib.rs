@@ -121,7 +121,7 @@ pub fn run() -> Result<()> {
         .with_survival(Survival::SpeciesTopProportion(0.2))
         .with_species(Species::TargetNumber(100))
         .with_niching(Niching::None)
-        .with_stagnation(Stagnation::None)
+        .with_stagnation(Stagnation::NumGenerations(100))
         .with_par_fitness(true)
         .with_par_dist(true);
 

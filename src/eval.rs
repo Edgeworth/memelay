@@ -163,10 +163,38 @@ impl Evaluator for LayoutEval {
     }
 
     fn fitness(&self, s: &Layout) -> f64 {
-        // Indexed by row jump length.
-        const SAME_FING: &[f64] = &[2.5, 3.0, 4.0];
-        const PINKY_RING: &[f64] = &[0.5, 1.0, 1.5];
-        const RING_MID: &[f64] = &[0.1, 0.2, 0.3];
+        // Indexed by: first finger, second finger, row jump amount
+        // Values adapted from https://github.com/bclnr/kb-layout-evaluation
+        const BIGRAM_MAP: [[[f64; 3]; 4]; 4] = [
+            [
+                // First finger: index
+                [2.5, 3.0, 4.0], // Index - same row val only used for different key locations
+                [0.5, 1.0, 2.0], // Middle - outward roll
+                [0.5, 0.8, 1.5], // Ring - outward roll
+                [0.5, 0.7, 1.1], // Pinkie - outward roll
+            ],
+            [
+                // First finger: middle
+                [-1.5, -0.5, 1.5], // Index - inward roll
+                [0.0, 3.5, 4.5],   // Middle - same row val only used for different key locations
+                [0.5, 1.0, 2.0],   // Ring - outward roll
+                [0.5, 0.8, 1.5],   // Pinkie - outward roll
+            ],
+            [
+                // First finger: ring
+                [-1.5, -0.5, 1.5], // Index - inward roll
+                [-2.0, -0.5, 1.2], // Middle - inward roll
+                [0.0, 3.5, 4.5],   // Ring - same row val only used for different key locations
+                [0.0, 3.5, 4.5],   // Pinkie - outward roll
+            ],
+            [
+                // First finger: pinkie
+                [-1.0, 0.0, 1.0], // Index - inward roll
+                [-1.0, 0.0, 1.5], // Middle - inward roll
+                [-1.0, 0.0, 1.5], // Ring - inward roll
+                [3.0, 4.0, 5.5],  // Pinkie - same row val only used for different key locations
+            ],
+        ];
         let mut cost = 0.0;
 
         // Check unigrams:
@@ -190,29 +218,15 @@ impl Evaluator for LayoutEval {
             }
             let previ = previ.unwrap();
             let curi = curi.unwrap();
+            let pfing = self.params.finger[previ] as usize;
+            let cfing = self.params.finger[curi] as usize;
+            let same_hand = self.params.hand[previ] == self.params.hand[curi];
+            let jump_len = (self.params.row[curi] - self.params.row[previ]).abs() as usize;
 
-            let cfing = self.params.finger[curi];
-            let pfing = self.params.finger[previ];
-            let crow = self.params.row[curi];
-            let prow = self.params.row[previ];
-            let chand = self.params.hand[curi];
-            let phand = self.params.hand[previ];
-            let same_hand = chand == phand;
-            let same_fing = same_hand && cfing == pfing;
-            let pinky_ring = same_hand && (cfing == 3 && pfing == 2 || cfing == 2 && pfing == 3);
-            let ring_mid = same_hand && (cfing == 2 && pfing == 1 || cfing == 1 && pfing == 2);
-            let jump_len = (crow - prow).abs() as usize;
-
-            let mut percost = 0.0;
-            if same_fing {
-                percost += SAME_FING[jump_len];
-            }
-            if pinky_ring {
-                percost += PINKY_RING[jump_len];
-            }
-            if ring_mid {
-                percost += RING_MID[jump_len];
-            }
+            // Special case: same key incurs zero cost for bigrams.
+            // Index finger can be used twice on the same row with different keys.
+            let percost =
+                if same_hand && kc1 != kc2 { BIGRAM_MAP[pfing][cfing][jump_len] } else { 0.0 };
             cost += percost * count as f64;
         }
 
