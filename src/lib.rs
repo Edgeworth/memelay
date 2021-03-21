@@ -19,7 +19,6 @@ use crate::layout::Layout;
 use eyre::Result;
 use memega::cfg::{Cfg, Crossover, Mutation, Niching, Species, Stagnation, Survival};
 use memega::hyper::HyperBuilder;
-use memega::ops::mutation::mutate_scramble;
 use memega::runner::Runner;
 use memega::{CachedEvaluator, Evaluator};
 use rand::prelude::SliceRandom;
@@ -116,12 +115,10 @@ pub fn run() -> Result<()> {
     let cfg = Cfg::new(1000)
         .with_mutation(Mutation::Adaptive)
         .with_crossover(Crossover::Adaptive)
-        // .with_survival(Survival::TopProportion(0.2))
-        // .with_species(Species::None)
         .with_survival(Survival::SpeciesTopProportion(0.2))
         .with_species(Species::TargetNumber(100))
         .with_niching(Niching::None)
-        .with_stagnation(Stagnation::NumGenerations(100))
+        .with_stagnation(Stagnation::DisallowDuplicates)
         .with_par_fitness(true)
         .with_par_dist(true);
 
