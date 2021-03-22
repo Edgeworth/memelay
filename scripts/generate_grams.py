@@ -3,7 +3,8 @@ import string
 
 # Skip whitespace without breaking bigrams - typed by thumb keys
 skip = str.maketrans(':<>?', ';,./', ' \n\t\r')
-files = [i.strip() for i in open('data/filelist').readlines()]
+suffix = '_linux'
+files = [i.strip() for i in open('data/filelist' + suffix).readlines()]
 allowed = string.ascii_lowercase + ';,./'
 
 unigrams = {}
@@ -21,7 +22,7 @@ for file in files:
         if c not in allowed:
             prev = None  # break bigrams
             continue
-        
+
         unigrams.setdefault(c, 0)
         unigrams[c] += 1
 
@@ -31,9 +32,14 @@ for file in files:
             bigrams[bgram] += 1
         prev = c
 
-with open('data/unigrams.data', 'w') as f:
+unigram_total = sum(i for i in unigrams.values())
+bigram_total = sum(i for i in bigrams.values())
+
+with open('data/unigrams%s.data' % suffix, 'w') as f:
+    f.write('%d\n' % unigram_total)
     for k, v in sorted(unigrams.items()):
-        f.write('%s %d\n'% (k, v))
-with open('data/bigrams.data', 'w') as f:
+        f.write('%s %.18f\n' % (k, v / unigram_total))
+with open('data/bigrams%s.data' % suffix, 'w') as f:
+    f.write('%d\n' % bigram_total)
     for k, v in sorted(bigrams.items()):
-        f.write('%s %s %d\n' % (k[0], k[1], v))
+        f.write('%s %s %.18f\n' % (k[0], k[1], v / bigram_total))

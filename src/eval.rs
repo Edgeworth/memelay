@@ -1,17 +1,16 @@
-use std::collections::HashMap;
-
 use crate::ingest::{load_histograms, load_params};
 use crate::layout::{Layout, COLEMAK_DHM_KEYS};
 use crate::types::Kc;
 use crate::Args;
 use eyre::Result;
 use memega::ops::crossover::{crossover_cycle, crossover_order, crossover_pmx};
-use memega::ops::fitness::count_different;
+use memega::ops::distance::kendall_tau;
 use memega::ops::mutation::{
     mutate_gen, mutate_insert, mutate_inversion, mutate_rate, mutate_scramble, mutate_swap,
 };
 use memega::Evaluator;
 use rand::Rng;
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Params {
@@ -41,8 +40,8 @@ impl Params {
 
 #[derive(Debug, Clone)]
 pub struct Histograms {
-    pub unigrams: HashMap<Kc, u32>,
-    pub bigrams: HashMap<(Kc, Kc), u32>,
+    pub unigrams: HashMap<Kc, f64>,
+    pub bigrams: HashMap<(Kc, Kc), f64>,
 }
 
 #[derive(Debug, Clone)]
@@ -53,23 +52,6 @@ pub struct LayoutEval {
 }
 
 impl LayoutEval {
-    fn build_unigrams(keys: &[Kc]) -> HashMap<Kc, u32> {
-        let mut m: HashMap<Kc, u32> = HashMap::new();
-        for &kc in keys.iter() {
-            *m.entry(kc).or_insert(0) += 1;
-        }
-        m
-    }
-
-    fn build_bigrams(keys: &[Kc]) -> HashMap<(Kc, Kc), u32> {
-        let mut m: HashMap<(Kc, Kc), u32> = HashMap::new();
-        for &[kc1, kc2] in keys.array_windows::<2>() {
-            *m.entry((kc1, kc2)).or_insert(0) += 1;
-        }
-        m
-    }
-
-
     pub fn from_args(args: &Args) -> Result<Self> {
         let params = load_params(&args.params_path)?;
         let hist = load_histograms(&args.unigrams_path, &args.bigrams_path)?;
@@ -100,7 +82,7 @@ impl Evaluator for LayoutEval {
 
     fn mutate(&self, s: &mut Layout, rate: f64, idx: usize) {
         let mut r = rand::thread_rng();
-        let mutate = r.gen::<f64>() < rate + 0.01; // TODO is this useful?
+        let mutate = r.gen::<f64>() < rate;
         match idx {
             0 => {
                 // Mutate random available key.
@@ -163,28 +145,26 @@ impl Evaluator for LayoutEval {
                 [3.0, 4.0, 5.5],  // Pinkie - same row val only used for different key locations
             ],
         ];
-        const SWITCH_HAND: f64 = -2.0;
-        const SAME_KEY: f64 = -0.5;
+        const SWITCH_HAND: f64 = -4.0; // Alternating hands is very easy.
+        const SAME_KEY: f64 = 0.0; // Same key is neither easy nor hard.
         // Treat bigram data as less important than unigram.
         // Equally, trigram would be less important than bigram.
         const BIGRAM_MULT: f64 = 0.5;
 
         let mut cost = 0.0;
-        let mut total_possible = 0.0;
         // Check unigrams:
-        for (&kc, &count) in self.hist.unigrams.iter() {
+        for (&kc, &prop) in self.hist.unigrams.iter() {
             // Finger penalties - penalise for not being able to type characters.
             let percost = if let Some(curi) = s.keys.iter().position(|&v| v == kc) {
                 self.params.cost[curi]
             } else {
                 100.0
             };
-            cost += percost * count as f64;
-            total_possible += count as f64;
+            cost += percost * prop;
         }
 
         // Check bi-grams
-        for (&(kc1, kc2), &count) in self.hist.bigrams.iter() {
+        for (&(kc1, kc2), &prop) in self.hist.bigrams.iter() {
             // Model adapted from https://colemakmods.github.io/mod-dh/compare.html
             let previ = s.keys.iter().position(|&v| v == kc1);
             let curi = s.keys.iter().position(|&v| v == kc2);
@@ -205,17 +185,17 @@ impl Evaluator for LayoutEval {
             } else {
                 SWITCH_HAND
             };
-            cost += percost * BIGRAM_MULT * count as f64;
+            cost += percost * BIGRAM_MULT * prop;
         }
 
         // Tie-breaking: similarity to given existing layout:
-        cost += count_different(&s.keys, &self.match_keys) as f64;
+        cost += kendall_tau(&s.keys, &self.match_keys).unwrap() as f64 / 10000.0;
 
-        //total_possible / (cost + 1.0)
-        (-cost / total_possible).exp()
+        // 1.0 / (cost + 1.0)
+        (-cost).exp()
     }
 
     fn distance(&self, s1: &Layout, s2: &Layout) -> f64 {
-        count_different(&s1.keys, &s2.keys) as f64
+        kendall_tau(&s1.keys, &s2.keys).unwrap() as f64
     }
 }

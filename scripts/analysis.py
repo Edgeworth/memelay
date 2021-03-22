@@ -2,7 +2,7 @@
 import os
 import string
 
-f = open('data/keys.data')
+f = open('data/keys_time.data')
 
 SHFT_MAP = {
     'A': 'A',
@@ -116,7 +116,7 @@ def histogram():
     m = {}
     shft = False
     for l in f.readlines():
-        t, key, pressed = l.split(' ')
+        _, key, pressed = l.split(' ')
         if key == 'LSHIFT':
             shft = int(pressed.strip()) != 0
         if pressed == '0':
@@ -133,7 +133,7 @@ def histogram():
 def histogram_not_shifted():
     m = {}
     for l in f.readlines():
-        t, key, pressed = l.split(' ')
+        _, key, pressed = l.split(' ')
         if pressed == '0':
             continue
 
@@ -143,4 +143,20 @@ def histogram_not_shifted():
     for count, key in s:
         print(count, key)
 
-histogram_not_shifted()
+def clean():
+    for l in f.readlines():
+        _, key, pressed = l.split(' ')
+        if pressed.strip() == '0':
+            continue
+        key = key.lower()
+        if key in string.ascii_lowercase:
+            print(key)
+        if key == 'dot':
+            print('.')
+        if key == 'semicolon':
+            print(';')
+        if key == 'comma':
+            print(',')
+        if key == 'slash':
+            print('/')
+clean()
