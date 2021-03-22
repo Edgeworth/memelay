@@ -1,8 +1,11 @@
-Top cands:
-q m c l b x u o ; j
-w n s t p g i e a y
-z f d r v / . , h k
+Trained on filelist_dropbox:
+fitness: 0.26829814736960267
+z f l d v / ; , . j
+x n t s h g a e i w
+k m p r b y o c u q
 
-q . , ; / v d l f z
-w i e a g h s t n x
-j u c o y b r p m k
+Trained on filelist_linux:
+Generation 19351: 0.24803662713023528
+z p d m v y o c u j
+k n t r h ; e s i w
+q b f l g . a x , /

@@ -81,24 +81,24 @@ pub fn load_params<P: AsRef<Path>>(cfg_path: P) -> Result<Params> {
 }
 
 pub fn load_histograms<P: AsRef<Path>>(unigrams_path: P, bigrams_path: P) -> Result<Histograms> {
-    let mut unigrams: HashMap<Kc, u32> = HashMap::new();
-    let mut bigrams: HashMap<(Kc, Kc), u32> = HashMap::new();
-    for i in fs::read_to_string(unigrams_path)?.lines() {
+    let mut unigrams: HashMap<Kc, f64> = HashMap::new();
+    let mut bigrams: HashMap<(Kc, Kc), f64> = HashMap::new();
+    for i in fs::read_to_string(unigrams_path)?.lines().skip(1) {
         let items = i.split(char::is_whitespace).collect::<Vec<_>>();
         if items.len() != 2 {
             return Err(eyre!("weird unigrams line: {}", i));
         }
-        let (kcstr, count) = (items[0], items[1].parse::<u32>()?);
+        let (kcstr, count) = (items[0], items[1].parse::<f64>()?);
         let kc = Kc::from_str(kcstr)?;
         unigrams.insert(kc, count).expect_none("duplicate unigram");
     }
 
-    for i in fs::read_to_string(bigrams_path)?.lines() {
+    for i in fs::read_to_string(bigrams_path)?.lines().skip(1) {
         let items = i.split(char::is_whitespace).collect::<Vec<_>>();
         if items.len() != 3 {
             return Err(eyre!("weird unigrams line: {}", i));
         }
-        let (kcstr1, kcstr2, count) = (items[0], items[1], items[2].parse::<u32>()?);
+        let (kcstr1, kcstr2, count) = (items[0], items[1], items[2].parse::<f64>()?);
         let kc1 = Kc::from_str(kcstr1)?;
         let kc2 = Kc::from_str(kcstr2)?;
         bigrams.insert((kc1, kc2), count).expect_none("duplicate bigram");
