@@ -18,7 +18,7 @@ use crate::eval::LayoutEval;
 use crate::ingest::{load_layout, load_params};
 use crate::layout::Layout;
 use eyre::Result;
-use memega::cfg::{Cfg, Crossover, Mutation, Niching, Species, Stagnation, Survival};
+use memega::cfg::{Cfg, Crossover, Duplicates, Mutation, Niching, Species, Stagnation, Survival};
 use memega::hyper::HyperBuilder;
 use memega::runner::Runner;
 use memega::{CachedEvaluator, Evaluator};
@@ -127,7 +127,8 @@ pub fn run() -> Result<()> {
         .with_survival(Survival::SpeciesTopProportion(0.2))
         .with_species(Species::TargetNumber(100))
         .with_niching(Niching::None)
-        .with_stagnation(Stagnation::DisallowDuplicates)
+        .with_stagnation(Stagnation::NumGenerations(100))
+        .with_duplicates(Duplicates::DisallowDuplicates)
         .with_par_fitness(true)
         .with_par_dist(true);
 

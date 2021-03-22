@@ -4,9 +4,9 @@ import json
 # https://stevep99.github.io/keyboard-layout-analyzer/#/config format.
 
 src = """
-q m c l b x u o ; j
-w n s t p g i e a y
-z f d r v / . , h k
+q l d w b ; u o y j
+v n s t c . a e h k
+z m f r p x i , g /
 """.strip().lower().split()
 
 shift_map = {
