@@ -4,7 +4,7 @@ use crate::types::Kc;
 use crate::Args;
 use eyre::Result;
 use memega::ops::crossover::{crossover_cycle, crossover_order, crossover_pmx};
-use memega::ops::distance::kendall_tau;
+use memega::ops::distance::count_different;
 use memega::ops::mutation::{
     mutate_gen, mutate_insert, mutate_inversion, mutate_rate, mutate_scramble, mutate_swap,
 };
@@ -33,7 +33,7 @@ impl Params {
                 s.push(c);
             }
         }
-        s.push('\n');
+        s.truncate(s.trim_end().len());
         s
     }
 }
@@ -188,14 +188,20 @@ impl Evaluator for LayoutEval {
             cost += percost * BIGRAM_MULT * prop;
         }
 
+        let comma = s.keys.iter().position(|&v| v == Kc::Comma);
+        let dot = s.keys.iter().position(|&v| v == Kc::Dot);
+        if dot.is_none() || comma.is_none() || comma.unwrap() + 1 != dot.unwrap() {
+            cost += 10.0; // Keep , and . next to eachother.
+        }
+
         // Tie-breaking: similarity to given existing layout:
-        cost += kendall_tau(&s.keys, &self.match_keys).unwrap() as f64 / 10000.0;
+        cost += count_different(&s.keys, &self.match_keys) as f64 / 100000.0;
 
         // 1.0 / (cost + 1.0)
         (-cost).exp()
     }
 
     fn distance(&self, s1: &Layout, s2: &Layout) -> f64 {
-        kendall_tau(&s1.keys, &s2.keys).unwrap() as f64
+        count_different(&s1.keys, &s2.keys) as f64
     }
 }
