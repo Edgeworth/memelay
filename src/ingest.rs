@@ -16,10 +16,15 @@ enum State {
     Finger,
 }
 
-pub fn load_layout<P: AsRef<Path>>(layout_path: P) -> Result<Layout> {
+pub fn load_layouts<P: AsRef<Path>>(layout_path: P) -> Result<Vec<Layout>> {
     const SKIP: &str = "|\\";
     let mut keys = Vec::new();
+    let mut layouts = Vec::new();
     for i in fs::read_to_string(layout_path)?.lines() {
+        if i.is_empty() {
+            layouts.push(Layout::new(keys.clone()));
+            keys.clear();
+        }
         for kc in i.split(|c: char| c.is_whitespace() || SKIP.contains(c)) {
             if kc.is_empty() {
                 continue;
@@ -27,7 +32,15 @@ pub fn load_layout<P: AsRef<Path>>(layout_path: P) -> Result<Layout> {
             keys.push(Kc::from_str(kc).wrap_err(eyre!("could not find {}", kc))?);
         }
     }
-    Ok(Layout::new(keys))
+    if !keys.is_empty() {
+        layouts.push(Layout::new(keys));
+    }
+    for v in layouts.iter() {
+        if v.keys.len() != layouts[0].keys.len() {
+            return Err(eyre!("not all layouts the same size"));
+        }
+    }
+    Ok(layouts)
 }
 
 pub fn load_params<P: AsRef<Path>>(cfg_path: P) -> Result<Params> {
