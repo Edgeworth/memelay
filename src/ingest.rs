@@ -51,7 +51,7 @@ pub fn load_params<P: AsRef<Path>>(cfg_path: P) -> Result<Params> {
     let mut keys = Vec::new();
     let mut fixed = Vec::new();
     let mut unigram_cost = Vec::new();
-    let mut bigram_cost = [[[0.0 as f64; 3]; 4]; 4];
+    let mut bigram_cost = [[[0.0; 3]; 4]; 4];
     let mut bigram_idx = 0;
     let mut row = Vec::new();
     let mut hand = Vec::new();
