@@ -1,58 +1,30 @@
 Layer0:
-0.5518628948449962
-z f l d v / ; , . j
-x n t s h g a e i w
-k m p r b y o c u q
-
-0.5520782503
-j . , ; / b d l f z
-y i e a g h s t n w
-q u c o x v r p m k
-
-0.5429816912
-z f c l v y u o ; q
-x n s r h g i e t k
-w m d p b / a , . j
-
-0.5438892661
-j ; o u x v c r l q
-y e a i g f t s n w
-k h , . / b p d m z
-
-0.5422561013
-q r d p v x h u ; j
-w n s t f g a i e y
-z m c l b / o , . k
-
-0.5429816912
-z f c l v y u o ; q
-x n s r h g i e t k
-w m d p b / a , . j
-
-0.5450699721
-z m d p v y u o ; q
-x n s r f g i e t k
-w b c l h / a , . j
-
-0.5520892919
-z f l d b / ; , . j
-w n t s h g a e i y
-k m p r v x o c u q
-
-0.5471068099
-z f l d b w u o c q
-x n t s h g a e i y
-k m p r v ; , . / j
-
-0.5509035266
+1.9653327331, 1.7561, 2.1693
 q f r d v / ; , . j
-w n s t p g a e i y
-z m c l b x o u h k
+w n s t p g a e i h
+z m c l b x o u y k
 
-0.5520892919
-z f l d b / ; , . j
-w n t s h g a e i y
-k m p r v x o c u q
+1.9727552314, 1.8060, 2.1909
+q r d f v x / , . j
+w n s t p g a i e h
+z m c l b y o u ; k
+
+1.9739191922, 1.8513, 2.1698
+q r d f w / u , . j
+b n s t p x a e o g
+z m c l v y i ; h k
+
+1.974432971, 1.8181, 2.1668
+q r d f w x / , . j
+b n s t p g a i e h
+z m c l v y o u ; k
+
+1.9762223512, 1.8554, 2.168
+z r d f v / u , . q
+x n s t p y e a o g
+w m c l b k i ; h j
+
+MTGAP: 1.7401, 2.1470
 
 Layer1:
 0.2547228871
@@ -69,3 +41,5 @@ $ \ { } | ' _ 7 8 9
 $ \ { } # ' _ 7 8 9
 | = ( ) - & " 4 5 6
 @ + [ ] * ! 0 1 2 3
+
+Gutenberg test layer0_moddh:

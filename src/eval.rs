@@ -15,7 +15,7 @@ pub struct Params {
     pub layout: String,
     pub keys: Vec<Kc>,
     pub fixed: Vec<Kc>,
-    pub cost: Vec<f64>,
+    pub unigram_cost: Vec<f64>,
     pub row: Vec<i32>,
     pub hand: Vec<i32>,
     pub finger: Vec<i32>,
@@ -177,9 +177,6 @@ impl Evaluator for LayoutEval {
         ];
         const SWITCH_HAND: f64 = -4.0; // Alternating hands is very easy.
         const SAME_KEY: f64 = 0.0; // Same key is neither easy nor hard.
-        // Treat bigram data as less important than unigram.
-        // Equally, trigram would be less important than bigram.
-        const BIGRAM_MULT: f64 = 0.5;
         const FIXED_COST: f64 = 10.0; // Penalty for missing a fixed key.
 
         let mut cost = 0.0;
@@ -187,7 +184,7 @@ impl Evaluator for LayoutEval {
         for (&kc, &prop) in self.hist.unigrams.iter() {
             // Finger penalties - penalise for not being able to type characters.
             let percost = if let Some(curi) = s.keys.iter().position(|&v| v == kc) {
-                self.params.cost[curi]
+                self.params.unigram_cost[curi]
             } else {
                 100.0
             };
@@ -216,7 +213,7 @@ impl Evaluator for LayoutEval {
             } else {
                 SWITCH_HAND
             };
-            cost += percost * BIGRAM_MULT * prop;
+            cost += percost * prop;
         }
 
         // TODO: Move to adjacency? - need concept of up/down etc

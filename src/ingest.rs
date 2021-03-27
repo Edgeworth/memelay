@@ -12,7 +12,7 @@ enum State {
     Layout,
     Keys,
     Fixed,
-    Cost,
+    UnigramCost,
     Row,
     Hand,
     Finger,
@@ -49,7 +49,7 @@ pub fn load_params<P: AsRef<Path>>(cfg_path: P) -> Result<Params> {
     let mut layout = String::new();
     let mut keys = Vec::new();
     let mut fixed = Vec::new();
-    let mut cost = Vec::new();
+    let mut unigram_cost = Vec::new();
     let mut row = Vec::new();
     let mut hand = Vec::new();
     let mut finger = Vec::new();
@@ -61,8 +61,8 @@ pub fn load_params<P: AsRef<Path>>(cfg_path: P) -> Result<Params> {
             state = State::Keys;
         } else if i.starts_with("fixed") {
             state = State::Fixed;
-        } else if i.starts_with("cost") {
-            state = State::Cost;
+        } else if i.starts_with("unigram_cost") {
+            state = State::UnigramCost;
         } else if i.starts_with("row") {
             state = State::Row;
         } else if i.starts_with("hand") {
@@ -89,7 +89,7 @@ pub fn load_params<P: AsRef<Path>>(cfg_path: P) -> Result<Params> {
                 State::Layout => {}
                 State::Keys => keys.push(Kc::from_str(&s).unwrap()),
                 State::Fixed => fixed.push(Kc::from_str(&s).unwrap_or_default()),
-                State::Cost => cost.push(s.parse::<f64>().unwrap()),
+                State::UnigramCost => unigram_cost.push(s.parse::<f64>().unwrap()),
                 State::Row => row.push(s.parse::<i32>().unwrap()),
                 State::Hand => hand.push(s.parse::<i32>().unwrap()),
                 State::Finger => finger.push(s.parse::<i32>().unwrap()),
@@ -97,7 +97,7 @@ pub fn load_params<P: AsRef<Path>>(cfg_path: P) -> Result<Params> {
         }
     }
 
-    Ok(Params { layout, keys, fixed, cost, row, hand, finger })
+    Ok(Params { layout, keys, fixed, unigram_cost, row, hand, finger })
 }
 
 pub fn load_histograms<P: AsRef<Path>>(unigrams_path: P, bigrams_path: P) -> Result<Histograms> {
