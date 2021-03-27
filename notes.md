@@ -14,7 +14,6 @@ z r d f v / u , . q
 x n s t p y e a o g
 w m c l b k i ; h j
 
-
 MTGAP: 1.7401, 2.1470
 
 Layer1:
@@ -32,6 +31,17 @@ $ \ { } | ' _ 7 8 9
 $ \ { } # ' _ 7 8 9
 | = ( ) - & " 4 5 6
 @ + [ ] * ! 0 1 2 3
+
+Gutenberg layer0:
+2.3378862617
+j n d c b ; u o y q
+p r s t w k a e h g
+z l f m v x i , . /
+
+2.3391100372
+q g o u ; b c d n j
+k h e a y w t s r p
+/ , . i x v m f l z
 
 Gutenberg test layer0_moddh:
 2.6594453947, 1.6925
