@@ -6,7 +6,6 @@ version = "0.1.0"
 
 [dependencies]
 color-eyre = "*"
-colored = "*"
 derive_more = "*"
 eyre = "*"
 lazy_static = "*"
@@ -15,7 +14,6 @@ memega = {path = "../libs/memega"}
 num_enum = "*"
 ordered-float = "*"
 pretty_env_logger = "*"
-priority-queue = "*"
 rand = "*"
 rayon = "*"
 serde = {version = "*", features = ["derive"]}

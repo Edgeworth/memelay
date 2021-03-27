@@ -5,9 +5,7 @@ use crate::Args;
 use eyre::Result;
 use memega::ops::crossover::{crossover_cycle, crossover_order, crossover_pmx};
 use memega::ops::distance::count_different;
-use memega::ops::mutation::{
-    mutate_gen, mutate_insert, mutate_inversion, mutate_rate, mutate_scramble, mutate_swap,
-};
+use memega::ops::mutation::{mutate_insert, mutate_inversion, mutate_scramble, mutate_swap};
 use memega::Evaluator;
 use rand::Rng;
 use std::collections::HashMap;
@@ -15,6 +13,8 @@ use std::collections::HashMap;
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Params {
     pub layout: String,
+    pub keys: Vec<Kc>,
+    pub fixed: Vec<Kc>,
     pub cost: Vec<f64>,
     pub row: Vec<i32>,
     pub hand: Vec<i32>,
@@ -35,6 +35,32 @@ impl Params {
         }
         s.truncate(s.trim_end().len());
         s
+    }
+
+    pub fn without_fixed(&self, inp: &[Kc]) -> Vec<Kc> {
+        assert_eq!(inp.len(), self.keys.len(), "must have same size when removing fixed");
+        let mut out: Vec<Kc> = Vec::with_capacity(self.keys.len());
+        for i in 0..inp.len() {
+            if self.fixed[i] == Kc::None {
+                out.push(inp[i]);
+            }
+        }
+        out
+    }
+
+    pub fn with_fixed(&self, inp: &[Kc]) -> Vec<Kc> {
+        let mut out: Vec<Kc> = Vec::with_capacity(self.keys.len());
+        let mut idx = 0;
+        for i in 0..self.keys.len() {
+            if self.fixed[i] == Kc::None {
+                out.push(inp[idx]);
+                idx += 1;
+            } else {
+                out.push(self.fixed[i])
+            }
+        }
+        assert_eq!(idx, inp.len(), "left over keys");
+        out
     }
 }
 
@@ -62,53 +88,58 @@ impl LayoutEval {
 impl Evaluator for LayoutEval {
     type Genome = Layout;
     const NUM_CROSSOVER: usize = 4;
-    const NUM_MUTATION: usize = 5;
+    const NUM_MUTATION: usize = 4;
 
     fn crossover(&self, s1: &mut Layout, s2: &mut Layout, idx: usize) {
+        // Crossover without touching fixed keys.
+        let mut unfixed1 = self.params.without_fixed(&s1.keys);
+        let mut unfixed2 = self.params.without_fixed(&s2.keys);
         match idx {
             0 => {} // Do nothing.
             1 => {
-                crossover_pmx(&mut s1.keys, &mut s2.keys);
+                crossover_pmx(&mut unfixed1, &mut unfixed2);
             }
             2 => {
-                crossover_order(&mut s1.keys, &mut s2.keys);
+                crossover_order(&mut unfixed1, &mut unfixed2);
             }
             3 => {
-                crossover_cycle(&mut s1.keys, &mut s2.keys);
+                crossover_cycle(&mut unfixed1, &mut unfixed2);
             }
             _ => panic!("unknown crossover strategy"),
         };
+        s1.keys = self.params.with_fixed(&unfixed1);
+        s2.keys = self.params.with_fixed(&unfixed2);
     }
 
     fn mutate(&self, s: &mut Layout, rate: f64, idx: usize) {
         let mut r = rand::thread_rng();
         let mutate = r.gen::<f64>() < rate;
+        // Mutate without touching fixed keys.
+        let mut unfixed = self.params.without_fixed(&s.keys);
         match idx {
             0 => {
-                mutate_rate(&mut s.keys, rate, |_| mutate_gen());
+                if mutate {
+                    mutate_swap(&mut unfixed);
+                }
             }
             1 => {
                 if mutate {
-                    mutate_swap(&mut s.keys);
+                    mutate_insert(&mut unfixed);
                 }
             }
             2 => {
                 if mutate {
-                    mutate_insert(&mut s.keys);
+                    mutate_scramble(&mut unfixed);
                 }
             }
             3 => {
                 if mutate {
-                    mutate_scramble(&mut s.keys);
-                }
-            }
-            4 => {
-                if mutate {
-                    mutate_inversion(&mut s.keys);
+                    mutate_inversion(&mut unfixed);
                 }
             }
             _ => panic!("unknown mutation strategy"),
         }
+        s.keys = self.params.with_fixed(&unfixed);
     }
 
     fn fitness(&self, s: &Layout) -> f64 {
@@ -149,6 +180,7 @@ impl Evaluator for LayoutEval {
         // Treat bigram data as less important than unigram.
         // Equally, trigram would be less important than bigram.
         const BIGRAM_MULT: f64 = 0.5;
+        const FIXED_COST: f64 = 10.0; // Penalty for missing a fixed key.
 
         let mut cost = 0.0;
         // Check unigrams:
@@ -187,10 +219,18 @@ impl Evaluator for LayoutEval {
             cost += percost * BIGRAM_MULT * prop;
         }
 
+        // TODO: Move to adjacency? - need concept of up/down etc
         let comma = s.keys.iter().position(|&v| v == Kc::Comma);
         let dot = s.keys.iter().position(|&v| v == Kc::Dot);
-        if dot.is_none() || comma.is_none() || comma.unwrap() + 1 != dot.unwrap() {
-            cost += 10.0; // Keep , and . next to eachother.
+        if dot.is_some() && comma.is_some() && comma.unwrap() + 1 != dot.unwrap() {
+            cost += FIXED_COST; // Keep , and . next to eachother.
+        }
+
+        // Check fixed keys
+        for (i, &kc) in self.params.fixed.iter().enumerate() {
+            if kc != Kc::None && kc != s.keys[i] {
+                cost += FIXED_COST;
+            }
         }
 
         // Tie-breaking: similarity to given existing layout:

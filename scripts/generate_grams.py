@@ -1,14 +1,22 @@
 import os
 import string
+from typing import Dict, Tuple
+
+filelist = 'dropbox'
+layer = 'layer1'
 
 # Skip whitespace without breaking bigrams - typed by thumb keys
 skip = str.maketrans(':<>?', ';,./', ' \n\t\r')
-suffix = '_linux'
-files = [i.strip() for i in open('data/filelist' + suffix).readlines()]
-allowed = string.ascii_lowercase + ';,./'
+files = [i.strip() for i in open('data/filelist_' + filelist).readlines()]
 
-unigrams = {}
-bigrams = {}
+allow_map = {
+    'layer0': string.ascii_lowercase + ';,./',
+    'layer1': '|*{}"+_789#!()\'=-456@&[]$\\0123'
+}
+allowed = allow_map[layer]
+
+unigrams: Dict[str, int] = {}
+bigrams: Dict[Tuple[str, str], int] = {}
 for file in files:
     try:
         data = open(file).read().lower()
@@ -34,7 +42,7 @@ for file in files:
 
 unigram_total = sum(i for i in unigrams.values())
 bigram_total = sum(i for i in bigrams.values())
-
+suffix = '_%s_%s' % (filelist, layer)
 with open('data/unigrams%s.data' % suffix, 'w') as f:
     f.write('%d\n' % unigram_total)
     for k, v in sorted(unigrams.items()):
