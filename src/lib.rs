@@ -21,9 +21,9 @@ use eyre::Result;
 use memega::cfg::{
     Cfg, Crossover, Duplicates, Mutation, Niching, Replacement, Species, Stagnation, Survival,
 };
+use memega::eval::{CachedEvaluator, Evaluator};
 use memega::hyper::HyperBuilder;
 use memega::runner::Runner;
-use memega::{CachedEvaluator, Evaluator};
 use rand::prelude::SliceRandom;
 use std::path::{Path, PathBuf};
 use std::time::Duration;

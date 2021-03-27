@@ -4,16 +4,6 @@ q f r d v / ; , . j
 w n s t p g a e i h
 z m c l b x o u y k
 
-1.9727552314, 1.8060, 2.1909
-q r d f v x / , . j
-w n s t p g a i e h
-z m c l b y o u ; k
-
-1.9739191922, 1.8513, 2.1698
-q r d f w / u , . j
-b n s t p x a e o g
-z m c l v y i ; h k
-
 1.974432971, 1.8181, 2.1668
 q r d f w x / , . j
 b n s t p g a i e h
