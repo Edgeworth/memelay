@@ -141,7 +141,7 @@ pub fn run() -> Result<()> {
         // .with_mutation(Mutation::Fixed(vec![0.001, 0.2, 0.2, 0.2, 0.2]))
         // .with_crossover(Crossover::Fixed(vec![0.3, 0.1, 0.2, 0.7]))
         .with_survival(Survival::SpeciesTopProportion(0.1))
-        .with_species(Species::TargetNumber(50))
+        .with_species(Species::TargetNumber(100))
         .with_niching(Niching::None)
         .with_stagnation(Stagnation::ContinuousAfter(200))
         .with_replacement(Replacement::ReplaceChildren(0.5))
