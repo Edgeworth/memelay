@@ -43,3 +43,17 @@ $ \ { } # ' _ 7 8 9
 @ + [ ] * ! 0 1 2 3
 
 Gutenberg test layer0_moddh:
+2.6594453947, 1.6925
+y g , . z x m l c p
+i t e a ; b n r s d
+q j u o / v h w f k
+
+2.6667750958, 1.6755
+p c l m j / u g , .
+d s r n b ; e t o a
+k f w h v z i y x q
+
+2.6681074345, 1.6755
+p c l m x / u g , .
+d s r n b j e t o a
+k f w h v z i y ; q

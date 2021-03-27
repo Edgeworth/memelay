@@ -16,6 +16,7 @@ pub struct Params {
     pub keys: Vec<Kc>,
     pub fixed: Vec<Kc>,
     pub unigram_cost: Vec<f64>,
+    pub bigram_cost: [[[f64; 3]; 4]; 4],
     pub row: Vec<i32>,
     pub hand: Vec<i32>,
     pub finger: Vec<i32>,
@@ -143,38 +144,6 @@ impl Evaluator for LayoutEval {
     }
 
     fn fitness(&self, s: &Layout) -> f64 {
-        // Indexed by: first finger, second finger, row jump amount
-        // Values adapted from https://github.com/bclnr/kb-layout-evaluation
-        const BIGRAM_MAP: [[[f64; 3]; 4]; 4] = [
-            [
-                // First finger: index
-                [2.5, 3.0, 4.0], // Index - same row val only used for different key locations
-                [0.5, 1.0, 2.0], // Middle - outward roll
-                [0.5, 0.8, 1.5], // Ring - outward roll
-                [0.5, 0.7, 1.1], // Pinkie - outward roll
-            ],
-            [
-                // First finger: middle
-                [-1.5, -0.5, 1.5], // Index - inward roll
-                [0.0, 3.5, 4.5],   // Middle - same row val only used for different key locations
-                [0.5, 1.0, 2.0],   // Ring - outward roll
-                [0.5, 0.8, 1.5],   // Pinkie - outward roll
-            ],
-            [
-                // First finger: ring
-                [-1.5, -0.5, 1.5], // Index - inward roll
-                [-2.0, -0.5, 1.2], // Middle - inward roll
-                [0.0, 3.5, 4.5],   // Ring - same row val only used for different key locations
-                [0.0, 3.5, 4.5],   // Pinkie - outward roll
-            ],
-            [
-                // First finger: pinkie
-                [-1.0, 0.0, 1.0], // Index - inward roll
-                [-1.0, 0.0, 1.5], // Middle - inward roll
-                [-1.0, 0.0, 1.5], // Ring - inward roll
-                [3.0, 4.0, 5.5],  // Pinkie - same row val only used for different key locations
-            ],
-        ];
         const SWITCH_HAND: f64 = -4.0; // Alternating hands is very easy.
         const SAME_KEY: f64 = 0.0; // Same key is neither easy nor hard.
         const FIXED_COST: f64 = 10.0; // Penalty for missing a fixed key.
@@ -209,7 +178,7 @@ impl Evaluator for LayoutEval {
             // Special case: same key incurs zero cost for bigrams.
             // Index finger can be used twice on the same row with different keys.
             let percost = if same_hand {
-                if kc1 != kc2 { BIGRAM_MAP[pfing][cfing][jump_len] } else { SAME_KEY }
+                if kc1 != kc2 { self.params.bigram_cost[pfing][cfing][jump_len] } else { SAME_KEY }
             } else {
                 SWITCH_HAND
             };
