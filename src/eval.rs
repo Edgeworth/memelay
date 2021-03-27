@@ -3,10 +3,10 @@ use crate::layout::{Layout, COLEMAK_DHM_KEYS};
 use crate::types::Kc;
 use crate::Args;
 use eyre::Result;
+use memega::eval::Evaluator;
 use memega::ops::crossover::{crossover_cycle, crossover_order, crossover_pmx};
 use memega::ops::distance::count_different;
 use memega::ops::mutation::{mutate_insert, mutate_inversion, mutate_scramble, mutate_swap};
-use memega::Evaluator;
 use rand::Rng;
 use std::collections::HashMap;
 
