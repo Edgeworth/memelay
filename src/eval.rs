@@ -85,7 +85,6 @@ impl Evaluator for LayoutEval {
         let mutate = r.gen::<f64>() < rate;
         match idx {
             0 => {
-                // Mutate random available key.
                 mutate_rate(&mut s.keys, rate, |_| mutate_gen());
             }
             1 => {
@@ -202,6 +201,10 @@ impl Evaluator for LayoutEval {
     }
 
     fn distance(&self, s1: &Layout, s2: &Layout) -> f64 {
-        count_different(&s1.keys, &s2.keys) as f64
+        let mut d = 0.0;
+        for i in 0..s1.keys.len() {
+            d += (i8::from(s1.keys[i]) - i8::from(s2.keys[i])).abs() as f64;
+        }
+        d
     }
 }

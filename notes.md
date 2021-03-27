@@ -39,9 +39,10 @@ z f l d b / ; , . j
 w n t s h g a e i y
 k m p r v x o c u q
 
-
-# TODO: Seed
-# TODO: Assign species IDs, keep stable species?
+0.5471068099
+z f l d b w u o c q
+x n t s h g a e i y
+k m p r v ; , . / j
 
 Trained on filelist_linux:
 0.5257562520421634
@@ -58,3 +59,28 @@ y g , a k x s f b q
 z n d f v k u o ; j
 / s t r h x i e c w
 q m p l b . a , g y
+
+0.5257509945
+j u c o y v m d p z
+w i s e ; h r t n k
+/ , x a . g l f b q
+
+0.5146310137
+j o p u y h l c m z
+w a t e ; g r s n b
+/ , . i k v d f x q
+
+0.5188598249
+j ; u o / h l c p z
+w t i e x g r s n b
+y , . a k v d f m q
+
+0.5197968621
+z b d l x y u o g j
+v n c r m ; i e t w
+q p f s h k a , . /
+
+0.5217112123
+j ; o u / h l c p z
+w t e i x g r s n b
+y , . a k v d f m q
