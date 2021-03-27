@@ -13,6 +13,7 @@ enum State {
     Keys,
     Fixed,
     UnigramCost,
+    BigramCost,
     Row,
     Hand,
     Finger,
@@ -50,6 +51,8 @@ pub fn load_params<P: AsRef<Path>>(cfg_path: P) -> Result<Params> {
     let mut keys = Vec::new();
     let mut fixed = Vec::new();
     let mut unigram_cost = Vec::new();
+    let mut bigram_cost = [[[0.0 as f64; 3]; 4]; 4];
+    let mut bigram_idx = 0;
     let mut row = Vec::new();
     let mut hand = Vec::new();
     let mut finger = Vec::new();
@@ -63,6 +66,8 @@ pub fn load_params<P: AsRef<Path>>(cfg_path: P) -> Result<Params> {
             state = State::Fixed;
         } else if i.starts_with("unigram_cost") {
             state = State::UnigramCost;
+        } else if i.starts_with("bigram_cost") {
+            state = State::BigramCost;
         } else if i.starts_with("row") {
             state = State::Row;
         } else if i.starts_with("hand") {
@@ -90,14 +95,20 @@ pub fn load_params<P: AsRef<Path>>(cfg_path: P) -> Result<Params> {
                 State::Keys => keys.push(Kc::from_str(&s).unwrap()),
                 State::Fixed => fixed.push(Kc::from_str(&s).unwrap_or_default()),
                 State::UnigramCost => unigram_cost.push(s.parse::<f64>().unwrap()),
+                State::BigramCost => {
+                    bigram_cost[bigram_idx / 3 / 4][bigram_idx / 3 % 4][bigram_idx % 3] =
+                        s.parse::<f64>().unwrap();
+                    bigram_idx += 1;
+                }
                 State::Row => row.push(s.parse::<i32>().unwrap()),
                 State::Hand => hand.push(s.parse::<i32>().unwrap()),
                 State::Finger => finger.push(s.parse::<i32>().unwrap()),
             };
         }
     }
+    assert_eq!(bigram_idx, 48, "missing bigram costs");
 
-    Ok(Params { layout, keys, fixed, unigram_cost, row, hand, finger })
+    Ok(Params { layout, keys, fixed, unigram_cost, bigram_cost, row, hand, finger })
 }
 
 pub fn load_histograms<P: AsRef<Path>>(unigrams_path: P, bigrams_path: P) -> Result<Histograms> {
