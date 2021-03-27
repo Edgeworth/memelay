@@ -15,7 +15,7 @@
 )]
 
 use crate::eval::LayoutEval;
-use crate::ingest::{load_layouts, load_params};
+use crate::ingest::{load_params, load_seeds};
 use crate::layout::Layout;
 use eyre::Result;
 use memega::cfg::{
@@ -39,11 +39,14 @@ pub mod types;
 pub struct Args {
     #[structopt(
         long,
-        default_value = "data/params.cfg",
+        default_value = "cfg/layer0.cfg",
         parse(from_os_str),
         help = "Config file describing target layout and costs"
     )]
     pub params_path: PathBuf,
+
+    #[structopt(long, parse(from_os_str), help = "Config file describing seed layouts")]
+    pub seed_path: Option<PathBuf>,
 
     #[structopt(
         long,
@@ -68,7 +71,7 @@ pub struct Args {
 pub fn eval_layout<P: AsRef<Path>>(p: P) -> Result<()> {
     let args = Args::from_args();
     let eval = LayoutEval::from_args(&args)?;
-    let l = load_layouts(p)?;
+    let l = load_seeds(p)?;
     let fitness = eval.fitness(&l[0]);
     println!("layout:\n{}", eval.params.format(&l[0]));
     println!("fitness: {}", fitness);
@@ -77,15 +80,22 @@ pub fn eval_layout<P: AsRef<Path>>(p: P) -> Result<()> {
 
 pub fn layout_runner(cfg: Cfg) -> Result<Runner<CachedEvaluator<LayoutEval>>> {
     let args = Args::from_args();
-    let eval = LayoutEval::from_args(&args)?;
-    let initial_keys = load_layouts("data/default.layout")?;
-    let keyset = initial_keys[0].keys.clone();
-    println!("Seeded with {} layouts", initial_keys.len());
-    Ok(Runner::from_initial(CachedEvaluator::new(eval, 1000), cfg, initial_keys, move || {
-        let mut keys = keyset.clone();
+    let params = load_params(&args.params_path)?;
+    println!("params: {:?}", params);
+    let eval = CachedEvaluator::new(LayoutEval::from_args(&args)?, 1000);
+    let genfn = move || {
+        let mut keys = params.without_fixed(&params.keys);
         keys.shuffle(&mut rand::thread_rng());
-        Layout::new(keys)
-    }))
+        Layout::new(params.with_fixed(&keys))
+    };
+    if let Some(seed) = args.seed_path {
+        let initial_keys = load_seeds(seed)?;
+        println!("Seeded with {} layouts", initial_keys.len());
+        Ok(Runner::from_initial(eval, cfg, initial_keys, genfn))
+    } else {
+        println!("Not using seeds");
+        Ok(Runner::new(eval, cfg, genfn))
+    }
 }
 
 pub fn evolve(cfg: Cfg) -> Result<()> {
@@ -133,7 +143,7 @@ pub fn run() -> Result<()> {
         .with_survival(Survival::SpeciesTopProportion(0.1))
         .with_species(Species::TargetNumber(50))
         .with_niching(Niching::None)
-        .with_stagnation(Stagnation::ContinuousAfter(100))
+        .with_stagnation(Stagnation::ContinuousAfter(200))
         .with_replacement(Replacement::ReplaceChildren(0.5))
         .with_duplicates(Duplicates::DisallowDuplicates)
         .with_par_fitness(true)

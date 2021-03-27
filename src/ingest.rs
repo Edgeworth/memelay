@@ -10,14 +10,15 @@ use std::str::FromStr;
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 enum State {
     Layout,
+    Keys,
+    Fixed,
     Cost,
     Row,
     Hand,
     Finger,
 }
 
-pub fn load_layouts<P: AsRef<Path>>(layout_path: P) -> Result<Vec<Layout>> {
-    const SKIP: &str = "|\\";
+pub fn load_seeds<P: AsRef<Path>>(layout_path: P) -> Result<Vec<Layout>> {
     let mut keys = Vec::new();
     let mut layouts = Vec::new();
     for i in fs::read_to_string(layout_path)?.lines() {
@@ -25,7 +26,7 @@ pub fn load_layouts<P: AsRef<Path>>(layout_path: P) -> Result<Vec<Layout>> {
             layouts.push(Layout::new(keys.clone()));
             keys.clear();
         }
-        for kc in i.split(|c: char| c.is_whitespace() || SKIP.contains(c)) {
+        for kc in i.split(char::is_whitespace) {
             if kc.is_empty() {
                 continue;
             }
@@ -44,9 +45,10 @@ pub fn load_layouts<P: AsRef<Path>>(layout_path: P) -> Result<Vec<Layout>> {
 }
 
 pub fn load_params<P: AsRef<Path>>(cfg_path: P) -> Result<Params> {
-    const ALLOWED: &str = "RLpmitr-.0123456789X";
     let mut state = State::Layout;
     let mut layout = String::new();
+    let mut keys = Vec::new();
+    let mut fixed = Vec::new();
     let mut cost = Vec::new();
     let mut row = Vec::new();
     let mut hand = Vec::new();
@@ -55,6 +57,10 @@ pub fn load_params<P: AsRef<Path>>(cfg_path: P) -> Result<Params> {
         let mut updated = true;
         if i.starts_with("layout") {
             state = State::Layout;
+        } else if i.starts_with("keys") {
+            state = State::Keys;
+        } else if i.starts_with("fixed") {
+            state = State::Fixed;
         } else if i.starts_with("cost") {
             state = State::Cost;
         } else if i.starts_with("row") {
@@ -67,7 +73,7 @@ pub fn load_params<P: AsRef<Path>>(cfg_path: P) -> Result<Params> {
             updated = false;
         }
 
-        if updated || i.starts_with('#') {
+        if updated {
             continue;
         }
         if state == State::Layout {
@@ -75,22 +81,23 @@ pub fn load_params<P: AsRef<Path>>(cfg_path: P) -> Result<Params> {
             layout.push('\n');
             continue;
         }
-        for item in i.split(char::is_whitespace) {
-            let filtered: String = item.chars().filter(|&c| ALLOWED.contains(c)).collect();
-            if filtered.is_empty() {
+        for s in i.split(char::is_whitespace) {
+            if s.is_empty() {
                 continue;
             }
             match state {
                 State::Layout => {}
-                State::Cost => cost.push(filtered.parse::<f64>().unwrap()),
-                State::Row => row.push(filtered.parse::<i32>().unwrap()),
-                State::Hand => hand.push(filtered.parse::<i32>().unwrap()),
-                State::Finger => finger.push(filtered.parse::<i32>().unwrap()),
+                State::Keys => keys.push(Kc::from_str(&s).unwrap()),
+                State::Fixed => fixed.push(Kc::from_str(&s).unwrap_or_default()),
+                State::Cost => cost.push(s.parse::<f64>().unwrap()),
+                State::Row => row.push(s.parse::<i32>().unwrap()),
+                State::Hand => hand.push(s.parse::<i32>().unwrap()),
+                State::Finger => finger.push(s.parse::<i32>().unwrap()),
             };
         }
     }
 
-    Ok(Params { layout, cost, row, hand, finger })
+    Ok(Params { layout, keys, fixed, cost, row, hand, finger })
 }
 
 pub fn load_histograms<P: AsRef<Path>>(unigrams_path: P, bigrams_path: P) -> Result<Histograms> {
