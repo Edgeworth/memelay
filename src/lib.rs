@@ -23,6 +23,7 @@ use memega::cfg::{
 };
 use memega::eval::{CachedEvaluator, Evaluator};
 use memega::hyper::HyperBuilder;
+use memega::multirun::multirun;
 use memega::runner::Runner;
 use rand::prelude::SliceRandom;
 use std::path::{Path, PathBuf};
@@ -81,7 +82,6 @@ pub fn eval_layout<P: AsRef<Path>>(p: P) -> Result<()> {
 pub fn layout_runner(cfg: Cfg) -> Result<Runner<CachedEvaluator<LayoutEval>>> {
     let args = Args::from_args();
     let params = load_params(&args.params_path)?;
-    println!("params: {:?}", params);
     let eval = CachedEvaluator::new(LayoutEval::from_args(&args)?, 1000);
     let genfn = move || {
         let mut keys = params.without_fixed(&params.keys);
@@ -90,10 +90,8 @@ pub fn layout_runner(cfg: Cfg) -> Result<Runner<CachedEvaluator<LayoutEval>>> {
     };
     if let Some(seed) = args.seed_path {
         let initial_keys = load_seeds(seed)?;
-        println!("Seeded with {} layouts", initial_keys.len());
         Ok(Runner::from_initial(eval, cfg, initial_keys, genfn))
     } else {
-        println!("Not using seeds");
         Ok(Runner::new(eval, cfg, genfn))
     }
 }
@@ -110,6 +108,18 @@ pub fn evolve(cfg: Cfg) -> Result<()> {
             println!("{}", runner.summary(&mut r));
             println!("{}", runner.summary_sample(&mut r, 6, |v| params.format(v)));
         }
+    }
+
+    Ok(())
+}
+
+pub fn multi_evolve(cfg: Cfg) -> Result<()> {
+    let args = Args::from_args();
+    let params = load_params(&args.params_path)?;
+    let mut results = multirun(20, 20000, &cfg, |cfg| layout_runner(cfg).unwrap());
+
+    for (runner, r) in results.iter_mut() {
+        println!("{}", runner.summary_sample(r, 1, |v| params.format(v)));
     }
 
     Ok(())
@@ -152,7 +162,8 @@ pub fn run() -> Result<()> {
     if let Some(p) = args.eval_layout {
         eval_layout(p)?;
     } else {
-        evolve(cfg)?;
+        multi_evolve(cfg)?;
+        // evolve(cfg)?;
         // hyper_evolve()?;
     }
 
