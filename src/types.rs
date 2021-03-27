@@ -1,3 +1,4 @@
+use num_enum::IntoPrimitive;
 use rand::distributions::Standard;
 use rand::prelude::Distribution;
 use rand::Rng;
@@ -49,7 +50,20 @@ impl Default for Kc {
 }
 
 // Based on QMK keycodes.
-#[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, EnumString, Hash, StrumDisplay)]
+#[derive(
+    Debug,
+    Copy,
+    Clone,
+    Ord,
+    PartialOrd,
+    Eq,
+    PartialEq,
+    EnumString,
+    Hash,
+    StrumDisplay,
+    IntoPrimitive,
+)]
+#[repr(i8)]
 pub enum Kc {
     None,
 

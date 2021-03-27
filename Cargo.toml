@@ -12,6 +12,7 @@ eyre = "*"
 lazy_static = "*"
 log = "*"
 memega = {path = "../libs/memega"}
+num_enum = "*"
 ordered-float = "*"
 pretty_env_logger = "*"
 priority-queue = "*"
