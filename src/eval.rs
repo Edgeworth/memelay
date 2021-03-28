@@ -1,7 +1,6 @@
 use crate::ingest::{load_histograms, load_model};
-use crate::layout::{Layout, COLEMAK_DHM_KEYS};
-use crate::model::Model;
-use crate::types::Kc;
+use crate::model::{Model, PENALTY};
+use crate::types::{Kc, COLEMAK_DHM};
 use crate::Args;
 use eyre::Result;
 use memega::eval::Evaluator;
@@ -28,19 +27,19 @@ impl LayoutEval {
     pub fn from_args(args: &Args) -> Result<Self> {
         let model = load_model(&args.model_path)?;
         let hist = load_histograms(&args.unigrams_path, &args.bigrams_path)?;
-        Ok(Self { model, hist, match_keys: COLEMAK_DHM_KEYS.to_vec() })
+        Ok(Self { model, hist, match_keys: COLEMAK_DHM.to_vec() })
     }
 }
 
 impl Evaluator for LayoutEval {
-    type Genome = Layout;
+    type Genome = Vec<Kc>;
     const NUM_CROSSOVER: usize = 4;
     const NUM_MUTATION: usize = 4;
 
-    fn crossover(&self, s1: &mut Layout, s2: &mut Layout, idx: usize) {
+    fn crossover(&self, s1: &mut Vec<Kc>, s2: &mut Vec<Kc>, idx: usize) {
         // Crossover without touching fixed keys.
-        let mut unfixed1 = self.model.without_fixed(&s1.keys);
-        let mut unfixed2 = self.model.without_fixed(&s2.keys);
+        let mut unfixed1 = self.model.without_fixed(&s1);
+        let mut unfixed2 = self.model.without_fixed(&s2);
         match idx {
             0 => {} // Do nothing.
             1 => {
@@ -54,15 +53,15 @@ impl Evaluator for LayoutEval {
             }
             _ => panic!("unknown crossover strategy"),
         };
-        s1.keys = self.model.with_fixed(&unfixed1);
-        s2.keys = self.model.with_fixed(&unfixed2);
+        *s1 = self.model.with_fixed(&unfixed1);
+        *s2 = self.model.with_fixed(&unfixed2);
     }
 
-    fn mutate(&self, s: &mut Layout, rate: f64, idx: usize) {
+    fn mutate(&self, s: &mut Vec<Kc>, rate: f64, idx: usize) {
         let mut r = rand::thread_rng();
         let mutate = r.gen::<f64>() < rate;
         // Mutate without touching fixed keys.
-        let mut unfixed = self.model.without_fixed(&s.keys);
+        let mut unfixed = self.model.without_fixed(&s);
         match idx {
             0 => {
                 if mutate {
@@ -86,41 +85,39 @@ impl Evaluator for LayoutEval {
             }
             _ => panic!("unknown mutation strategy"),
         }
-        s.keys = self.model.with_fixed(&unfixed);
+        *s = self.model.with_fixed(&unfixed);
     }
 
-    fn fitness(&self, s: &Layout) -> f64 {
-        const FIXED_COST: f64 = 10.0; // Penalty for missing a fixed key.
-
+    fn fitness(&self, s: &Vec<Kc>) -> f64 {
         let mut cost = 0.0;
 
         cost += self.model.unigram_cost(s, &self.hist.unigrams);
         cost += self.model.bigram_cost(s, &self.hist.bigrams);
 
-        let comma = s.keys.iter().position(|&v| v == Kc::Comma);
-        let dot = s.keys.iter().position(|&v| v == Kc::Dot);
+        let comma = s.iter().position(|&v| v == Kc::Comma);
+        let dot = s.iter().position(|&v| v == Kc::Dot);
         if dot.is_some() && comma.is_some() && comma.unwrap() + 1 != dot.unwrap() {
-            cost += FIXED_COST; // Keep , and . next to eachother.
+            cost += PENALTY; // Keep , and . next to eachother.
         }
 
         // Check fixed keys
         for (i, &kc) in self.model.fixed.iter().enumerate() {
-            if kc != Kc::None && kc != s.keys[i] {
-                cost += FIXED_COST;
+            if kc != Kc::None && kc != s[i] {
+                cost += PENALTY;
             }
         }
 
         // Tie-breaking: similarity to given existing layout:
-        cost += count_different(&s.keys, &self.match_keys) as f64 / 100000.0;
+        cost += count_different(&s, &self.match_keys) as f64 / 100000.0;
 
         // 1.0 / (cost + 1.0)
         (-cost).exp()
     }
 
-    fn distance(&self, s1: &Layout, s2: &Layout) -> f64 {
+    fn distance(&self, s1: &Vec<Kc>, s2: &Vec<Kc>) -> f64 {
         let mut d = 0.0;
-        for i in 0..s1.keys.len() {
-            d += (i8::from(s1.keys[i]) - i8::from(s2.keys[i])).abs() as f64;
+        for i in 0..s1.len() {
+            d += (i8::from(s1[i]) - i8::from(s2[i])).abs() as f64;
         }
         d
     }
