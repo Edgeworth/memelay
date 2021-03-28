@@ -1,5 +1,4 @@
 use crate::eval::Histograms;
-use crate::layout::Layout;
 use crate::model::Model;
 use crate::types::Kc;
 use eyre::{eyre, Result, WrapErr};
@@ -20,12 +19,12 @@ enum State {
     Finger,
 }
 
-pub fn load_seeds<P: AsRef<Path>>(layout_path: P) -> Result<Vec<Layout>> {
+pub fn load_seeds<P: AsRef<Path>>(layout_path: P) -> Result<Vec<Vec<Kc>>> {
     let mut keys = Vec::new();
     let mut layouts = Vec::new();
     for i in fs::read_to_string(layout_path)?.lines() {
         if i.is_empty() {
-            layouts.push(Layout::new(keys.clone()));
+            layouts.push(keys.clone());
             keys.clear();
         }
         for kc in i.split(char::is_whitespace) {
@@ -36,10 +35,10 @@ pub fn load_seeds<P: AsRef<Path>>(layout_path: P) -> Result<Vec<Layout>> {
         }
     }
     if !keys.is_empty() {
-        layouts.push(Layout::new(keys));
+        layouts.push(keys);
     }
     for v in layouts.iter() {
-        if v.keys.len() != layouts[0].keys.len() {
+        if v.len() != layouts[0].len() {
             return Err(eyre!("not all layouts the same size"));
         }
     }
@@ -109,7 +108,7 @@ pub fn load_model<P: AsRef<Path>>(cfg_path: P) -> Result<Model> {
     }
     assert_eq!(bigram_idx, 48, "missing bigram costs");
 
-    Ok(Model { layout, keys, fixed, unigram_cost, bigram_cost, row, hand, finger })
+    Ok(Model { layout, universe: keys, fixed, unigram_cost, bigram_cost, row, hand, finger })
 }
 
 pub fn load_histograms<P: AsRef<Path>>(unigrams_path: P, bigrams_path: P) -> Result<Histograms> {

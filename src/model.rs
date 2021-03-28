@@ -1,16 +1,15 @@
-use std::collections::HashMap;
-
-use crate::layout::Layout;
 use crate::types::Kc;
+use std::collections::HashMap;
 
 const SWITCH_HAND: f64 = -1.0; // Alternating hands is easy.
 const SAME_KEY: f64 = 0.0; // Same key is neither easy nor hard.
+pub const PENALTY: f64 = 100.0;
 
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Model {
-    pub layout: String,
-    pub keys: Vec<Kc>,
-    pub fixed: Vec<Kc>,
+    pub layout: String,    // Format string for printing keyboard layouts
+    pub universe: Vec<Kc>, // What keys we can use
+    pub fixed: Vec<Kc>,    // Positions of keys that should be fixed in place.
     pub unigram_cost: Vec<f64>,
     pub bigram_cost: [[[f64; 3]; 4]; 4],
     pub row: Vec<i32>,
@@ -19,11 +18,11 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn unigram_cost(&self, l: &Layout, unigrams: &HashMap<Kc, f64>) -> f64 {
+    pub fn unigram_cost(&self, l: &[Kc], unigrams: &HashMap<Kc, f64>) -> f64 {
         let mut cost = 0.0;
         for (&kc, &prop) in unigrams.iter() {
             // Finger penalties - penalise for not being able to type characters.
-            let percost = if let Some(curi) = l.keys.iter().position(|&v| v == kc) {
+            let percost = if let Some(curi) = l.iter().position(|&v| v == kc) {
                 self.unigram_cost[curi]
             } else {
                 100.0
@@ -33,12 +32,12 @@ impl Model {
         cost
     }
 
-    pub fn bigram_cost(&self, l: &Layout, bigrams: &HashMap<(Kc, Kc), f64>) -> f64 {
+    pub fn bigram_cost(&self, l: &[Kc], bigrams: &HashMap<(Kc, Kc), f64>) -> f64 {
         let mut cost = 0.0;
         for (&(kc1, kc2), &prop) in bigrams.iter() {
             // Model adapted from https://colemakmods.github.io/mod-dh/compare.html
-            let previ = l.keys.iter().position(|&v| v == kc1);
-            let curi = l.keys.iter().position(|&v| v == kc2);
+            let previ = l.iter().position(|&v| v == kc1);
+            let curi = l.iter().position(|&v| v == kc2);
             if previ.is_none() || curi.is_none() {
                 continue;
             }
@@ -61,12 +60,12 @@ impl Model {
         cost
     }
 
-    pub fn format(&self, l: &Layout) -> String {
+    pub fn format(&self, l: &[Kc]) -> String {
         let mut s = String::new();
         let mut idx = 0;
         for c in self.layout.chars() {
             if c == 'X' {
-                s += &format!("{}", l.keys[idx]);
+                s += &format!("{}", l[idx]);
                 idx += 1;
             } else {
                 s.push(c);
@@ -77,8 +76,8 @@ impl Model {
     }
 
     pub fn without_fixed(&self, inp: &[Kc]) -> Vec<Kc> {
-        assert_eq!(inp.len(), self.keys.len(), "must have same size when removing fixed");
-        let mut out: Vec<Kc> = Vec::with_capacity(self.keys.len());
+        assert_eq!(inp.len(), self.universe.len(), "must have same size when removing fixed");
+        let mut out: Vec<Kc> = Vec::with_capacity(self.universe.len());
         for i in 0..inp.len() {
             if self.fixed[i] == Kc::None {
                 out.push(inp[i]);
@@ -88,9 +87,9 @@ impl Model {
     }
 
     pub fn with_fixed(&self, inp: &[Kc]) -> Vec<Kc> {
-        let mut out: Vec<Kc> = Vec::with_capacity(self.keys.len());
+        let mut out: Vec<Kc> = Vec::with_capacity(self.universe.len());
         let mut idx = 0;
-        for i in 0..self.keys.len() {
+        for i in 0..self.universe.len() {
             if self.fixed[i] == Kc::None {
                 out.push(inp[idx]);
                 idx += 1;
@@ -100,5 +99,64 @@ impl Model {
         }
         assert_eq!(idx, inp.len(), "left over keys");
         out
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::assert_relative_eq;
+
+    #[test]
+    fn test_unigrams() {
+        let model = Model { unigram_cost: vec![1.0, 10.0], ..Default::default() };
+        let l = &[Kc::A, Kc::B];
+        assert_relative_eq!(
+            13.0,
+            model.unigram_cost(l, &[(Kc::A, 3.0), (Kc::B, 1.0)].iter().cloned().collect())
+        );
+        assert_relative_eq!(
+            PENALTY * 3.0,
+            model.unigram_cost(l, &[(Kc::C, 3.0)].iter().cloned().collect())
+        );
+    }
+
+    #[test]
+    fn test_bigrams() {
+        let model = Model {
+            bigram_cost: [
+                [
+                    // First finger: index
+                    [2.5, 3.0, 4.0], // Index - same row val only used for different key locations
+                    [0.5, 1.0, 2.0], // Middle - outward roll
+                    [0.5, 0.8, 1.5], // Ring - outward roll
+                    [0.5, 0.7, 1.1], // Pinkie - outward roll
+                ],
+                [
+                    // First finger: middle
+                    [-1.5, -0.5, 1.5], // Index - inward roll
+                    [0.0, 3.5, 4.5], // Middle - same row val only used for different key locations
+                    [0.5, 1.0, 2.0], // Ring - outward roll
+                    [0.5, 0.8, 1.5], // Pinkie - outward roll
+                ],
+                [
+                    // First finger: ring
+                    [-1.5, -0.5, 1.5], // Index - inward roll
+                    [-2.0, -0.5, 1.2], // Middle - inward roll
+                    [0.0, 3.5, 4.5],   // Ring - same row val only used for different key locations
+                    [0.0, 3.5, 4.5],   // Pinkie - outward roll
+                ],
+                [
+                    // First finger: pinkie
+                    [-1.0, 0.0, 1.0], // Index - inward roll
+                    [-1.0, 0.0, 1.5], // Middle - inward roll
+                    [-1.0, 0.0, 1.5], // Ring - inward roll
+                    [3.0, 4.0, 5.5],  // Pinkie - same row val only used for different key locations
+                ],
+            ],
+            ..Default::default()
+        };
+        let l = &[Kc::A, Kc::B];
+
     }
 }
