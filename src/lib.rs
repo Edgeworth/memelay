@@ -116,7 +116,7 @@ pub fn evolve(cfg: Cfg) -> Result<()> {
 pub fn multi_evolve(cfg: Cfg) -> Result<()> {
     let args = Args::from_args();
     let params = load_params(&args.params_path)?;
-    let mut results = multirun(20, 6000, &cfg, |cfg| layout_runner(cfg).unwrap());
+    let mut results = multirun(10, 15000, &cfg, |cfg| layout_runner(cfg).unwrap());
 
     for (runner, r) in results.iter_mut() {
         println!("{}", runner.summary_sample(r, 1, |v| params.format(v)));

@@ -1,12 +1,12 @@
 import os
 import string
 from typing import Dict, Tuple
+from scripts.common import write_unigrams, write_bigrams
 
-filelist = 'dropbox'
-layer = 'layer1'
+filelist = 'gutenberg'
+layer = 'layer0'
 
-# Skip whitespace without breaking bigrams - typed by thumb keys
-skip = str.maketrans(':<>?', ';,./', ' \n\t\r')
+trans = str.maketrans(':<>?', ';,./', '')
 files = [i.strip() for i in open('data/filelist_' + filelist).readlines()]
 
 allow_map = {
@@ -23,7 +23,7 @@ for file in files:
     except:
         print('Error processing, skipping ', file)
         continue
-    data = data.translate(skip)
+    data = data.translate(trans)
 
     prev = None
     for c in data:
@@ -40,14 +40,8 @@ for file in files:
             bigrams[bgram] += 1
         prev = c
 
+suffix = '%s_%s' % (filelist, layer)
 unigram_total = sum(i for i in unigrams.values())
 bigram_total = sum(i for i in bigrams.values())
-suffix = '_%s_%s' % (filelist, layer)
-with open('data/unigrams%s.data' % suffix, 'w') as f:
-    f.write('%d\n' % unigram_total)
-    for k, v in sorted(unigrams.items()):
-        f.write('%s %.18f\n' % (k, v / unigram_total))
-with open('data/bigrams%s.data' % suffix, 'w') as f:
-    f.write('%d\n' % bigram_total)
-    for k, v in sorted(bigrams.items()):
-        f.write('%s %s %.18f\n' % (k[0], k[1], v / bigram_total))
+write_unigrams(unigrams, unigram_total, suffix)
+write_bigrams(bigrams, bigram_total, suffix)

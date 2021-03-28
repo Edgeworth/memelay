@@ -1,60 +1,41 @@
-Layer0:
-1.9653327331, 1.7561, 2.1693
-q f r d v / ; , . j
-w n s t p g a e i h
-z m c l b x o u y k
-
-1.974432971, 1.8181, 2.1668
-q r d f w x / , . j
-b n s t p g a i e h
-z m c l v y o u ; k
-
+## Done using unigrams and bigrams
+### Layer0 - dropbox filelist v1
 1.9762223512, 1.8554, 2.168
 z r d f v / u , . q
 x n s t p y e a o g
 w m c l b k i ; h j
 
-MTGAP: 1.7401, 2.1470
-
-Layer1:
-0.2547228871
-$ \ { } | ' _ 7 8 9
-! = ( ) - & " 4 5 6
-@ + [ ] # * 0 1 2 3
-
-0.2523342364
-$ \ { } | ' _ 7 8 9
-! = ( ) - & " 4 5 6
-@ # [ ] + * 0 1 2 3
-
+### Layer1 - dropbox filelist v1
 0.2548845253
 $ \ { } # ' _ 7 8 9
 | = ( ) - & " 4 5 6
 @ + [ ] * ! 0 1 2 3
 
 Gutenberg layer0:
-2.3378862617
-j n d c b ; u o y q
-p r s t w k a e h g
-z l f m v x i , . /
-
 2.3391100372
 q g o u ; b c d n j
 k h e a y w t s r p
 / , . i x v m f l z
 
-Gutenberg test layer0_moddh:
-2.6594453947, 1.6925
-y g , . z x m l c p
-i t e a ; b n r s d
-q j u o / v h w f k
-
-2.6667750958, 1.6755
-p c l m j / u g , .
-d s r n b ; e t o a
-k f w h v z i y x q
-
+### Gutenberg test layer0_moddh:
 2.6681074345, 1.6755
 p c l m x / u g , .
 d s r n b j e t o a
 k f w h v z i y ; q
+
+### Linux test layer0_moddh:
+2.2873146757
+; k , . j z m d p g
+a t i e y x r s n c
+q w u o / h l f b v
+
+### Layer 0 - dropbox filelist v2
+0.266838038
+q l c f v / u o ; j
+w n s t g x i e r h
+z m d p b y a , . k
+
+0.2671331019
+j ; o u / v f c l q
+h r e i x g t s n w
+k , . a y b p d m z
