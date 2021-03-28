@@ -1,7 +1,7 @@
 import os
 import string
 from typing import Dict, Tuple
-from scripts.common import write_unigrams, write_bigrams
+from scripts.common import write_unigrams, write_bigrams, write_trigrams
 
 filelist = 'gutenberg'
 layer = 'layer0'
@@ -17,6 +17,7 @@ allowed = allow_map[layer]
 
 unigrams: Dict[str, int] = {}
 bigrams: Dict[Tuple[str, str], int] = {}
+trigrams: Dict[Tuple[str, str, str], int] = {}
 for file in files:
     try:
         data = open(file).read().lower()
@@ -26,9 +27,11 @@ for file in files:
     data = data.translate(trans)
 
     prev = None
+    pprev = None
     for c in data:
         if c not in allowed:
             prev = None  # break bigrams
+            pprev = None
             continue
 
         unigrams.setdefault(c, 0)
@@ -38,10 +41,18 @@ for file in files:
             bgram = (prev, c)
             bigrams.setdefault(bgram, 0)
             bigrams[bgram] += 1
+
+            if pprev is not None:
+                tgram = (pprev, prev, c)
+                trigrams.setdefault(tgram, 0)
+                trigrams[tgram] += 1
+        pprev = prev
         prev = c
 
 suffix = '%s_%s' % (filelist, layer)
 unigram_total = sum(i for i in unigrams.values())
 bigram_total = sum(i for i in bigrams.values())
+trigram_total = sum(i for i in bigrams.values())
 write_unigrams(unigrams, unigram_total, suffix)
 write_bigrams(bigrams, bigram_total, suffix)
+write_trigrams(trigrams, trigram_total, suffix)

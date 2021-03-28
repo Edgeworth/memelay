@@ -14,6 +14,7 @@ use std::collections::HashMap;
 pub struct Histograms {
     pub unigrams: HashMap<Kc, f64>,
     pub bigrams: HashMap<(Kc, Kc), f64>,
+    pub trigrams: HashMap<(Kc, Kc, Kc), f64>,
 }
 
 #[derive(Debug, Clone)]
@@ -26,7 +27,7 @@ pub struct LayoutEval {
 impl LayoutEval {
     pub fn from_args(args: &Args) -> Result<Self> {
         let model = load_model(&args.model_path)?;
-        let hist = load_histograms(&args.unigrams_path, &args.bigrams_path)?;
+        let hist = load_histograms(&args.unigrams_path, &args.bigrams_path, &args.trigrams_path)?;
         Ok(Self { model, hist, match_keys: COLEMAK_DHM.to_vec() })
     }
 }
@@ -93,6 +94,7 @@ impl Evaluator for LayoutEval {
 
         cost += self.model.unigram_cost(s, &self.hist.unigrams);
         cost += self.model.bigram_cost(s, &self.hist.bigrams);
+        cost += self.model.trigram_cost(s, &self.hist.trigrams);
 
         let comma = s.iter().position(|&v| v == Kc::Comma);
         let dot = s.iter().position(|&v| v == Kc::Dot);

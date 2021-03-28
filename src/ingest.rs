@@ -51,7 +51,7 @@ pub fn load_model<P: AsRef<Path>>(cfg_path: P) -> Result<Model> {
     let mut keys = Vec::new();
     let mut fixed = Vec::new();
     let mut unigram_cost = Vec::new();
-    let mut bigram_cost = [[[0.0; 3]; 4]; 4];
+    let mut bigram_cost = [[[0.0; 5]; 4]; 4];
     let mut bigram_idx = 0;
     let mut row = Vec::new();
     let mut hand = Vec::new();
@@ -96,7 +96,7 @@ pub fn load_model<P: AsRef<Path>>(cfg_path: P) -> Result<Model> {
                 State::Fixed => fixed.push(Kc::from_str(&s).unwrap_or_default()),
                 State::UnigramCost => unigram_cost.push(s.parse::<f64>().unwrap()),
                 State::BigramCost => {
-                    bigram_cost[bigram_idx / 3 / 4][bigram_idx / 3 % 4][bigram_idx % 3] =
+                    bigram_cost[bigram_idx / 5 / 4][bigram_idx / 5 % 4][bigram_idx % 5] =
                         s.parse::<f64>().unwrap();
                     bigram_idx += 1;
                 }
@@ -106,14 +106,17 @@ pub fn load_model<P: AsRef<Path>>(cfg_path: P) -> Result<Model> {
             };
         }
     }
-    assert_eq!(bigram_idx, 48, "missing bigram costs");
+    assert_eq!(bigram_idx, 80, "missing bigram costs");
 
     Ok(Model { layout, universe: keys, fixed, unigram_cost, bigram_cost, row, hand, finger })
 }
 
-pub fn load_histograms<P: AsRef<Path>>(unigrams_path: P, bigrams_path: P) -> Result<Histograms> {
+pub fn load_histograms<P: AsRef<Path>>(
+    unigrams_path: P,
+    bigrams_path: P,
+    trigrams_path: P,
+) -> Result<Histograms> {
     let mut unigrams: HashMap<Kc, f64> = HashMap::new();
-    let mut bigrams: HashMap<(Kc, Kc), f64> = HashMap::new();
     for i in fs::read_to_string(unigrams_path)?.lines().skip(1) {
         let items = i.split(char::is_whitespace).collect::<Vec<_>>();
         if items.len() != 2 {
@@ -124,6 +127,7 @@ pub fn load_histograms<P: AsRef<Path>>(unigrams_path: P, bigrams_path: P) -> Res
         unigrams.insert(kc, count).expect_none("duplicate unigram");
     }
 
+    let mut bigrams: HashMap<(Kc, Kc), f64> = HashMap::new();
     for i in fs::read_to_string(bigrams_path)?.lines().skip(1) {
         let items = i.split(char::is_whitespace).collect::<Vec<_>>();
         if items.len() != 3 {
@@ -135,5 +139,20 @@ pub fn load_histograms<P: AsRef<Path>>(unigrams_path: P, bigrams_path: P) -> Res
         bigrams.insert((kc1, kc2), count).expect_none("duplicate bigram");
     }
 
-    Ok(Histograms { unigrams, bigrams })
+    let mut trigrams: HashMap<(Kc, Kc, Kc), f64> = HashMap::new();
+    for i in fs::read_to_string(trigrams_path)?.lines().skip(1) {
+        let items = i.split(char::is_whitespace).collect::<Vec<_>>();
+        if items.len() != 4 {
+            return Err(eyre!("weird unigrams line: {}", i));
+        }
+        let (kcstr1, kcstr2, kcstr3, count) =
+            (items[0], items[1], items[2], items[3].parse::<f64>()?);
+        let kc1 = Kc::from_str(kcstr1)?;
+        let kc2 = Kc::from_str(kcstr2)?;
+        let kc3 = Kc::from_str(kcstr3)?;
+        trigrams.insert((kc1, kc2, kc3), count).expect_none("duplicate trigram");
+    }
+
+
+    Ok(Histograms { unigrams, bigrams, trigrams })
 }
