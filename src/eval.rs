@@ -144,7 +144,7 @@ impl Evaluator for LayoutEval {
     }
 
     fn fitness(&self, s: &Layout) -> f64 {
-        const SWITCH_HAND: f64 = -4.0; // Alternating hands is very easy.
+        const SWITCH_HAND: f64 = -1.0; // Alternating hands is easy.
         const SAME_KEY: f64 = 0.0; // Same key is neither easy nor hard.
         const FIXED_COST: f64 = 10.0; // Penalty for missing a fixed key.
 
