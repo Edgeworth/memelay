@@ -59,7 +59,7 @@ shift_map = {
     122: 90,
 }
 
-template = json.loads(open('data/keyboard_layout_analyzer.json').read())
+template = json.loads(open('cfg/keyboard_layout_analyzer.json').read())
 
 idx = 0
 for key in template["keys"]:
