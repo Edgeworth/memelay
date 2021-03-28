@@ -1,7 +1,7 @@
 use crate::types::Kc;
 use std::collections::HashMap;
 
-const SWITCH_HAND: f64 = -1.0; // Alternating hands is easy.
+const SWITCH_HAND: f64 = -0.5; // Alternating hands is easy.
 const SAME_KEY: f64 = 0.0; // Same key is neither easy nor hard.
 pub const PENALTY: f64 = 100.0;
 
@@ -11,7 +11,7 @@ pub struct Model {
     pub universe: Vec<Kc>, // What keys we can use
     pub fixed: Vec<Kc>,    // Positions of keys that should be fixed in place.
     pub unigram_cost: Vec<f64>,
-    pub bigram_cost: [[[f64; 3]; 4]; 4],
+    pub bigram_cost: [[[f64; 5]; 4]; 4],
     pub row: Vec<i32>,
     pub hand: Vec<i32>,
     pub finger: Vec<i32>,
@@ -46,7 +46,7 @@ impl Model {
             let pfing = self.finger[previ] as usize;
             let cfing = self.finger[curi] as usize;
             let same_hand = self.hand[previ] == self.hand[curi];
-            let jump_len = (self.row[curi] - self.row[previ]).abs() as usize;
+            let jump_len = (self.row[curi] - self.row[previ] + 2) as usize;
 
             // Special case: same key incurs zero cost for bigrams.
             // Index finger can be used twice on the same row with different keys.
@@ -58,6 +58,10 @@ impl Model {
             cost += percost * prop;
         }
         cost
+    }
+
+    pub fn trigram_cost(&self, l: &[Kc], bigrams: &HashMap<(Kc, Kc, Kc), f64>) -> f64 {
+        0.0 // TODO
     }
 
     pub fn format(&self, l: &[Kc]) -> String {
@@ -126,37 +130,36 @@ mod tests {
         let model = Model {
             bigram_cost: [
                 [
-                    // First finger: index
-                    [2.5, 3.0, 4.0], // Index - same row val only used for different key locations
-                    [0.5, 1.0, 2.0], // Middle - outward roll
-                    [0.5, 0.8, 1.5], // Ring - outward roll
-                    [0.5, 0.7, 1.1], // Pinkie - outward roll
+                    // First finger: index - [down 2, down 1, same row, up 1, up 2]
+                    [0.0, 0.0, 2.5, 3.0, 4.0], // Index - same row val only used for different key locations
+                    [0.0, 0.0, 0.5, 1.0, 2.0], // Middle - outward roll
+                    [0.0, 0.0, 0.5, 0.8, 1.5], // Ring - outward roll
+                    [0.0, 0.0, 0.5, 0.7, 1.1], // Pinkie - outward roll
                 ],
                 [
-                    // First finger: middle
-                    [-1.5, -0.5, 1.5], // Index - inward roll
-                    [0.0, 3.5, 4.5], // Middle - same row val only used for different key locations
-                    [0.5, 1.0, 2.0], // Ring - outward roll
-                    [0.5, 0.8, 1.5], // Pinkie - outward roll
+                    // First finger: middle - [down 2, down 1, same row, up 1, up 2]
+                    [0.0, 0.0, -1.5, -0.5, 1.5], // Index - inward roll
+                    [0.0, 0.0, 0.0, 3.5, 4.5], // Middle - same row val only used for different key locations
+                    [0.0, 0.0, 0.5, 1.0, 2.0], // Ring - outward roll
+                    [0.0, 0.0, 0.5, 0.8, 1.5], // Pinkie - outward roll
                 ],
                 [
-                    // First finger: ring
-                    [-1.5, -0.5, 1.5], // Index - inward roll
-                    [-2.0, -0.5, 1.2], // Middle - inward roll
-                    [0.0, 3.5, 4.5],   // Ring - same row val only used for different key locations
-                    [0.0, 3.5, 4.5],   // Pinkie - outward roll
+                    // First finger: ring - [down 2, down 1, same row, up 1, up 2]
+                    [0.0, 0.0, -1.5, -0.5, 1.5], // Index - inward roll
+                    [0.0, 0.0, -2.0, -0.5, 1.2], // Middle - inward roll
+                    [0.0, 0.0, 0.0, 3.5, 4.5], // Ring - same row val only used for different key locations
+                    [0.0, 0.0, 0.0, 3.5, 4.5], // Pinkie - outward roll
                 ],
                 [
-                    // First finger: pinkie
-                    [-1.0, 0.0, 1.0], // Index - inward roll
-                    [-1.0, 0.0, 1.5], // Middle - inward roll
-                    [-1.0, 0.0, 1.5], // Ring - inward roll
-                    [3.0, 4.0, 5.5],  // Pinkie - same row val only used for different key locations
+                    // First finger: pinkie - [down 2, down 1, same row, up 1, up 2]
+                    [0.0, 0.0, -1.0, 0.0, 1.0], // Index - inward roll
+                    [0.0, 0.0, -1.0, 0.0, 1.5], // Middle - inward roll
+                    [0.0, 0.0, -1.0, 0.0, 1.5], // Ring - inward roll
+                    [0.0, 0.0, 3.0, 4.0, 5.5], // Pinkie - same row val only used for different key locations
                 ],
             ],
             ..Default::default()
         };
         let l = &[Kc::A, Kc::B];
-
     }
 }

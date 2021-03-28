@@ -64,6 +64,14 @@ pub struct Args {
     )]
     pub bigrams_path: PathBuf,
 
+    #[structopt(
+        long,
+        default_value = "data/trigrams.data",
+        parse(from_os_str),
+        help = "Data file describing trigrams"
+    )]
+    pub trigrams_path: PathBuf,
+
     #[structopt(short, long, parse(from_os_str), help = "Evaluate a given layout")]
     pub eval_layout: Option<PathBuf>,
 }
