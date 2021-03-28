@@ -1,3 +1,9 @@
+## Fitness / evaluation resources
+https://github.com/michaeldickens/Typing/blob/master/doc/Fitness.md
+https://colemakmods.github.io/mod-dh/compare.html
+https://stevep99.github.io/keyboard-effort-grid/
+https://github.com/bclnr/kb-layout-evaluation
+
 ## Done using unigrams and bigrams
 ### Layer0 - dropbox filelist v1
 1.9762223512, 1.8554, 2.168
