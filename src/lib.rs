@@ -16,7 +16,6 @@
 
 use crate::eval::LayoutEval;
 use crate::ingest::{load_model, load_seeds};
-use crate::layout::Layout;
 use eyre::Result;
 use memega::cfg::{
     Cfg, Crossover, Duplicates, Mutation, Niching, Replacement, Species, Stagnation, Survival,
@@ -32,7 +31,6 @@ use structopt::StructOpt;
 
 pub mod eval;
 pub mod ingest;
-pub mod layout;
 pub mod model;
 pub mod types;
 
@@ -85,9 +83,9 @@ pub fn layout_runner(cfg: Cfg) -> Result<Runner<CachedEvaluator<LayoutEval>>> {
     let model = load_model(&args.model_path)?;
     let eval = CachedEvaluator::new(LayoutEval::from_args(&args)?, 1000);
     let genfn = move || {
-        let mut keys = model.without_fixed(&model.keys);
+        let mut keys = model.without_fixed(&model.universe);
         keys.shuffle(&mut rand::thread_rng());
-        Layout::new(model.with_fixed(&keys))
+        model.with_fixed(&keys)
     };
     if let Some(seed) = args.seed_path {
         let initial_keys = load_seeds(seed)?;
