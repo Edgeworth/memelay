@@ -1,5 +1,6 @@
-use crate::eval::{Histograms, Params};
+use crate::eval::Histograms;
 use crate::layout::Layout;
+use crate::model::Model;
 use crate::types::Kc;
 use eyre::{eyre, Result, WrapErr};
 use std::collections::HashMap;
@@ -45,7 +46,7 @@ pub fn load_seeds<P: AsRef<Path>>(layout_path: P) -> Result<Vec<Layout>> {
     Ok(layouts)
 }
 
-pub fn load_params<P: AsRef<Path>>(cfg_path: P) -> Result<Params> {
+pub fn load_model<P: AsRef<Path>>(cfg_path: P) -> Result<Model> {
     let mut state = State::Layout;
     let mut layout = String::new();
     let mut keys = Vec::new();
@@ -108,7 +109,7 @@ pub fn load_params<P: AsRef<Path>>(cfg_path: P) -> Result<Params> {
     }
     assert_eq!(bigram_idx, 48, "missing bigram costs");
 
-    Ok(Params { layout, keys, fixed, unigram_cost, bigram_cost, row, hand, finger })
+    Ok(Model { layout, keys, fixed, unigram_cost, bigram_cost, row, hand, finger })
 }
 
 pub fn load_histograms<P: AsRef<Path>>(unigrams_path: P, bigrams_path: P) -> Result<Histograms> {

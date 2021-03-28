@@ -15,7 +15,7 @@
 )]
 
 use crate::eval::LayoutEval;
-use crate::ingest::{load_params, load_seeds};
+use crate::ingest::{load_model, load_seeds};
 use crate::layout::Layout;
 use eyre::Result;
 use memega::cfg::{
@@ -33,6 +33,7 @@ use structopt::StructOpt;
 pub mod eval;
 pub mod ingest;
 pub mod layout;
+pub mod model;
 pub mod types;
 
 #[derive(Debug, StructOpt)]
@@ -42,9 +43,9 @@ pub struct Args {
         long,
         default_value = "cfg/layer0.cfg",
         parse(from_os_str),
-        help = "Config file describing target layout and costs"
+        help = "Config file describing the model"
     )]
-    pub params_path: PathBuf,
+    pub model_path: PathBuf,
 
     #[structopt(long, parse(from_os_str), help = "Config file describing seed layouts")]
     pub seed_path: Option<PathBuf>,
@@ -74,19 +75,19 @@ pub fn eval_layout<P: AsRef<Path>>(p: P) -> Result<()> {
     let eval = LayoutEval::from_args(&args)?;
     let l = load_seeds(p)?;
     let fitness = eval.fitness(&l[0]);
-    println!("layout:\n{}", eval.params.format(&l[0]));
+    println!("layout:\n{}", eval.model.format(&l[0]));
     println!("fitness: {}", fitness);
     Ok(())
 }
 
 pub fn layout_runner(cfg: Cfg) -> Result<Runner<CachedEvaluator<LayoutEval>>> {
     let args = Args::from_args();
-    let params = load_params(&args.params_path)?;
+    let model = load_model(&args.model_path)?;
     let eval = CachedEvaluator::new(LayoutEval::from_args(&args)?, 1000);
     let genfn = move || {
-        let mut keys = params.without_fixed(&params.keys);
+        let mut keys = model.without_fixed(&model.keys);
         keys.shuffle(&mut rand::thread_rng());
-        Layout::new(params.with_fixed(&keys))
+        Layout::new(model.with_fixed(&keys))
     };
     if let Some(seed) = args.seed_path {
         let initial_keys = load_seeds(seed)?;
@@ -98,7 +99,7 @@ pub fn layout_runner(cfg: Cfg) -> Result<Runner<CachedEvaluator<LayoutEval>>> {
 
 pub fn evolve(cfg: Cfg) -> Result<()> {
     let args = Args::from_args();
-    let params = load_params(&args.params_path)?;
+    let model = load_model(&args.model_path)?;
     let mut runner = layout_runner(cfg)?;
 
     for i in 0..200001 {
@@ -106,7 +107,7 @@ pub fn evolve(cfg: Cfg) -> Result<()> {
         if i % 50 == 0 {
             println!("Generation {}: {}", i + 1, r.nth(0).base_fitness);
             println!("{}", runner.summary(&mut r));
-            println!("{}", runner.summary_sample(&mut r, 6, |v| params.format(v)));
+            println!("{}", runner.summary_sample(&mut r, 6, |v| model.format(v)));
         }
     }
 
@@ -115,11 +116,11 @@ pub fn evolve(cfg: Cfg) -> Result<()> {
 
 pub fn multi_evolve(cfg: Cfg) -> Result<()> {
     let args = Args::from_args();
-    let params = load_params(&args.params_path)?;
+    let model = load_model(&args.model_path)?;
     let mut results = multirun(10, 15000, &cfg, |cfg| layout_runner(cfg).unwrap());
 
     for (runner, r) in results.iter_mut() {
-        println!("{}", runner.summary_sample(r, 1, |v| params.format(v)));
+        println!("{}", runner.summary_sample(r, 1, |v| model.format(v)));
     }
 
     Ok(())
@@ -162,8 +163,8 @@ pub fn run() -> Result<()> {
     if let Some(p) = args.eval_layout {
         eval_layout(p)?;
     } else {
-        multi_evolve(cfg)?;
-        // evolve(cfg)?;
+        // multi_evolve(cfg)?;
+        evolve(cfg)?;
         // hyper_evolve()?;
     }
 
