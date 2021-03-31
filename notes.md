@@ -45,3 +45,9 @@ z m d p b y a , . k
 j ; o u / v f c l q
 h r e i x g t s n w
 k , . a y b p d m z
+
+### Layer 0 - combined, updated bigram cost
+0.2665695262
+q p r m w x u o f j
+v n s t g ; a e h k
+z b l d c y i , . /
