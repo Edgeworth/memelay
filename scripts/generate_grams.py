@@ -3,8 +3,8 @@ import string
 from typing import Dict, Tuple
 from scripts.common import write_unigrams, write_bigrams, write_trigrams
 
-filelist = 'gutenberg'
-layer = 'layer0'
+filelist = 'dropbox'
+layer = 'layer1'
 
 trans = str.maketrans(':<>?', ';,./', '')
 files = [i.strip() for i in open('data/filelist_' + filelist).readlines()]
