@@ -60,8 +60,28 @@ impl Model {
         cost
     }
 
-    pub fn trigram_cost(&self, l: &[Kc], bigrams: &HashMap<(Kc, Kc, Kc), f64>) -> f64 {
-        0.0 // TODO
+    pub fn trigram_cost(&self, l: &[Kc], trigrams: &HashMap<(Kc, Kc, Kc), f64>) -> f64 {
+        const ALT_ROLL_BONUS: f64 = -1.0;
+        let mut cost = 0.0;
+        for (&(kc1, kc2, kc3), &prop) in trigrams.iter() {
+            // Model adapted from https://colemakmods.github.io/mod-dh/compare.html
+            let i1 = l.iter().position(|&v| v == kc1);
+            let i2 = l.iter().position(|&v| v == kc2);
+            let i3 = l.iter().position(|&v| v == kc3);
+            if i1.is_none() || i2.is_none() || i3.is_none() {
+                continue;
+            }
+            // Bonus for rolling inward on one hand then swithing hand.
+            let i1 = i1.unwrap();
+            let i2 = i2.unwrap();
+            let i3 = i3.unwrap();
+
+            let alt = self.hand[i1] == self.hand[i2] && self.hand[i2] != self.hand[i3];
+            let rolling = self.finger[i1] > self.finger[i2];
+            let percost = if alt && rolling { ALT_ROLL_BONUS } else { 0.0 };
+            cost += percost * prop;
+        }
+        cost
     }
 
     pub fn format(&self, l: &[Kc]) -> String {

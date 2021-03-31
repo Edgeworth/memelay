@@ -43,7 +43,7 @@ p2uni = read_unigrams('data/unigrams_%s_%s.data' % (suffix2, layer))
 p1bi = read_bigrams('data/bigrams_%s_%s.data' % (suffix1, layer))
 p2bi = read_bigrams('data/bigrams_%s_%s.data' % (suffix2, layer))
 p1tri = read_trigrams('data/trigrams_%s_%s.data' % (suffix1, layer))
-p2tri = read_trigrams('data/bigrams_%s_%s.data' % (suffix2, layer))
+p2tri = read_trigrams('data/trigrams_%s_%s.data' % (suffix2, layer))
 
 
 out_suffix = 'combined_%s' % layer
