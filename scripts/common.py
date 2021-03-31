@@ -18,4 +18,4 @@ def write_trigrams(trigrams, trigram_total, suffix):
     with open('data/trigrams_%s.data' % suffix, 'w') as f:
         f.write('%.18f\n' % trigram_total)
         for k, v in sorted(trigrams.items()):
-            f.write('%s %s %s %.18f\n' % (k[0], k[1], k[2], v / bigram_total))
+            f.write('%s %s %s %.18f\n' % (k[0], k[1], k[2], v / trigram_total))

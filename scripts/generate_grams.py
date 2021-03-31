@@ -52,7 +52,7 @@ for file in files:
 suffix = '%s_%s' % (filelist, layer)
 unigram_total = sum(i for i in unigrams.values())
 bigram_total = sum(i for i in bigrams.values())
-trigram_total = sum(i for i in bigrams.values())
+trigram_total = sum(i for i in trigrams.values())
 write_unigrams(unigrams, unigram_total, suffix)
 write_bigrams(bigrams, bigram_total, suffix)
 write_trigrams(trigrams, trigram_total, suffix)
