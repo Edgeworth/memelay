@@ -1,5 +1,4 @@
 use crate::types::Kc;
-use std::collections::HashMap;
 
 const SWITCH_HAND: f64 = -0.5; // Alternating hands is easy.
 const SAME_KEY: f64 = 0.0; // Same key is neither easy nor hard.
@@ -18,9 +17,9 @@ pub struct Model {
 }
 
 impl Model {
-    pub fn unigram_cost(&self, l: &[Kc], unigrams: &HashMap<Kc, f64>) -> f64 {
+    pub fn unigram_cost(&self, l: &[Kc], unigrams: &[(Kc, f64)]) -> f64 {
         let mut cost = 0.0;
-        for (&kc, &prop) in unigrams.iter() {
+        for &(kc, prop) in unigrams.iter() {
             // Finger penalties - penalise for not being able to type characters.
             let percost = if let Some(curi) = l.iter().position(|&v| v == kc) {
                 self.unigram_cost[curi]
@@ -32,9 +31,9 @@ impl Model {
         cost
     }
 
-    pub fn bigram_cost(&self, l: &[Kc], bigrams: &HashMap<(Kc, Kc), f64>) -> f64 {
+    pub fn bigram_cost(&self, l: &[Kc], bigrams: &[((Kc, Kc), f64)]) -> f64 {
         let mut cost = 0.0;
-        for (&(kc1, kc2), &prop) in bigrams.iter() {
+        for &((kc1, kc2), prop) in bigrams.iter() {
             // Model adapted from https://colemakmods.github.io/mod-dh/compare.html
             let previ = l.iter().position(|&v| v == kc1);
             let curi = l.iter().position(|&v| v == kc2);
@@ -60,10 +59,10 @@ impl Model {
         cost
     }
 
-    pub fn trigram_cost(&self, l: &[Kc], trigrams: &HashMap<(Kc, Kc, Kc), f64>) -> f64 {
+    pub fn trigram_cost(&self, l: &[Kc], trigrams: &[((Kc, Kc, Kc), f64)]) -> f64 {
         const ALT_ROLL_BONUS: f64 = -1.0;
         let mut cost = 0.0;
-        for (&(kc1, kc2, kc3), &prop) in trigrams.iter() {
+        for &((kc1, kc2, kc3), prop) in trigrams.iter() {
             // Model adapted from https://colemakmods.github.io/mod-dh/compare.html
             let i1 = l.iter().position(|&v| v == kc1);
             let i2 = l.iter().position(|&v| v == kc2);
@@ -135,14 +134,8 @@ mod tests {
     fn test_unigrams() {
         let model = Model { unigram_cost: vec![1.0, 10.0], ..Default::default() };
         let l = &[Kc::A, Kc::B];
-        assert_relative_eq!(
-            13.0,
-            model.unigram_cost(l, &[(Kc::A, 3.0), (Kc::B, 1.0)].iter().cloned().collect())
-        );
-        assert_relative_eq!(
-            PENALTY * 3.0,
-            model.unigram_cost(l, &[(Kc::C, 3.0)].iter().cloned().collect())
-        );
+        assert_relative_eq!(13.0, model.unigram_cost(l, &[(Kc::A, 3.0), (Kc::B, 1.0)].to_vec()));
+        assert_relative_eq!(PENALTY * 3.0, model.unigram_cost(l, &[(Kc::C, 3.0)].to_vec()));
     }
 
     #[test]
