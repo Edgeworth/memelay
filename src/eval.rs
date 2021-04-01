@@ -8,13 +8,12 @@ use memega::ops::crossover::{crossover_cycle, crossover_order, crossover_pmx};
 use memega::ops::distance::count_different;
 use memega::ops::mutation::{mutate_insert, mutate_inversion, mutate_scramble, mutate_swap};
 use rand::Rng;
-use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct Histograms {
-    pub unigrams: HashMap<Kc, f64>,
-    pub bigrams: HashMap<(Kc, Kc), f64>,
-    pub trigrams: HashMap<(Kc, Kc, Kc), f64>,
+    pub unigrams: Vec<(Kc, f64)>,
+    pub bigrams: Vec<((Kc, Kc), f64)>,
+    pub trigrams: Vec<((Kc, Kc, Kc), f64)>,
 }
 
 #[derive(Debug, Clone)]
