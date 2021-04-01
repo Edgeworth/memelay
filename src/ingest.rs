@@ -2,7 +2,6 @@ use crate::eval::Histograms;
 use crate::model::Model;
 use crate::types::Kc;
 use eyre::{eyre, Result, WrapErr};
-use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
 use std::str::FromStr;
@@ -116,7 +115,7 @@ pub fn load_histograms<P: AsRef<Path>>(
     bigrams_path: P,
     trigrams_path: P,
 ) -> Result<Histograms> {
-    let mut unigrams: HashMap<Kc, f64> = HashMap::new();
+    let mut unigrams: Vec<(Kc, f64)> = Vec::new();
     for i in fs::read_to_string(unigrams_path)?.lines().skip(1) {
         let items = i.split(char::is_whitespace).collect::<Vec<_>>();
         if items.len() != 2 {
@@ -124,10 +123,10 @@ pub fn load_histograms<P: AsRef<Path>>(
         }
         let (kcstr, count) = (items[0], items[1].parse::<f64>()?);
         let kc = Kc::from_str(kcstr)?;
-        unigrams.insert(kc, count).expect_none("duplicate unigram");
+        unigrams.push((kc, count));
     }
 
-    let mut bigrams: HashMap<(Kc, Kc), f64> = HashMap::new();
+    let mut bigrams: Vec<((Kc, Kc), f64)> = Vec::new();
     for i in fs::read_to_string(bigrams_path)?.lines().skip(1) {
         let items = i.split(char::is_whitespace).collect::<Vec<_>>();
         if items.len() != 3 {
@@ -136,10 +135,10 @@ pub fn load_histograms<P: AsRef<Path>>(
         let (kcstr1, kcstr2, count) = (items[0], items[1], items[2].parse::<f64>()?);
         let kc1 = Kc::from_str(kcstr1)?;
         let kc2 = Kc::from_str(kcstr2)?;
-        bigrams.insert((kc1, kc2), count).expect_none("duplicate bigram");
+        bigrams.push(((kc1, kc2), count));
     }
 
-    let mut trigrams: HashMap<(Kc, Kc, Kc), f64> = HashMap::new();
+    let mut trigrams: Vec<((Kc, Kc, Kc), f64)> = Vec::new();
     for i in fs::read_to_string(trigrams_path)?.lines().skip(1) {
         let items = i.split(char::is_whitespace).collect::<Vec<_>>();
         if items.len() != 4 {
@@ -150,7 +149,7 @@ pub fn load_histograms<P: AsRef<Path>>(
         let kc1 = Kc::from_str(kcstr1)?;
         let kc2 = Kc::from_str(kcstr2)?;
         let kc3 = Kc::from_str(kcstr3)?;
-        trigrams.insert((kc1, kc2, kc3), count).expect_none("duplicate trigram");
+        trigrams.push(((kc1, kc2, kc3), count));
     }
 
 
