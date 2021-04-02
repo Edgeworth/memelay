@@ -123,7 +123,7 @@ pub fn evolve(cfg: Cfg) -> Result<()> {
 pub fn multi_evolve(cfg: Cfg) -> Result<()> {
     let args = Args::from_args();
     let model = load_model(&args.model_path)?;
-    let mut results = multirun(10, 5000, &cfg, |cfg| layout_runner(cfg).unwrap());
+    let mut results = multirun(20, 8000, &cfg, |cfg| layout_runner(cfg).unwrap());
 
     for (runner, r) in results.iter_mut() {
         println!("{}", runner.summary_sample(r, 1, |v| model.format(v)));
