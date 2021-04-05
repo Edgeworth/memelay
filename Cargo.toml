@@ -20,8 +20,7 @@ rayon = "*"
 serde = {version = "*", features = ["derive"]}
 smallvec = "*"
 structopt = "*"
-strum = "*"
-strum_macros = "*"
+strum = {version = "*", features = ["derive"]}
 vec_map = "*"
 
 [dev-dependencies]

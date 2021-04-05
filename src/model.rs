@@ -152,7 +152,7 @@ mod tests {
                 [
                     // First finger: middle - [down 2, down 1, same row, up 1, up 2]
                     [0.0, 0.0, -1.5, -0.5, 1.5], // Index - inward roll
-                    [0.0, 0.0, 0.0, 3.5, 4.5], // Middle - same row val only used for different key locations
+                    [0.1, 1.7, 0.0, 3.5, 4.5], // Middle - same row val only used for different key locations
                     [0.0, 0.0, 0.5, 1.0, 2.0], // Ring - outward roll
                     [0.0, 0.0, 0.5, 0.8, 1.5], // Pinkie - outward roll
                 ],
@@ -171,8 +171,51 @@ mod tests {
                     [0.0, 0.0, 3.0, 4.0, 5.5], // Pinkie - same row val only used for different key locations
                 ],
             ],
+            unigram_cost: vec![1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0],
+            row: vec![2, 2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0],
+            hand: vec![0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1],
+            finger: vec![1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1],
             ..Default::default()
         };
-        let l = &[Kc::A, Kc::B];
+        // 1 0   0 1
+        // A B | C D  2
+        // E F | G H  1
+        // I J | K L  0
+        let l =
+            &[Kc::A, Kc::B, Kc::C, Kc::D, Kc::E, Kc::F, Kc::G, Kc::H, Kc::I, Kc::J, Kc::K, Kc::L];
+        // Unigram cost test
+        assert_relative_eq!(1.0, model.unigram_cost(l, &[(Kc::A, 1.0)]));
+        assert_relative_eq!(2.0, model.unigram_cost(l, &[(Kc::B, 1.0)]));
+        assert_relative_eq!(3.0, model.unigram_cost(l, &[(Kc::C, 1.0)]));
+        assert_relative_eq!(4.0, model.unigram_cost(l, &[(Kc::D, 1.0)]));
+        assert_relative_eq!(1.0, model.unigram_cost(l, &[(Kc::B, 0.5)]));
+        assert_relative_eq!(3.0, model.unigram_cost(l, &[(Kc::B, 0.5), (Kc::D, 0.5)]));
+
+        // Bigram cost test
+        // Middle down 2 middle
+        assert_relative_eq!(0.1, model.bigram_cost(l, &[((Kc::A, Kc::I), 1.0)]));
+        assert_relative_eq!(0.1, model.bigram_cost(l, &[((Kc::D, Kc::L), 1.0)]));
+        // Middle down 1 middle
+        assert_relative_eq!(1.7, model.bigram_cost(l, &[((Kc::A, Kc::E), 1.0)]));
+        assert_relative_eq!(1.7, model.bigram_cost(l, &[((Kc::D, Kc::H), 1.0)]));
+        // Middle up 1 middle
+        assert_relative_eq!(3.5, model.bigram_cost(l, &[((Kc::E, Kc::A), 1.0)]));
+        assert_relative_eq!(3.5, model.bigram_cost(l, &[((Kc::H, Kc::D), 1.0)]));
+        // Middle up 2 middle
+        assert_relative_eq!(4.5, model.bigram_cost(l, &[((Kc::I, Kc::A), 1.0)]));
+        assert_relative_eq!(4.5, model.bigram_cost(l, &[((Kc::L, Kc::D), 1.0)]));
+        // Middle up 1 index
+        assert_relative_eq!(-0.5, model.bigram_cost(l, &[((Kc::H, Kc::C), 1.0)]));
+        // Middle up 2 index
+        assert_relative_eq!(1.5, model.bigram_cost(l, &[((Kc::L, Kc::C), 1.0)]));
+
+        assert_relative_eq!(
+            0.875,
+            model.bigram_cost(l, &[((Kc::L, Kc::D), 0.25), ((Kc::H, Kc::C), 0.5)])
+        );
+
+        // Trigram cost test
+        assert_relative_eq!(-1.0, model.trigram_cost(l, &[((Kc::A, Kc::B, Kc::C), 1.0)]));
+        assert_relative_eq!(0.0, model.trigram_cost(l, &[((Kc::B, Kc::A, Kc::C), 1.0)]));
     }
 }

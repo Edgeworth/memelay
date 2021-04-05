@@ -1,5 +1,5 @@
 use num_enum::IntoPrimitive;
-use strum_macros::{Display as StrumDisplay, EnumString};
+use strum::{Display as StrumDisplay, EnumString};
 
 impl Default for Kc {
     fn default() -> Self {
