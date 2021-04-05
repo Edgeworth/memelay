@@ -3,10 +3,10 @@ ring same middle -0.9
 ring same index -0.9
 index same middle -0.8
 ring down1 index -0.7
-pinky same index -0.5
+middle same ring -0.5
+index same ring -0.4
+pinky same index -0.2
 pinky same middle -0.2
-middle same ring -0.1
-index same ring -0.1
 middle up1 index 0.0
 ring up1 middle 0.0
 middle same pinky 0.1
