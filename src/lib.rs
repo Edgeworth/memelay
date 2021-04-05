@@ -5,13 +5,11 @@
     bool_to_option,
     const_fn,
     destructuring_assignment,
+    is_sorted,
     map_first_last,
-    option_expect_none,
     option_result_contains,
-    option_unwrap_none,
     stmt_expr_attributes,
-    trait_alias,
-    type_alias_impl_trait
+    trait_alias
 )]
 
 use crate::eval::LayoutEval;
@@ -123,9 +121,13 @@ pub fn evolve(cfg: Cfg) -> Result<()> {
 pub fn multi_evolve(cfg: Cfg) -> Result<()> {
     let args = Args::from_args();
     let model = load_model(&args.model_path)?;
-    let mut results = multirun(20, 8000, &cfg, |cfg| layout_runner(cfg).unwrap());
+    let mut results = multirun(20, 5000, &cfg, |cfg| layout_runner(cfg).unwrap());
 
-    for (runner, r) in results.iter_mut() {
+    results.sort_unstable_by(|(_, r1), (_, r2)| {
+        r2.nth(0).base_fitness.partial_cmp(&r1.nth(0).base_fitness).unwrap()
+    });
+
+    for (runner, r) in results.iter_mut().take(10) {
         println!("{}", runner.summary_sample(r, 1, |v| model.format(v)));
     }
 
@@ -169,8 +171,8 @@ pub fn run() -> Result<()> {
     if let Some(p) = args.eval_layout {
         eval_layout(p)?;
     } else {
-        // multi_evolve(cfg)?;
-        evolve(cfg)?;
+        multi_evolve(cfg)?;
+        // evolve(cfg)?;
         // hyper_evolve()?;
     }
 
