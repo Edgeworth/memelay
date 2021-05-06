@@ -1,13 +1,14 @@
-use crate::ingest::{load_histograms, load_model};
-use crate::model::{Model, PENALTY};
-use crate::types::{Kc, COLEMAK_DHM};
-use crate::Args;
 use eyre::Result;
 use memega::eval::Evaluator;
 use memega::ops::crossover::{crossover_cycle, crossover_order, crossover_pmx};
 use memega::ops::distance::count_different;
 use memega::ops::mutation::{mutate_insert, mutate_inversion, mutate_scramble, mutate_swap};
 use rand::Rng;
+
+use crate::ingest::{load_histograms, load_model};
+use crate::model::{Model, PENALTY};
+use crate::types::{Kc, COLEMAK_DHM};
+use crate::Args;
 
 #[derive(Debug, Clone)]
 pub struct Histograms {
