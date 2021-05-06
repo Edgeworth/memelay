@@ -3,7 +3,6 @@
     array_chunks,
     array_windows,
     bool_to_option,
-    const_fn,
     destructuring_assignment,
     is_sorted,
     map_first_last,
@@ -12,8 +11,9 @@
     trait_alias
 )]
 
-use crate::eval::LayoutEval;
-use crate::ingest::{load_model, load_seeds};
+use std::path::{Path, PathBuf};
+use std::time::Duration;
+
 use eyre::Result;
 use memega::cfg::{
     Cfg, Crossover, Duplicates, Mutation, Niching, Replacement, Species, Stagnation, Survival,
@@ -23,9 +23,10 @@ use memega::hyper::HyperBuilder;
 use memega::multirun::multirun;
 use memega::runner::Runner;
 use rand::prelude::SliceRandom;
-use std::path::{Path, PathBuf};
-use std::time::Duration;
 use structopt::StructOpt;
+
+use crate::eval::LayoutEval;
+use crate::ingest::{load_model, load_seeds};
 
 pub mod eval;
 pub mod ingest;

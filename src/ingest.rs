@@ -1,10 +1,12 @@
-use crate::eval::Histograms;
-use crate::model::Model;
-use crate::types::Kc;
-use eyre::{eyre, Result, WrapErr};
 use std::fs;
 use std::path::Path;
 use std::str::FromStr;
+
+use eyre::{eyre, Result, WrapErr};
+
+use crate::eval::Histograms;
+use crate::model::Model;
+use crate::types::Kc;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 enum State {
