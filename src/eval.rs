@@ -89,7 +89,7 @@ impl Evaluator for LayoutEval {
         *s = self.model.with_fixed(&unfixed);
     }
 
-    fn fitness(&self, s: &Vec<Kc>) -> f64 {
+    fn fitness(&self, s: &Vec<Kc>, _gen: usize) -> f64 {
         let mut cost = 0.0;
 
         cost += self.model.unigram_cost(s, &self.hist.unigrams);
