@@ -11,7 +11,7 @@ derive_more = "*"
 eyre = "*"
 lazy_static = "*"
 log = "*"
-memega = {path = "../libs/memega"}
+memega = {path = "../../libs/memega"}
 num_enum = "*"
 pretty_env_logger = "*"
 rand = "*"

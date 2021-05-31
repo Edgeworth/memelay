@@ -79,7 +79,7 @@ pub fn eval_layout<P: AsRef<Path>>(p: P) -> Result<()> {
     let args = Args::from_args();
     let eval = LayoutEval::from_args(&args)?;
     let l = load_seeds(p)?;
-    let fitness = eval.fitness(&l[0]);
+    let fitness = eval.fitness(&l[0], 0);
     println!("layout:\n{}", eval.model.format(&l[0]));
     println!("fitness: {}", fitness);
     Ok(())
