@@ -39,8 +39,8 @@ impl Evaluator for LayoutEval {
 
     fn crossover(&self, s1: &mut Vec<Kc>, s2: &mut Vec<Kc>, idx: usize) {
         // Crossover without touching fixed keys.
-        let mut unfixed1 = self.model.without_fixed(&s1);
-        let mut unfixed2 = self.model.without_fixed(&s2);
+        let mut unfixed1 = self.model.without_fixed(s1);
+        let mut unfixed2 = self.model.without_fixed(s2);
         match idx {
             0 => {} // Do nothing.
             1 => {
@@ -62,7 +62,7 @@ impl Evaluator for LayoutEval {
         let mut r = rand::thread_rng();
         let mutate = r.gen::<f64>() < rate;
         // Mutate without touching fixed keys.
-        let mut unfixed = self.model.without_fixed(&s);
+        let mut unfixed = self.model.without_fixed(s);
         match idx {
             0 => {
                 if mutate {
@@ -96,11 +96,42 @@ impl Evaluator for LayoutEval {
         cost += self.model.bigram_cost(s, &self.hist.bigrams);
         cost += self.model.trigram_cost(s, &self.hist.trigrams);
 
-        let comma = s.iter().position(|&v| v == Kc::Comma);
-        let dot = s.iter().position(|&v| v == Kc::Dot);
-        if dot.is_some() && comma.is_some() && comma.unwrap() + 1 != dot.unwrap() {
-            cost += PENALTY; // Keep , and . next to eachother.
+        struct Cons {
+            a: Kc,
+            b: Kc,
+            horiz: bool,
+            ordered: bool,
         }
+
+        let horiz = [
+            Cons { a: Kc::Comma, b: Kc::Dot, horiz: true, ordered: true }, // Keep , and . next to eachother.
+            Cons { a: Kc::DoubleQuote, b: Kc::Quote, horiz: false, ordered: false }, // " and ' vert.
+            Cons { a: Kc::Asterisk, b: Kc::Ampersand, horiz: false, ordered: false }, // * and & vert.
+            Cons { a: Kc::Ampersand, b: Kc::Bar, horiz: false, ordered: false }, // | and & vert.
+            Cons { a: Kc::Minus, b: Kc::Plus, horiz: false, ordered: false },    // - and + vert.
+        ];
+        for Cons { a, b, horiz, ordered } in horiz {
+            let apos = s.iter().position(|&v| v == a);
+            let bpos = s.iter().position(|&v| v == b);
+            if bpos.is_none() || apos.is_none() {
+                continue;
+            }
+            let apos = apos.unwrap();
+            let bpos = bpos.unwrap();
+            let (ab, ba) = if horiz {
+                (apos + 1 == bpos, bpos + 1 == apos)
+            } else {
+                let abelow = self.model.key_below(apos);
+                let bbelow = self.model.key_below(bpos);
+                let ab = if let Some(abelow) = abelow { abelow == bpos } else { false };
+                let ba = if let Some(bbelow) = bbelow { bbelow == apos } else { false };
+                (ab, ba)
+            };
+            if (!ba || ordered) && !ab {
+                cost += PENALTY;
+            }
+        }
+
 
         // Check fixed keys
         for (i, &kc) in self.model.fixed.iter().enumerate() {
@@ -110,7 +141,7 @@ impl Evaluator for LayoutEval {
         }
 
         // Tie-breaking: similarity to given existing layout:
-        cost += count_different(&s, &self.match_keys) as f64 / 100000.0;
+        cost += count_different(s, &self.match_keys) as f64 / 100000.0;
 
         // 1.0 / (cost + 1.0)
         (-cost).exp()

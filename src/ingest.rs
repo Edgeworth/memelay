@@ -93,8 +93,8 @@ pub fn load_model<P: AsRef<Path>>(cfg_path: P) -> Result<Model> {
             }
             match state {
                 State::Layout => {}
-                State::Keys => keys.push(Kc::from_str(&s).unwrap()),
-                State::Fixed => fixed.push(Kc::from_str(&s).unwrap_or_default()),
+                State::Keys => keys.push(Kc::from_str(s).unwrap()),
+                State::Fixed => fixed.push(Kc::from_str(s).unwrap_or_default()),
                 State::UnigramCost => unigram_cost.push(s.parse::<f64>().unwrap()),
                 State::BigramCost => {
                     bigram_cost[bigram_idx / 5 / 4][bigram_idx / 5 % 4][bigram_idx % 5] =
