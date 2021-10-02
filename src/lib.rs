@@ -172,8 +172,8 @@ pub fn run() -> Result<()> {
     if let Some(p) = args.eval_layout {
         eval_layout(p)?;
     } else {
-        multi_evolve(cfg)?;
-        // evolve(cfg)?;
+        // multi_evolve(cfg)?;
+        evolve(cfg)?;
         // hyper_evolve()?;
     }
 

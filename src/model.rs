@@ -31,6 +31,20 @@ impl Model {
         cost
     }
 
+    // Assumes key below is on the same hand and finger.
+    pub fn key_below(&self, v: usize) -> Option<usize> {
+        let row = self.row[v] - 1;
+        for i in 0..self.row.len() {
+            if row == self.row[i]
+                && self.hand[i] == self.hand[v]
+                && self.finger[i] == self.finger[v]
+            {
+                return Some(i);
+            }
+        }
+        None
+    }
+
     pub fn bigram_cost(&self, l: &[Kc], bigrams: &[((Kc, Kc), f64)]) -> f64 {
         let mut cost = 0.0;
         for &((kc1, kc2), prop) in bigrams.iter() {
@@ -130,6 +144,28 @@ mod tests {
     use approx::assert_relative_eq;
 
     use super::*;
+
+    #[test]
+    fn test_key_relation() {
+        let model = Model {
+            row: vec![2, 2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0],
+            hand: vec![0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1],
+            finger: vec![1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1],
+            ..Default::default()
+        };
+        assert_eq!(model.key_below(0), Some(4));
+        assert_eq!(model.key_below(1), Some(5));
+        assert_eq!(model.key_below(2), Some(6));
+        assert_eq!(model.key_below(3), Some(7));
+        assert_eq!(model.key_below(4), Some(8));
+        assert_eq!(model.key_below(5), Some(9));
+        assert_eq!(model.key_below(6), Some(10));
+        assert_eq!(model.key_below(7), Some(11));
+        assert_eq!(model.key_below(8), None);
+        assert_eq!(model.key_below(9), None);
+        assert_eq!(model.key_below(10), None);
+        assert_eq!(model.key_below(11), None);
+    }
 
     #[test]
     fn test_unigrams() {
