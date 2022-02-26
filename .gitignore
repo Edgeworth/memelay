@@ -1,3 +1,4 @@
 perf.data*
 data/
 __pycache__
+.mypy_cache

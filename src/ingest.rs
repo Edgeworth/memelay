@@ -38,7 +38,7 @@ pub fn load_seeds<P: AsRef<Path>>(layout_path: P) -> Result<Vec<Vec<Kc>>> {
     if !keys.is_empty() {
         layouts.push(keys);
     }
-    for v in layouts.iter() {
+    for v in &layouts {
         if v.len() != layouts[0].len() {
             return Err(eyre!("not all layouts the same size"));
         }

@@ -1,13 +1,18 @@
 import json
+from pathlib import Path
 
 # Converts kbd output to
 # https://stevep99.github.io/keyboard-layout-analyzer/#/config format.
 
-src = """
+src = (
+    """
 q p r m v x u o f j
 b n s t g ; a e h w
 z c l d k y i , . /
-""".strip().lower().split()
+""".strip()
+    .lower()
+    .split()
+)
 
 shift_map = {
     96: 126,
@@ -59,7 +64,7 @@ shift_map = {
     122: 90,
 }
 
-template = json.loads(open('cfg/keyboard_layout_analyzer.json').read())
+template = json.loads(Path("cfg/keyboard_layout_analyzer.json").read_text(encoding="utf-8"))
 
 idx = 0
 for key in template["keys"]:

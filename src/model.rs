@@ -17,6 +17,7 @@ pub struct Model {
 }
 
 impl Model {
+    #[must_use]
     pub fn unigram_cost(&self, l: &[Kc], unigrams: &[(Kc, f64)]) -> f64 {
         let mut cost = 0.0;
         for &(kc, prop) in unigrams.iter() {
@@ -32,6 +33,7 @@ impl Model {
     }
 
     // Assumes key below is on the same hand and finger.
+    #[must_use]
     pub fn key_below(&self, v: usize) -> Option<usize> {
         let row = self.row[v] - 1;
         for i in 0..self.row.len() {
@@ -45,6 +47,7 @@ impl Model {
         None
     }
 
+    #[must_use]
     pub fn bigram_cost(&self, l: &[Kc], bigrams: &[((Kc, Kc), f64)]) -> f64 {
         let mut cost = 0.0;
         for &((kc1, kc2), prop) in bigrams.iter() {
@@ -64,7 +67,7 @@ impl Model {
             // Special case: same key incurs zero cost for bigrams.
             // Index finger can be used twice on the same row with different keys.
             let percost = if same_hand {
-                if kc1 != kc2 { self.bigram_cost[pfing][cfing][jump_len] } else { SAME_KEY }
+                if kc1 == kc2 { SAME_KEY } else { self.bigram_cost[pfing][cfing][jump_len] }
             } else {
                 SWITCH_HAND
             };
@@ -73,6 +76,7 @@ impl Model {
         cost
     }
 
+    #[must_use]
     pub fn trigram_cost(&self, l: &[Kc], trigrams: &[((Kc, Kc, Kc), f64)]) -> f64 {
         const ALT_ROLL_BONUS: f64 = -1.0;
         let mut cost = 0.0;
@@ -97,6 +101,7 @@ impl Model {
         cost
     }
 
+    #[must_use]
     pub fn format(&self, l: &[Kc]) -> String {
         let mut s = String::new();
         let mut idx = 0;
@@ -112,17 +117,19 @@ impl Model {
         s
     }
 
+    #[must_use]
     pub fn without_fixed(&self, inp: &[Kc]) -> Vec<Kc> {
         assert_eq!(inp.len(), self.universe.len(), "must have same size when removing fixed");
         let mut out: Vec<Kc> = Vec::with_capacity(self.universe.len());
-        for i in 0..inp.len() {
+        for (i, v) in inp.iter().enumerate() {
             if self.fixed[i] == Kc::None {
-                out.push(inp[i]);
+                out.push(*v);
             }
         }
         out
     }
 
+    #[must_use]
     pub fn with_fixed(&self, inp: &[Kc]) -> Vec<Kc> {
         let mut out: Vec<Kc> = Vec::with_capacity(self.universe.len());
         let mut idx = 0;
@@ -131,7 +138,7 @@ impl Model {
                 out.push(inp[idx]);
                 idx += 1;
             } else {
-                out.push(self.fixed[i])
+                out.push(self.fixed[i]);
             }
         }
         assert_eq!(idx, inp.len(), "left over keys");
@@ -171,8 +178,8 @@ mod tests {
     fn test_unigrams() {
         let model = Model { unigram_cost: vec![1.0, 10.0], ..Default::default() };
         let l = &[Kc::A, Kc::B];
-        assert_relative_eq!(13.0, model.unigram_cost(l, &[(Kc::A, 3.0), (Kc::B, 1.0)].to_vec()));
-        assert_relative_eq!(PENALTY * 3.0, model.unigram_cost(l, &[(Kc::C, 3.0)].to_vec()));
+        assert_relative_eq!(13.0, model.unigram_cost(l, &[(Kc::A, 3.0), (Kc::B, 1.0)]));
+        assert_relative_eq!(PENALTY * 3.0, model.unigram_cost(l, &[(Kc::C, 3.0)]));
     }
 
     #[test]

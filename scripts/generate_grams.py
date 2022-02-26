@@ -1,28 +1,32 @@
-import os
+from pathlib import Path
 import string
-from typing import Dict, Tuple
-from scripts.common import write_unigrams, write_bigrams, write_trigrams
 
-filelist = 'dropbox'
-layer = 'layer1'
+from scripts.common import write_bigrams
+from scripts.common import write_trigrams
+from scripts.common import write_unigrams
 
-trans = str.maketrans(':<>?', ';,./', '')
-files = [i.strip() for i in open('data/filelist_' + filelist).readlines()]
+filelist = "dropbox"
+layer = "layer1"
+
+trans = str.maketrans(":<>?", ";,./", "")
+files = [
+    i.strip() for i in Path("data/filelist_" + filelist).read_text(encoding="utf-8").splitlines()
+]
 
 allow_map = {
-    'layer0': string.ascii_lowercase + ';,./',
-    'layer1': '|*{}"+_789#!()\'=-456@&[]$\\0123'
+    "layer0": string.ascii_lowercase + ";,./",
+    "layer1": "|*{}\"+_789#!()'=-456@&[]$\\0123",
 }
 allowed = allow_map[layer]
 
-unigrams: Dict[str, int] = {}
-bigrams: Dict[Tuple[str, str], int] = {}
-trigrams: Dict[Tuple[str, str, str], int] = {}
+unigrams: dict[str, int] = {}
+bigrams: dict[tuple[str, str], int] = {}
+trigrams: dict[tuple[str, str, str], int] = {}
 for file in files:
     try:
-        data = open(file).read().lower()
-    except:
-        print('Error processing, skipping ', file)
+        data = Path(file).read_text(encoding="utf-8").lower()
+    except Exception:
+        print("Error processing, skipping ", file)
         continue
     data = data.translate(trans)
 
@@ -49,7 +53,7 @@ for file in files:
         pprev = prev
         prev = c
 
-suffix = '%s_%s' % (filelist, layer)
+suffix = f"{filelist}_{layer}"
 unigram_total = sum(i for i in unigrams.values())
 bigram_total = sum(i for i in bigrams.values())
 trigram_total = sum(i for i in trigrams.values())

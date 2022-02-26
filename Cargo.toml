@@ -1,30 +1,38 @@
 [package]
 authors = ["Eliot Courtney <edgeworth.dev@gmail.com>"]
+categories = ["genetic", "ga", "keyboard"]
+description = "genetic algorithms for keyboard layouts"
 edition = "2021"
-name = "kbd"
+license = "GPL-3.0"
+name = "memelay"
+readme = "README.md"
+repository = "https://github.com/Edgeworth/memelay"
 version = "0.1.0"
 
 [dependencies]
-approx = "*"
-color-eyre = "*"
-derive_more = "*"
-eyre = "*"
-lazy_static = "*"
-log = "*"
-memega = {path = "../../libs/memega"}
-num_enum = "*"
-pretty_env_logger = "*"
-rand = "*"
-rayon = "*"
-serde = {version = "*", features = ["derive"]}
-smallvec = "*"
-structopt = "*"
-strum = {version = "*", features = ["derive"]}
-vec_map = "*"
+approx = "0.5.1"
+clap = {version = "3.1.6", features = ["derive", "unicode", "wrap_help"]}
+color-eyre = "0.6.1"
+derive_more = "0.99.17"
+eyre = "0.6.7"
+log = "0.4.16"
+memega = {version = "0.1.0", git = "https://github.com/Edgeworth/memega"}
+num_enum = "0.5.7"
+pretty_env_logger = "0.4.0"
+rand = "0.8.5"
+strum = {version = "0.24.0", features = ["derive"]}
 
 [dev-dependencies]
-criterion = {version = "*", features = ["real_blackbox"]}
+criterion = {version = "0.3.5", features = ["real_blackbox"]}
 
 [[bench]]
 harness = false
 name = "path"
+
+# Build dependencies with optimisations - debug builds will run faster
+# but dependencies don't change often.
+[profile.dev.package."*"]
+opt-level = 3
+
+[profile.release]
+lto = true

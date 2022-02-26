@@ -1,21 +1,22 @@
-
 def write_unigrams(unigrams, unigram_total, suffix):
     unigram_total = float(unigram_total)
-    with open('data/unigrams_%s.data' % suffix, 'w') as f:
-        f.write('%.18f\n' % unigram_total)
+    with open(f"data/unigrams_{suffix}.data", "w", encoding="utf-8") as f:
+        f.write(f"{unigram_total:.18f}\n")
         for k, v in sorted(unigrams.items()):
-            f.write('%s %.18f\n' % (k, v / unigram_total))
+            f.write(f"{k} {v / unigram_total:.18f}\n")
+
 
 def write_bigrams(bigrams, bigram_total, suffix):
     bigram_total = float(bigram_total)
-    with open('data/bigrams_%s.data' % suffix, 'w') as f:
-        f.write('%.18f\n' % bigram_total)
+    with open(f"data/bigrams_{suffix}.data", "w", encoding="utf-8") as f:
+        f.write(f"{bigram_total:.18f}\n")
         for k, v in sorted(bigrams.items()):
-            f.write('%s %s %.18f\n' % (k[0], k[1], v / bigram_total))
+            f.write(f"{k[0]} {k[1]} {v / bigram_total:.18f}\n")
+
 
 def write_trigrams(trigrams, trigram_total, suffix):
     trigram_total = float(trigram_total)
-    with open('data/trigrams_%s.data' % suffix, 'w') as f:
-        f.write('%.18f\n' % trigram_total)
+    with open(f"data/trigrams_{suffix}.data", "w", encoding="utf-8") as f:
+        f.write(f"{trigram_total:.18f}\n")
         for k, v in sorted(trigrams.items()):
-            f.write('%s %s %s %.18f\n' % (k[0], k[1], k[2], v / trigram_total))
+            f.write(f"{k[0]} {k[1]} {k[2]} {v / trigram_total:.18f}\n")
