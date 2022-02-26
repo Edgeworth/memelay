@@ -1,5 +1,5 @@
 use eyre::Result;
-use kbd::run;
+use memelay::run;
 
 fn main() -> Result<()> {
     pretty_env_logger::init_timed();

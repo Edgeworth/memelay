@@ -1,29 +1,53 @@
-#![warn(rust_2018_idioms, clippy::all)]
-#![feature(
-    array_chunks,
-    array_windows,
-    bool_to_option,
-    destructuring_assignment,
-    is_sorted,
-    map_first_last,
-    option_result_contains,
-    stmt_expr_attributes,
-    trait_alias
+#![warn(
+    clippy::all,
+    clippy::pedantic,
+    future_incompatible,
+    macro_use_extern_crate,
+    meta_variable_misuse,
+    missing_abi,
+    nonstandard_style,
+    noop_method_call,
+    rust_2018_compatibility,
+    rust_2018_idioms,
+    rust_2021_compatibility,
+    trivial_casts,
+    unreachable_pub,
+    unsafe_code,
+    unsafe_op_in_unsafe_fn,
+    unused_import_braces,
+    unused_lifetimes,
+    unused_qualifications,
+    unused,
+    variant_size_differences
+)]
+#![allow(
+    clippy::cast_lossless,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss,
+    clippy::items_after_statements,
+    clippy::missing_errors_doc,
+    clippy::missing_panics_doc,
+    clippy::module_name_repetitions,
+    clippy::similar_names,
+    clippy::too_many_lines,
+    clippy::unreadable_literal
 )]
 
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
+use clap::Parser;
 use eyre::Result;
 use memega::cfg::{
     Cfg, Crossover, Duplicates, Mutation, Niching, Replacement, Species, Stagnation, Survival,
 };
 use memega::eval::{CachedEvaluator, Evaluator};
-use memega::hyper::HyperBuilder;
-use memega::multirun::multirun;
-use memega::runner::Runner;
+use memega::hyper::builder::HyperBuilder;
+use memega::run::multirun::multirun;
+use memega::run::runner::Runner;
 use rand::prelude::SliceRandom;
-use structopt::StructOpt;
 
 use crate::eval::LayoutEval;
 use crate::ingest::{load_model, load_seeds};
@@ -33,10 +57,10 @@ pub mod ingest;
 pub mod model;
 pub mod types;
 
-#[derive(Debug, StructOpt)]
-#[structopt(name = "hodlr", about = "Hodlr CLI")]
+#[derive(Debug, Parser)]
+#[clap(name = "hodlr", about = "Hodlr CLI")]
 pub struct Args {
-    #[structopt(
+    #[clap(
         long,
         default_value = "cfg/layer0.cfg",
         parse(from_os_str),
@@ -44,10 +68,10 @@ pub struct Args {
     )]
     pub model_path: PathBuf,
 
-    #[structopt(long, parse(from_os_str), help = "Config file describing seed layouts")]
+    #[clap(long, parse(from_os_str), help = "Config file describing seed layouts")]
     pub seed_path: Option<PathBuf>,
 
-    #[structopt(
+    #[clap(
         long,
         default_value = "data/unigrams.data",
         parse(from_os_str),
@@ -55,7 +79,7 @@ pub struct Args {
     )]
     pub unigrams_path: PathBuf,
 
-    #[structopt(
+    #[clap(
         long,
         default_value = "data/bigrams.data",
         parse(from_os_str),
@@ -63,7 +87,7 @@ pub struct Args {
     )]
     pub bigrams_path: PathBuf,
 
-    #[structopt(
+    #[clap(
         long,
         default_value = "data/trigrams.data",
         parse(from_os_str),
@@ -71,12 +95,12 @@ pub struct Args {
     )]
     pub trigrams_path: PathBuf,
 
-    #[structopt(short, long, parse(from_os_str), help = "Evaluate a given layout")]
+    #[clap(short, long, parse(from_os_str), help = "Evaluate a given layout")]
     pub eval_layout: Option<PathBuf>,
 }
 
 pub fn eval_layout<P: AsRef<Path>>(p: P) -> Result<()> {
-    let args = Args::from_args();
+    let args = Args::parse();
     let eval = LayoutEval::from_args(&args)?;
     let l = load_seeds(p)?;
     let fitness = eval.fitness(&l[0], 0);
@@ -86,7 +110,7 @@ pub fn eval_layout<P: AsRef<Path>>(p: P) -> Result<()> {
 }
 
 pub fn layout_runner(cfg: Cfg) -> Result<Runner<CachedEvaluator<LayoutEval>>> {
-    let args = Args::from_args();
+    let args = Args::parse();
     let model = load_model(&args.model_path)?;
     let eval = CachedEvaluator::new(LayoutEval::from_args(&args)?, 1000);
     let genfn = move || {
@@ -103,7 +127,7 @@ pub fn layout_runner(cfg: Cfg) -> Result<Runner<CachedEvaluator<LayoutEval>>> {
 }
 
 pub fn evolve(cfg: Cfg) -> Result<()> {
-    let args = Args::from_args();
+    let args = Args::parse();
     let model = load_model(&args.model_path)?;
     let mut runner = layout_runner(cfg)?;
 
@@ -119,10 +143,10 @@ pub fn evolve(cfg: Cfg) -> Result<()> {
     Ok(())
 }
 
-pub fn multi_evolve(cfg: Cfg) -> Result<()> {
-    let args = Args::from_args();
+pub fn multi_evolve(cfg: &Cfg) -> Result<()> {
+    let args = Args::parse();
     let model = load_model(&args.model_path)?;
-    let mut results = multirun(20, 5000, &cfg, |cfg| layout_runner(cfg).unwrap());
+    let mut results = multirun(20, 5000, cfg, |cfg| layout_runner(cfg).unwrap());
 
     results.sort_unstable_by(|(_, r1), (_, r2)| {
         r2.nth(0).base_fitness.partial_cmp(&r1.nth(0).base_fitness).unwrap()
@@ -153,7 +177,7 @@ pub fn hyper_evolve() -> Result<()> {
 }
 
 pub fn run() -> Result<()> {
-    let args = Args::from_args();
+    let args = Args::parse();
     // Remember to update these values if add more mutation/crossover strategies.
     let cfg = Cfg::new(1000)
         .with_mutation(Mutation::Adaptive)
