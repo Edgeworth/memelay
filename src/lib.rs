@@ -36,20 +36,20 @@
 )]
 
 use std::path::{Path, PathBuf};
-use std::time::Duration;
 
 use clap::Parser;
 use eyre::Result;
-use memega::cfg::{
-    Cfg, Crossover, Duplicates, Mutation, Niching, Replacement, Species, Stagnation, Survival,
-};
 use memega::eval::{CachedEvaluator, Evaluator};
-use memega::hyper::builder::HyperBuilder;
-use memega::run::multirun::multirun;
-use memega::run::runner::Runner;
+use memega::evolve::cfg::{
+    Crossover, Duplicates, EvolveCfg, Mutation, Niching, Replacement, Species, Stagnation, Survival,
+};
+use memega::evolve::evolver::Evolver;
+use memega::train::cfg::{Termination, TrainerCfg};
+use memega::train::sampler::EmptyDataSampler;
+use memega::train::trainer::Trainer;
 use rand::prelude::SliceRandom;
 
-use crate::eval::LayoutEval;
+use crate::eval::{KeyState, LayoutEval};
 use crate::ingest::{load_model, load_seeds};
 
 pub mod eval;
@@ -103,75 +103,39 @@ pub fn eval_layout<P: AsRef<Path>>(p: P) -> Result<()> {
     let args = Args::parse();
     let eval = LayoutEval::from_args(&args)?;
     let l = load_seeds(p)?;
-    let fitness = eval.fitness(&l[0], 0);
-    println!("layout:\n{}", eval.model.format(&l[0]));
+    let fitness = eval.fitness(&l[0], &())?;
+    println!("layout:\n{}", eval.model.format(&l[0].0));
     println!("fitness: {}", fitness);
     Ok(())
 }
 
-pub fn layout_runner(cfg: Cfg) -> Result<Runner<CachedEvaluator<LayoutEval>>> {
+pub fn layout_evolver(cfg: EvolveCfg) -> Result<Evolver<impl Evaluator<Data = ()>>> {
     let args = Args::parse();
     let model = load_model(&args.model_path)?;
     let eval = CachedEvaluator::new(LayoutEval::from_args(&args)?, 1000);
     let genfn = move || {
         let mut keys = model.without_fixed(&model.universe);
         keys.shuffle(&mut rand::thread_rng());
-        model.with_fixed(&keys)
+        KeyState(model.with_fixed(&keys))
     };
     if let Some(seed) = args.seed_path {
         let initial_keys = load_seeds(seed)?;
-        Ok(Runner::from_initial(eval, cfg, initial_keys, genfn))
+        Ok(Evolver::from_initial(eval, cfg, initial_keys, genfn))
     } else {
-        Ok(Runner::new(eval, cfg, genfn))
+        Ok(Evolver::new(eval, cfg, genfn))
     }
 }
 
-pub fn evolve(cfg: Cfg) -> Result<()> {
-    let args = Args::parse();
-    let model = load_model(&args.model_path)?;
-    let mut runner = layout_runner(cfg)?;
+pub fn evolve(cfg: EvolveCfg) -> Result<()> {
+    let evolver = layout_evolver(cfg)?;
 
-    for i in 0..200001 {
-        let mut r = runner.run_iter()?;
-        if i % 50 == 0 {
-            println!("Generation {}: {}", i + 1, r.nth(0).base_fitness);
-            println!("{}", runner.summary(&mut r));
-            println!("{}", runner.summary_sample(&mut r, 6, |v| model.format(v)));
-        }
-    }
-
-    Ok(())
-}
-
-pub fn multi_evolve(cfg: &Cfg) -> Result<()> {
-    let args = Args::parse();
-    let model = load_model(&args.model_path)?;
-    let mut results = multirun(20, 5000, cfg, |cfg| layout_runner(cfg).unwrap());
-
-    results.sort_unstable_by(|(_, r1), (_, r2)| {
-        r2.nth(0).base_fitness.partial_cmp(&r1.nth(0).base_fitness).unwrap()
-    });
-
-    for (runner, r) in results.iter_mut().take(10) {
-        println!("{}", runner.summary_sample(r, 1, |v| model.format(v)));
-    }
-
-    Ok(())
-}
-
-pub fn hyper_evolve() -> Result<()> {
-    let mut builder = HyperBuilder::new(100, Duration::from_millis(2000));
-    builder.add(1.0, &|cfg| layout_runner(cfg).unwrap());
-    let mut runner = builder.build();
-
-    for i in 0..10001 {
-        let mut r = runner.run_iter()?;
-        println!("Generation {}: {}", i + 1, r.nth(0).base_fitness);
-        if i % 10 == 0 {
-            println!("{}", runner.summary(&mut r));
-            println!("{}", runner.summary_sample(&mut r, 5, |v| format!("{:?}", v)));
-        }
-    }
+    let mut trainer = Trainer::new(
+        TrainerCfg::new("memelay")
+            .set_termination(Termination::FixedGenerations(20000))
+            .set_print_gen(50)
+            .set_print_summary(50),
+    );
+    trainer.train(evolver, &EmptyDataSampler {})?;
 
     Ok(())
 }
@@ -179,26 +143,22 @@ pub fn hyper_evolve() -> Result<()> {
 pub fn run() -> Result<()> {
     let args = Args::parse();
     // Remember to update these values if add more mutation/crossover strategies.
-    let cfg = Cfg::new(1000)
-        .with_mutation(Mutation::Adaptive)
-        .with_crossover(Crossover::Adaptive)
-        // .with_mutation(Mutation::Fixed(vec![0.001, 0.2, 0.2, 0.2, 0.2]))
-        // .with_crossover(Crossover::Fixed(vec![0.3, 0.1, 0.2, 0.7]))
-        .with_survival(Survival::SpeciesTopProportion(0.1))
-        .with_species(Species::TargetNumber(100))
-        .with_niching(Niching::None)
-        .with_stagnation(Stagnation::ContinuousAfter(200))
-        .with_replacement(Replacement::ReplaceChildren(0.5))
-        .with_duplicates(Duplicates::DisallowDuplicates)
-        .with_par_fitness(true)
-        .with_par_dist(true);
+    let cfg = EvolveCfg::new(1000)
+        .set_mutation(Mutation::Adaptive)
+        .set_crossover(Crossover::Adaptive)
+        .set_survival(Survival::SpeciesTopProportion(0.1))
+        .set_species(Species::TargetNumber(100))
+        .set_niching(Niching::None)
+        .set_stagnation(Stagnation::ContinuousAfter(200))
+        .set_replacement(Replacement::ReplaceChildren(0.5))
+        .set_duplicates(Duplicates::DisallowDuplicates)
+        .set_par_fitness(true)
+        .set_par_dist(true);
 
     if let Some(p) = args.eval_layout {
         eval_layout(p)?;
     } else {
-        // multi_evolve(cfg)?;
         evolve(cfg)?;
-        // hyper_evolve()?;
     }
 
     Ok(())

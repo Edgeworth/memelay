@@ -4,12 +4,12 @@ use std::str::FromStr;
 
 use eyre::{eyre, Result, WrapErr};
 
-use crate::eval::Histograms;
+use crate::eval::{Histograms, KeyState};
 use crate::model::Model;
 use crate::types::Kc;
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-enum State {
+enum ParseStage {
     Layout,
     Keys,
     Fixed,
@@ -20,12 +20,12 @@ enum State {
     Finger,
 }
 
-pub fn load_seeds<P: AsRef<Path>>(layout_path: P) -> Result<Vec<Vec<Kc>>> {
+pub fn load_seeds<P: AsRef<Path>>(layout_path: P) -> Result<Vec<KeyState>> {
     let mut keys = Vec::new();
     let mut layouts = Vec::new();
     for i in fs::read_to_string(layout_path)?.lines() {
         if i.is_empty() {
-            layouts.push(keys.clone());
+            layouts.push(KeyState(keys.clone()));
             keys.clear();
         }
         for kc in i.split(char::is_whitespace) {
@@ -36,7 +36,7 @@ pub fn load_seeds<P: AsRef<Path>>(layout_path: P) -> Result<Vec<Vec<Kc>>> {
         }
     }
     if !keys.is_empty() {
-        layouts.push(keys);
+        layouts.push(KeyState(keys));
     }
     for v in &layouts {
         if v.len() != layouts[0].len() {
@@ -47,7 +47,7 @@ pub fn load_seeds<P: AsRef<Path>>(layout_path: P) -> Result<Vec<Vec<Kc>>> {
 }
 
 pub fn load_model<P: AsRef<Path>>(cfg_path: P) -> Result<Model> {
-    let mut state = State::Layout;
+    let mut state = ParseStage::Layout;
     let mut layout = String::new();
     let mut keys = Vec::new();
     let mut fixed = Vec::new();
@@ -60,21 +60,21 @@ pub fn load_model<P: AsRef<Path>>(cfg_path: P) -> Result<Model> {
     for i in fs::read_to_string(cfg_path)?.lines() {
         let mut updated = true;
         if i.starts_with("layout") {
-            state = State::Layout;
+            state = ParseStage::Layout;
         } else if i.starts_with("keys") {
-            state = State::Keys;
+            state = ParseStage::Keys;
         } else if i.starts_with("fixed") {
-            state = State::Fixed;
+            state = ParseStage::Fixed;
         } else if i.starts_with("unigram_cost") {
-            state = State::UnigramCost;
+            state = ParseStage::UnigramCost;
         } else if i.starts_with("bigram_cost") {
-            state = State::BigramCost;
+            state = ParseStage::BigramCost;
         } else if i.starts_with("row") {
-            state = State::Row;
+            state = ParseStage::Row;
         } else if i.starts_with("hand") {
-            state = State::Hand;
+            state = ParseStage::Hand;
         } else if i.starts_with("finger") {
-            state = State::Finger;
+            state = ParseStage::Finger;
         } else {
             updated = false;
         }
@@ -82,7 +82,7 @@ pub fn load_model<P: AsRef<Path>>(cfg_path: P) -> Result<Model> {
         if updated {
             continue;
         }
-        if state == State::Layout {
+        if state == ParseStage::Layout {
             layout += i;
             layout.push('\n');
             continue;
@@ -92,18 +92,18 @@ pub fn load_model<P: AsRef<Path>>(cfg_path: P) -> Result<Model> {
                 continue;
             }
             match state {
-                State::Layout => {}
-                State::Keys => keys.push(Kc::from_str(s).unwrap()),
-                State::Fixed => fixed.push(Kc::from_str(s).unwrap_or_default()),
-                State::UnigramCost => unigram_cost.push(s.parse::<f64>().unwrap()),
-                State::BigramCost => {
+                ParseStage::Layout => {}
+                ParseStage::Keys => keys.push(Kc::from_str(s)?),
+                ParseStage::Fixed => fixed.push(Kc::from_str(s).unwrap_or_default()),
+                ParseStage::UnigramCost => unigram_cost.push(s.parse::<f64>()?),
+                ParseStage::BigramCost => {
                     bigram_cost[bigram_idx / 5 / 4][bigram_idx / 5 % 4][bigram_idx % 5] =
-                        s.parse::<f64>().unwrap();
+                        s.parse::<f64>()?;
                     bigram_idx += 1;
                 }
-                State::Row => row.push(s.parse::<i32>().unwrap()),
-                State::Hand => hand.push(s.parse::<i32>().unwrap()),
-                State::Finger => finger.push(s.parse::<i32>().unwrap()),
+                ParseStage::Row => row.push(s.parse::<i32>()?),
+                ParseStage::Hand => hand.push(s.parse::<i32>()?),
+                ParseStage::Finger => finger.push(s.parse::<i32>()?),
             };
         }
     }
@@ -153,7 +153,6 @@ pub fn load_histograms<P: AsRef<Path>>(
         let kc3 = Kc::from_str(kcstr3)?;
         trigrams.push(((kc1, kc2, kc3), count));
     }
-
 
     Ok(Histograms { unigrams, bigrams, trigrams })
 }

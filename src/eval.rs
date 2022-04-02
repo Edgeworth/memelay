@@ -1,3 +1,4 @@
+use derive_more::{Deref, DerefMut, Display};
 use eyre::Result;
 use memega::eval::Evaluator;
 use memega::ops::crossover::{crossover_cycle, crossover_order, crossover_pmx};
@@ -32,12 +33,16 @@ impl LayoutEval {
     }
 }
 
+#[derive(Debug, Display, Deref, DerefMut, Hash, Clone, PartialEq, Eq, PartialOrd)]
+#[display(fmt = "{:?}", _0)]
+pub struct KeyState(pub Vec<Kc>);
+
 impl Evaluator for LayoutEval {
-    type Genome = Vec<Kc>;
+    type State = KeyState;
     const NUM_CROSSOVER: usize = 4;
     const NUM_MUTATION: usize = 4;
 
-    fn crossover(&self, s1: &mut Vec<Kc>, s2: &mut Vec<Kc>, idx: usize) {
+    fn crossover(&self, s1: &mut Self::State, s2: &mut Self::State, idx: usize) {
         // Crossover without touching fixed keys.
         let mut unfixed1 = self.model.without_fixed(s1);
         let mut unfixed2 = self.model.without_fixed(s2);
@@ -54,11 +59,11 @@ impl Evaluator for LayoutEval {
             }
             _ => panic!("unknown crossover strategy"),
         };
-        *s1 = self.model.with_fixed(&unfixed1);
-        *s2 = self.model.with_fixed(&unfixed2);
+        *s1 = KeyState(self.model.with_fixed(&unfixed1));
+        *s2 = KeyState(self.model.with_fixed(&unfixed2));
     }
 
-    fn mutate(&self, s: &mut Vec<Kc>, rate: f64, idx: usize) {
+    fn mutate(&self, s: &mut Self::State, rate: f64, idx: usize) {
         let mut r = rand::thread_rng();
         let mutate = r.gen::<f64>() < rate;
         // Mutate without touching fixed keys.
@@ -86,10 +91,10 @@ impl Evaluator for LayoutEval {
             }
             _ => panic!("unknown mutation strategy"),
         }
-        *s = self.model.with_fixed(&unfixed);
+        *s = KeyState(self.model.with_fixed(&unfixed));
     }
 
-    fn fitness(&self, s: &Vec<Kc>, _gen: usize) -> f64 {
+    fn fitness(&self, s: &Self::State, _data: &Self::Data) -> Result<f64> {
         let mut cost = 0.0;
 
         cost += self.model.unigram_cost(s, &self.hist.unigrams);
@@ -132,7 +137,6 @@ impl Evaluator for LayoutEval {
             }
         }
 
-
         // Check fixed keys
         for (i, &kc) in self.model.fixed.iter().enumerate() {
             if kc != Kc::None && kc != s[i] {
@@ -144,14 +148,14 @@ impl Evaluator for LayoutEval {
         cost += count_different(s, &self.match_keys) as f64 / 100000.0;
 
         // 1.0 / (cost + 1.0)
-        (-cost).exp()
+        Ok((-cost).exp())
     }
 
-    fn distance(&self, s1: &Vec<Kc>, s2: &Vec<Kc>) -> f64 {
+    fn distance(&self, s1: &Self::State, s2: &Self::State) -> Result<f64> {
         let mut d = 0.0;
         for i in 0..s1.len() {
             d += (i8::from(s1[i]) - i8::from(s2[i])).abs() as f64;
         }
-        d
+        Ok(d)
     }
 }
