@@ -1,9 +1,12 @@
+use std::fmt::Write;
+
 use crate::types::Kc;
 
 const SWITCH_HAND: f64 = -0.5; // Alternating hands is easy.
 const SAME_KEY: f64 = 0.0; // Same key is neither easy nor hard.
 pub const PENALTY: f64 = 100.0;
 
+#[must_use]
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct Model {
     pub layout: String,    // Format string for printing keyboard layouts
@@ -36,15 +39,9 @@ impl Model {
     #[must_use]
     pub fn key_below(&self, v: usize) -> Option<usize> {
         let row = self.row[v] - 1;
-        for i in 0..self.row.len() {
-            if row == self.row[i]
-                && self.hand[i] == self.hand[v]
-                && self.finger[i] == self.finger[v]
-            {
-                return Some(i);
-            }
-        }
-        None
+        (0..self.row.len()).find(|&i| {
+            row == self.row[i] && self.hand[i] == self.hand[v] && self.finger[i] == self.finger[v]
+        })
     }
 
     #[must_use]
@@ -67,7 +64,11 @@ impl Model {
             // Special case: same key incurs zero cost for bigrams.
             // Index finger can be used twice on the same row with different keys.
             let percost = if same_hand {
-                if kc1 == kc2 { SAME_KEY } else { self.bigram_cost[pfing][cfing][jump_len] }
+                if kc1 == kc2 {
+                    SAME_KEY
+                } else {
+                    self.bigram_cost[pfing][cfing][jump_len]
+                }
             } else {
                 SWITCH_HAND
             };
@@ -107,7 +108,7 @@ impl Model {
         let mut idx = 0;
         for c in self.layout.chars() {
             if c == 'X' {
-                s += &format!("{}", l[idx]);
+                let _ = write!(s, "{}", l[idx]);
                 idx += 1;
             } else {
                 s.push(c);
@@ -149,6 +150,7 @@ impl Model {
 #[cfg(test)]
 mod tests {
     use approx::assert_relative_eq;
+    use pretty_assertions::assert_eq;
 
     use super::*;
 

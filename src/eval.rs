@@ -11,6 +11,7 @@ use crate::model::{Model, PENALTY};
 use crate::types::{Kc, COLEMAK_DHM};
 use crate::Args;
 
+#[must_use]
 #[derive(Debug, Clone)]
 pub struct Histograms {
     pub unigrams: Vec<(Kc, f64)>,
@@ -18,6 +19,7 @@ pub struct Histograms {
     pub trigrams: Vec<((Kc, Kc, Kc), f64)>,
 }
 
+#[must_use]
 #[derive(Debug, Clone)]
 pub struct LayoutEval {
     pub model: Model,
@@ -33,8 +35,9 @@ impl LayoutEval {
     }
 }
 
+#[must_use]
 #[derive(Debug, Display, Deref, DerefMut, Hash, Clone, PartialEq, Eq, PartialOrd)]
-#[display(fmt = "{:?}", _0)]
+#[display(fmt = "{_0:?}")]
 pub struct KeyState(pub Vec<Kc>);
 
 impl Evaluator for LayoutEval {
@@ -101,6 +104,7 @@ impl Evaluator for LayoutEval {
         cost += self.model.bigram_cost(s, &self.hist.bigrams);
         cost += self.model.trigram_cost(s, &self.hist.trigrams);
 
+        #[must_use]
         struct Cons {
             a: Kc,
             b: Kc,

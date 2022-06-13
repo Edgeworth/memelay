@@ -8,6 +8,7 @@ impl Default for Kc {
 }
 
 // Based on QMK keycodes.
+#[must_use]
 #[derive(
     Debug,
     Copy,

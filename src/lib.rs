@@ -57,6 +57,7 @@ pub mod ingest;
 pub mod model;
 pub mod types;
 
+#[must_use]
 #[derive(Debug, Parser)]
 #[clap(name = "hodlr", about = "Hodlr CLI")]
 pub struct Args {
@@ -105,7 +106,7 @@ pub fn eval_layout<P: AsRef<Path>>(p: P) -> Result<()> {
     let l = load_seeds(p)?;
     let fitness = eval.fitness(&l[0], &())?;
     println!("layout:\n{}", eval.model.format(&l[0].0));
-    println!("fitness: {}", fitness);
+    println!("fitness: {fitness}");
     Ok(())
 }
 
