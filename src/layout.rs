@@ -1,6 +1,7 @@
 use crate::types::Kc;
 use derive_more::Display;
 
+#[must_use]
 #[derive(Debug, Clone, Default, Eq, PartialEq, Ord, PartialOrd, Hash, Display)]
 #[display(fmt = "{:?}", keys)]
 pub struct Layout {

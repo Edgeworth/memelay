@@ -8,6 +8,7 @@ use crate::eval::{Histograms, KeyState};
 use crate::model::Model;
 use crate::types::Kc;
 
+#[must_use]
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 enum ParseStage {
     Layout,
