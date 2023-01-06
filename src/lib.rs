@@ -64,18 +64,25 @@ pub struct Args {
     #[clap(
         long,
         default_value = "cfg/layer0.cfg",
-        parse(from_os_str),
+        value_name = "FILE",
+        value_hint = clap::ValueHint::FilePath,
         help = "Config file describing the model"
     )]
     pub model_path: PathBuf,
 
-    #[clap(long, parse(from_os_str), help = "Config file describing seed layouts")]
+    #[clap(
+        long,
+        value_name = "FILE",
+        value_hint = clap::ValueHint::FilePath,
+        help = "Config file describing seed layouts"
+    )]
     pub seed_path: Option<PathBuf>,
 
     #[clap(
         long,
         default_value = "data/unigrams.data",
-        parse(from_os_str),
+        value_name = "FILE",
+        value_hint = clap::ValueHint::FilePath,
         help = "Data file describing unigrams"
     )]
     pub unigrams_path: PathBuf,
@@ -83,7 +90,8 @@ pub struct Args {
     #[clap(
         long,
         default_value = "data/bigrams.data",
-        parse(from_os_str),
+        value_name = "FILE",
+        value_hint = clap::ValueHint::FilePath,
         help = "Data file describing bigrams"
     )]
     pub bigrams_path: PathBuf,
@@ -91,12 +99,19 @@ pub struct Args {
     #[clap(
         long,
         default_value = "data/trigrams.data",
-        parse(from_os_str),
+        value_name = "FILE",
+        value_hint = clap::ValueHint::FilePath,
         help = "Data file describing trigrams"
     )]
     pub trigrams_path: PathBuf,
 
-    #[clap(short, long, parse(from_os_str), help = "Evaluate a given layout")]
+    #[clap(
+        short,
+        long,
+        value_name = "FILE",
+        value_hint = clap::ValueHint::FilePath,
+        help = "Evaluate a given layout"
+    )]
     pub eval_layout: Option<PathBuf>,
 }
 
@@ -136,7 +151,7 @@ pub fn evolve(cfg: EvolveCfg) -> Result<()> {
             .set_print_gen(50)
             .set_print_summary(50),
     );
-    trainer.train(evolver, &EmptyDataSampler {})?;
+    let _ = trainer.train(evolver, &EmptyDataSampler {})?;
 
     Ok(())
 }
