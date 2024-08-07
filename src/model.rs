@@ -23,7 +23,7 @@ impl Model {
     #[must_use]
     pub fn unigram_cost(&self, l: &[Kc], unigrams: &[(Kc, f64)]) -> f64 {
         let mut cost = 0.0;
-        for &(kc, prop) in unigrams.iter() {
+        for &(kc, prop) in unigrams {
             // Finger penalties - penalise for not being able to type characters.
             let percost = if let Some(curi) = l.iter().position(|&v| v == kc) {
                 self.unigram_cost[curi]
@@ -47,7 +47,7 @@ impl Model {
     #[must_use]
     pub fn bigram_cost(&self, l: &[Kc], bigrams: &[((Kc, Kc), f64)]) -> f64 {
         let mut cost = 0.0;
-        for &((kc1, kc2), prop) in bigrams.iter() {
+        for &((kc1, kc2), prop) in bigrams {
             // Model adapted from https://colemakmods.github.io/mod-dh/compare.html
             let previ = l.iter().position(|&v| v == kc1);
             let curi = l.iter().position(|&v| v == kc2);
@@ -64,11 +64,7 @@ impl Model {
             // Special case: same key incurs zero cost for bigrams.
             // Index finger can be used twice on the same row with different keys.
             let percost = if same_hand {
-                if kc1 == kc2 {
-                    SAME_KEY
-                } else {
-                    self.bigram_cost[pfing][cfing][jump_len]
-                }
+                if kc1 == kc2 { SAME_KEY } else { self.bigram_cost[pfing][cfing][jump_len] }
             } else {
                 SWITCH_HAND
             };
@@ -81,7 +77,7 @@ impl Model {
     pub fn trigram_cost(&self, l: &[Kc], trigrams: &[((Kc, Kc, Kc), f64)]) -> f64 {
         const ALT_ROLL_BONUS: f64 = -1.0;
         let mut cost = 0.0;
-        for &((kc1, kc2, kc3), prop) in trigrams.iter() {
+        for &((kc1, kc2, kc3), prop) in trigrams {
             // Model adapted from https://colemakmods.github.io/mod-dh/compare.html
             let i1 = l.iter().position(|&v| v == kc1);
             let i2 = l.iter().position(|&v| v == kc2);
