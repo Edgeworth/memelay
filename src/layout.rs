@@ -1,9 +1,10 @@
-use crate::types::Kc;
 use derive_more::Display;
+
+use crate::types::Kc;
 
 #[must_use]
 #[derive(Debug, Clone, Default, Eq, PartialEq, Ord, PartialOrd, Hash, Display)]
-#[display(fmt = "{:?}", keys)]
+#[display("{:?}", keys)]
 pub struct Layout {
     pub keys: Vec<Kc>,
 }

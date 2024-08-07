@@ -131,7 +131,7 @@ pub fn layout_evolver(cfg: EvolveCfg) -> Result<Evolver<impl Evaluator<Data = ()
     let eval = CachedEvaluator::new(LayoutEval::from_args(&args)?, 1000);
     let genfn = move || {
         let mut keys = model.without_fixed(&model.universe);
-        keys.shuffle(&mut rand::thread_rng());
+        keys.shuffle(&mut rand::rng());
         KeyState(model.with_fixed(&keys))
     };
     if let Some(seed) = args.seed_path {

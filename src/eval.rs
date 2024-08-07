@@ -6,10 +6,10 @@ use memega::ops::distance::count_different;
 use memega::ops::mutation::{mutate_insert, mutate_inversion, mutate_scramble, mutate_swap};
 use rand::Rng;
 
+use crate::Args;
 use crate::ingest::{load_histograms, load_model};
 use crate::model::{Model, PENALTY};
-use crate::types::{Kc, COLEMAK_DHM};
-use crate::Args;
+use crate::types::{COLEMAK_DHM, Kc};
 
 #[must_use]
 #[derive(Debug, Clone)]
@@ -37,7 +37,7 @@ impl LayoutEval {
 
 #[must_use]
 #[derive(Debug, Display, Deref, DerefMut, Hash, Clone, PartialEq, Eq, PartialOrd)]
-#[display(fmt = "{_0:?}")]
+#[display("{_0:?}")]
 pub struct KeyState(pub Vec<Kc>);
 
 impl Evaluator for LayoutEval {
@@ -61,14 +61,14 @@ impl Evaluator for LayoutEval {
                 crossover_cycle(&mut unfixed1, &mut unfixed2);
             }
             _ => panic!("unknown crossover strategy"),
-        };
+        }
         *s1 = KeyState(self.model.with_fixed(&unfixed1));
         *s2 = KeyState(self.model.with_fixed(&unfixed2));
     }
 
     fn mutate(&self, s: &mut Self::State, rate: f64, idx: usize) {
-        let mut r = rand::thread_rng();
-        let mutate = r.gen::<f64>() < rate;
+        let mut r = rand::rng();
+        let mutate = r.random::<f64>() < rate;
         // Mutate without touching fixed keys.
         let mut unfixed = self.model.without_fixed(s);
         match idx {

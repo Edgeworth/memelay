@@ -2,7 +2,7 @@ use std::fs;
 use std::path::Path;
 use std::str::FromStr;
 
-use eyre::{eyre, Result, WrapErr};
+use eyre::{Result, WrapErr, eyre};
 
 use crate::eval::{Histograms, KeyState};
 use crate::model::Model;
@@ -105,7 +105,7 @@ pub fn load_model<P: AsRef<Path>>(cfg_path: P) -> Result<Model> {
                 ParseStage::Row => row.push(s.parse::<i32>()?),
                 ParseStage::Hand => hand.push(s.parse::<i32>()?),
                 ParseStage::Finger => finger.push(s.parse::<i32>()?),
-            };
+            }
         }
     }
     assert_eq!(bigram_idx, 80, "missing bigram costs");
