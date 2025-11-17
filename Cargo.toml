@@ -26,6 +26,7 @@ strum = {version = "0.25.0", features = ["derive"]}
 [dev-dependencies]
 criterion = {version = "0.7.0", features = ["real_blackbox"]}
 pretty_assertions = "1.4.1"
+tempfile = "3.15.0"
 
 [[bench]]
 harness = false

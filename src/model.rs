@@ -260,4 +260,291 @@ mod tests {
         assert_relative_eq!(-1.0, model.trigram_cost(l, &[((Kc::A, Kc::B, Kc::C), 1.0)]));
         assert_relative_eq!(0.0, model.trigram_cost(l, &[((Kc::B, Kc::A, Kc::C), 1.0)]));
     }
+
+    #[test]
+    fn test_format_basic() {
+        let model = Model { layout: "X X X".to_string(), ..Default::default() };
+        let l = &[Kc::A, Kc::B, Kc::C];
+        assert_eq!(model.format(l), "a b c");
+    }
+
+    #[test]
+    fn test_format_with_newlines() {
+        let model = Model { layout: "X X\nX X".to_string(), ..Default::default() };
+        let l = &[Kc::A, Kc::B, Kc::C, Kc::D];
+        assert_eq!(model.format(l), "a b\nc d");
+    }
+
+    #[test]
+    fn test_format_trailing_whitespace() {
+        let model = Model { layout: "X X  \n".to_string(), ..Default::default() };
+        let l = &[Kc::A, Kc::B];
+        assert_eq!(model.format(l), "a b");
+    }
+
+    #[test]
+    fn test_format_no_x() {
+        let model = Model { layout: "test".to_string(), ..Default::default() };
+        let l = &[Kc::A];
+        assert_eq!(model.format(l), "test");
+    }
+
+    #[test]
+    fn test_without_fixed_no_fixed() {
+        let model = Model {
+            universe: vec![Kc::A, Kc::B, Kc::C],
+            fixed: vec![Kc::None, Kc::None, Kc::None],
+            ..Default::default()
+        };
+        let inp = &[Kc::A, Kc::B, Kc::C];
+        assert_eq!(model.without_fixed(inp), vec![Kc::A, Kc::B, Kc::C]);
+    }
+
+    #[test]
+    fn test_without_fixed_with_fixed() {
+        let model = Model {
+            universe: vec![Kc::A, Kc::B, Kc::C],
+            fixed: vec![Kc::A, Kc::None, Kc::None],
+            ..Default::default()
+        };
+        let inp = &[Kc::A, Kc::B, Kc::C];
+        assert_eq!(model.without_fixed(inp), vec![Kc::B, Kc::C]);
+    }
+
+    #[test]
+    fn test_without_fixed_all_fixed() {
+        let model = Model {
+            universe: vec![Kc::A, Kc::B],
+            fixed: vec![Kc::A, Kc::B],
+            ..Default::default()
+        };
+        let inp = &[Kc::A, Kc::B];
+        assert_eq!(model.without_fixed(inp), Vec::<Kc>::new());
+    }
+
+    #[test]
+    fn test_with_fixed_no_fixed() {
+        let model = Model {
+            universe: vec![Kc::A, Kc::B, Kc::C],
+            fixed: vec![Kc::None, Kc::None, Kc::None],
+            ..Default::default()
+        };
+        let inp = &[Kc::A, Kc::B, Kc::C];
+        assert_eq!(model.with_fixed(inp), vec![Kc::A, Kc::B, Kc::C]);
+    }
+
+    #[test]
+    fn test_with_fixed_with_fixed() {
+        let model = Model {
+            universe: vec![Kc::A, Kc::B, Kc::C],
+            fixed: vec![Kc::A, Kc::None, Kc::None],
+            ..Default::default()
+        };
+        let inp = &[Kc::B, Kc::C];
+        assert_eq!(model.with_fixed(inp), vec![Kc::A, Kc::B, Kc::C]);
+    }
+
+    #[test]
+    fn test_with_fixed_all_fixed() {
+        let model = Model {
+            universe: vec![Kc::A, Kc::B],
+            fixed: vec![Kc::A, Kc::B],
+            ..Default::default()
+        };
+        let inp: &[Kc] = &[];
+        assert_eq!(model.with_fixed(inp), vec![Kc::A, Kc::B]);
+    }
+
+    #[test]
+    fn test_roundtrip_without_with_fixed() {
+        let model = Model {
+            universe: vec![Kc::A, Kc::B, Kc::C, Kc::D],
+            fixed: vec![Kc::A, Kc::None, Kc::C, Kc::None],
+            ..Default::default()
+        };
+        let original = &[Kc::A, Kc::X, Kc::C, Kc::Y];
+        let without = model.without_fixed(original);
+        assert_eq!(without, vec![Kc::X, Kc::Y]);
+        let with = model.with_fixed(&without);
+        assert_eq!(with, vec![Kc::A, Kc::X, Kc::C, Kc::Y]);
+    }
+
+    #[test]
+    fn test_model_default() {
+        let model = Model::default();
+        assert_eq!(model.layout, "");
+        assert_eq!(model.universe, Vec::<Kc>::new());
+        assert_eq!(model.fixed, Vec::<Kc>::new());
+        assert_eq!(model.unigram_cost, Vec::<f64>::new());
+        assert_eq!(model.row, Vec::<i32>::new());
+        assert_eq!(model.hand, Vec::<i32>::new());
+        assert_eq!(model.finger, Vec::<i32>::new());
+    }
+
+    #[test]
+    fn test_model_clone() {
+        let model = Model {
+            layout: "test".to_string(),
+            universe: vec![Kc::A, Kc::B],
+            fixed: vec![Kc::None, Kc::A],
+            unigram_cost: vec![1.0, 2.0],
+            row: vec![0, 1],
+            hand: vec![0, 1],
+            finger: vec![0, 1],
+            bigram_cost: [[[0.0; 5]; 4]; 4],
+        };
+        let cloned = model.clone();
+        assert_eq!(model, cloned);
+    }
+
+    #[test]
+    fn test_unigram_cost_empty() {
+        let model = Model { unigram_cost: vec![1.0, 2.0], ..Default::default() };
+        let l = &[Kc::A, Kc::B];
+        assert_relative_eq!(0.0, model.unigram_cost(l, &[]));
+    }
+
+    #[test]
+    fn test_unigram_cost_missing_key() {
+        let model = Model { unigram_cost: vec![1.0, 2.0], ..Default::default() };
+        let l = &[Kc::A, Kc::B];
+        assert_relative_eq!(100.0, model.unigram_cost(l, &[(Kc::Z, 1.0)]));
+    }
+
+    #[test]
+    fn test_bigram_cost_empty() {
+        let model = Model {
+            bigram_cost: [[[1.0; 5]; 4]; 4],
+            row: vec![0, 0],
+            hand: vec![0, 0],
+            finger: vec![0, 0],
+            ..Default::default()
+        };
+        let l = &[Kc::A, Kc::B];
+        assert_relative_eq!(0.0, model.bigram_cost(l, &[]));
+    }
+
+    #[test]
+    fn test_bigram_cost_same_key() {
+        let model = Model {
+            bigram_cost: [[[10.0; 5]; 4]; 4],
+            row: vec![0],
+            hand: vec![0],
+            finger: vec![0],
+            ..Default::default()
+        };
+        let l = &[Kc::A];
+        assert_relative_eq!(0.0, model.bigram_cost(l, &[((Kc::A, Kc::A), 1.0)]));
+    }
+
+    #[test]
+    fn test_bigram_cost_switch_hand() {
+        let model = Model {
+            bigram_cost: [[[10.0; 5]; 4]; 4],
+            row: vec![0, 0],
+            hand: vec![0, 1],
+            finger: vec![0, 0],
+            ..Default::default()
+        };
+        let l = &[Kc::A, Kc::B];
+        assert_relative_eq!(-0.5, model.bigram_cost(l, &[((Kc::A, Kc::B), 1.0)]));
+    }
+
+    #[test]
+    fn test_bigram_cost_missing_key() {
+        let model = Model {
+            bigram_cost: [[[1.0; 5]; 4]; 4],
+            row: vec![0],
+            hand: vec![0],
+            finger: vec![0],
+            ..Default::default()
+        };
+        let l = &[Kc::A];
+        assert_relative_eq!(0.0, model.bigram_cost(l, &[((Kc::A, Kc::Z), 1.0)]));
+        assert_relative_eq!(0.0, model.bigram_cost(l, &[((Kc::Z, Kc::A), 1.0)]));
+    }
+
+    #[test]
+    fn test_trigram_cost_empty() {
+        let model = Model {
+            row: vec![0, 0, 0],
+            hand: vec![0, 0, 1],
+            finger: vec![0, 1, 0],
+            ..Default::default()
+        };
+        let l = &[Kc::A, Kc::B, Kc::C];
+        assert_relative_eq!(0.0, model.trigram_cost(l, &[]));
+    }
+
+    #[test]
+    fn test_trigram_cost_missing_key() {
+        let model = Model {
+            row: vec![0, 0],
+            hand: vec![0, 0],
+            finger: vec![0, 1],
+            ..Default::default()
+        };
+        let l = &[Kc::A, Kc::B];
+        assert_relative_eq!(0.0, model.trigram_cost(l, &[((Kc::A, Kc::B, Kc::Z), 1.0)]));
+        assert_relative_eq!(0.0, model.trigram_cost(l, &[((Kc::A, Kc::Z, Kc::B), 1.0)]));
+        assert_relative_eq!(0.0, model.trigram_cost(l, &[((Kc::Z, Kc::A, Kc::B), 1.0)]));
+    }
+
+    #[test]
+    fn test_trigram_cost_no_alternation() {
+        let model = Model {
+            row: vec![0, 0, 0],
+            hand: vec![0, 0, 0],
+            finger: vec![2, 1, 0],
+            ..Default::default()
+        };
+        let l = &[Kc::A, Kc::B, Kc::C];
+        assert_relative_eq!(0.0, model.trigram_cost(l, &[((Kc::A, Kc::B, Kc::C), 1.0)]));
+    }
+
+    #[test]
+    fn test_trigram_cost_no_rolling() {
+        let model = Model {
+            row: vec![0, 0, 0],
+            hand: vec![0, 0, 1],
+            finger: vec![0, 1, 0],
+            ..Default::default()
+        };
+        let l = &[Kc::A, Kc::B, Kc::C];
+        assert_relative_eq!(0.0, model.trigram_cost(l, &[((Kc::A, Kc::B, Kc::C), 1.0)]));
+    }
+
+    #[test]
+    fn test_key_below_boundary() {
+        let model = Model {
+            row: vec![0, 0],
+            hand: vec![0, 0],
+            finger: vec![0, 0],
+            ..Default::default()
+        };
+        assert_eq!(model.key_below(0), None);
+        assert_eq!(model.key_below(1), None);
+    }
+
+    #[test]
+    fn test_key_below_different_hand() {
+        let model = Model {
+            row: vec![1, 0],
+            hand: vec![0, 1],
+            finger: vec![0, 0],
+            ..Default::default()
+        };
+        assert_eq!(model.key_below(0), None);
+    }
+
+    #[test]
+    fn test_key_below_different_finger() {
+        let model = Model {
+            row: vec![1, 0],
+            hand: vec![0, 0],
+            finger: vec![0, 1],
+            ..Default::default()
+        };
+        assert_eq!(model.key_below(0), None);
+    }
 }

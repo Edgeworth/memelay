@@ -179,3 +179,109 @@ pub fn run() -> Result<()> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Write;
+    use tempfile::NamedTempFile;
+
+    #[test]
+    fn test_args_default_values() {
+        let args = Args::parse_from(["hodlr"]);
+        assert_eq!(args.model_path.to_str().unwrap(), "cfg/layer0.cfg");
+        assert_eq!(args.unigrams_path.to_str().unwrap(), "data/unigrams.data");
+        assert_eq!(args.bigrams_path.to_str().unwrap(), "data/bigrams.data");
+        assert_eq!(args.trigrams_path.to_str().unwrap(), "data/trigrams.data");
+        assert!(args.seed_path.is_none());
+        assert!(args.eval_layout.is_none());
+    }
+
+    #[test]
+    fn test_args_with_custom_paths() {
+        let args = Args::parse_from([
+            "hodlr",
+            "--model-path", "custom/model.cfg",
+            "--unigrams-path", "custom/uni.data",
+            "--bigrams-path", "custom/bi.data",
+            "--trigrams-path", "custom/tri.data",
+        ]);
+        assert_eq!(args.model_path.to_str().unwrap(), "custom/model.cfg");
+        assert_eq!(args.unigrams_path.to_str().unwrap(), "custom/uni.data");
+        assert_eq!(args.bigrams_path.to_str().unwrap(), "custom/bi.data");
+        assert_eq!(args.trigrams_path.to_str().unwrap(), "custom/tri.data");
+    }
+
+    #[test]
+    fn test_args_with_seed_path() {
+        let args = Args::parse_from([
+            "hodlr",
+            "--seed-path", "custom/seeds.txt",
+        ]);
+        assert!(args.seed_path.is_some());
+        assert_eq!(args.seed_path.unwrap().to_str().unwrap(), "custom/seeds.txt");
+    }
+
+    #[test]
+    fn test_args_with_eval_layout() {
+        let args = Args::parse_from([
+            "hodlr",
+            "--eval-layout", "layouts/test.txt",
+        ]);
+        assert!(args.eval_layout.is_some());
+        assert_eq!(args.eval_layout.unwrap().to_str().unwrap(), "layouts/test.txt");
+    }
+
+    fn create_test_model_file() -> NamedTempFile {
+        let mut file = NamedTempFile::new().unwrap();
+        writeln!(file, "layout").unwrap();
+        writeln!(file, "X X X").unwrap();
+        writeln!(file, "keys").unwrap();
+        writeln!(file, "a b c").unwrap();
+        writeln!(file, "fixed").unwrap();
+        writeln!(file, "None None None").unwrap();
+        writeln!(file, "unigram_cost").unwrap();
+        writeln!(file, "1.0 1.0 1.0").unwrap();
+        writeln!(file, "bigram_cost").unwrap();
+        for _ in 0..80 {
+            write!(file, "0.0 ").unwrap();
+        }
+        writeln!(file).unwrap();
+        writeln!(file, "row").unwrap();
+        writeln!(file, "0 0 0").unwrap();
+        writeln!(file, "hand").unwrap();
+        writeln!(file, "0 0 1").unwrap();
+        writeln!(file, "finger").unwrap();
+        writeln!(file, "0 1 0").unwrap();
+        file.flush().unwrap();
+        file
+    }
+
+    fn create_test_histogram_files() -> (NamedTempFile, NamedTempFile, NamedTempFile) {
+        let mut uni = NamedTempFile::new().unwrap();
+        writeln!(uni, "header").unwrap();
+        writeln!(uni, "a 1.0").unwrap();
+        writeln!(uni, "b 1.0").unwrap();
+        writeln!(uni, "c 1.0").unwrap();
+        uni.flush().unwrap();
+
+        let mut bi = NamedTempFile::new().unwrap();
+        writeln!(bi, "header").unwrap();
+        writeln!(bi, "a b 0.5").unwrap();
+        bi.flush().unwrap();
+
+        let mut tri = NamedTempFile::new().unwrap();
+        writeln!(tri, "header").unwrap();
+        writeln!(tri, "a b c 0.25").unwrap();
+        tri.flush().unwrap();
+
+        (uni, bi, tri)
+    }
+
+    fn create_test_seeds_file() -> NamedTempFile {
+        let mut file = NamedTempFile::new().unwrap();
+        writeln!(file, "a b c").unwrap();
+        file.flush().unwrap();
+        file
+    }
+}
