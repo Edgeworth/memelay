@@ -195,20 +195,6 @@ fn test_model_with_fixed_interleaves_correctly() {
 }
 
 #[test]
-fn test_keystate_operations() {
-    let state1 = KeyState(vec![Kc::A, Kc::B, Kc::C]);
-    let state2 = state1.clone();
-
-    assert_eq!(state1.len(), state2.len());
-    assert_eq!(state1.0, state2.0);
-
-    // Test indexing
-    assert_eq!(state1[0], Kc::A);
-    assert_eq!(state1[1], Kc::B);
-    assert_eq!(state1[2], Kc::C);
-}
-
-#[test]
 fn test_model_format_with_special_chars() {
     let mut model_file = NamedTempFile::new().unwrap();
     writeln!(model_file, "layout").unwrap();

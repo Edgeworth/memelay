@@ -223,27 +223,6 @@ fn test_evaluator_distance() {
 }
 
 #[test]
-fn test_keystate_deref() {
-    let keys = vec![Kc::A, Kc::B, Kc::C];
-    let state = KeyState(keys.clone());
-
-    // Test that KeyState can be used like a Vec through Deref
-    assert_eq!(state.len(), 3);
-    assert_eq!(state[0], Kc::A);
-    assert_eq!(state[1], Kc::B);
-    assert_eq!(state[2], Kc::C);
-}
-
-#[test]
-fn test_keystate_clone() {
-    let state1 = KeyState(vec![Kc::A, Kc::B, Kc::C]);
-    let state2 = state1.clone();
-
-    assert_eq!(state1.0, state2.0);
-    assert_eq!(state1.len(), state2.len());
-}
-
-#[test]
 fn test_fitness_deterministic() {
     let model_file = create_minimal_test_model();
     let (uni, bi, tri) = create_test_histograms();

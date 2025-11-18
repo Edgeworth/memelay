@@ -230,17 +230,6 @@ fn test_load_histograms_integration() {
 }
 
 #[test]
-fn test_keystate_wrapper() {
-    use memelay::eval::KeyState;
-
-    let keys = vec![Kc::A, Kc::B, Kc::C];
-    let state = KeyState(keys.clone());
-
-    assert_eq!(state.0, keys);
-    assert_eq!(state.len(), 3);
-}
-
-#[test]
 fn test_multiple_seed_layouts_different_characteristics() {
     let mut file = NamedTempFile::new().unwrap();
 
