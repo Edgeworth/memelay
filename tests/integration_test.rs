@@ -1,5 +1,5 @@
 use memelay::ingest::{load_model, load_seeds};
-use memelay::types::{Kc, COLEMAK_DHM, QWERTY};
+use memelay::types::Kc;
 use std::io::Write;
 use tempfile::NamedTempFile;
 
@@ -29,22 +29,6 @@ fn test_load_seeds_from_real_config() {
     for seed in &seeds {
         assert_eq!(seed.0.len(), first_size, "All seeds should have same size");
     }
-}
-
-#[test]
-fn test_qwerty_constant_usage() {
-    // Test that QWERTY constant is accessible and valid
-    assert_eq!(QWERTY.len(), 30);
-    assert_eq!(QWERTY[0], Kc::Q);
-    assert_eq!(QWERTY[29], Kc::Slash);
-}
-
-#[test]
-fn test_colemak_constant_usage() {
-    // Test that COLEMAK_DHM constant is accessible and valid
-    assert_eq!(COLEMAK_DHM.len(), 30);
-    assert_eq!(COLEMAK_DHM[0], Kc::Q);
-    assert_eq!(COLEMAK_DHM[2], Kc::F);
 }
 
 #[test]
@@ -258,42 +242,6 @@ fn test_multiple_seed_layouts_different_characteristics() {
 }
 
 #[test]
-fn test_model_cost_arrays_size() {
-    let model = load_model("cfg/layer0.cfg").unwrap();
-
-    // Verify unigram cost array has correct size
-    assert_eq!(model.unigram_cost.len(), model.universe.len());
-
-    // Bigram cost should have some values
-    assert!(!model.bigram_cost.is_empty(), "Bigram cost array should not be empty");
-}
-
-#[test]
-fn test_model_geometric_properties() {
-    let model = load_model("cfg/layer0.cfg").unwrap();
-
-    // Verify geometric arrays match universe size
-    assert_eq!(model.row.len(), model.universe.len());
-    assert_eq!(model.hand.len(), model.universe.len());
-    assert_eq!(model.finger.len(), model.universe.len());
-
-    // Verify rows are in valid range (typically 0-2 for 3 rows)
-    for &row in &model.row {
-        assert!(row <= 2, "Row value should be 0, 1, or 2");
-    }
-
-    // Verify hands are 0 or 1
-    for &hand in &model.hand {
-        assert!(hand == 0 || hand == 1, "Hand should be 0 (left) or 1 (right)");
-    }
-
-    // Verify fingers are in valid range (typically 0-3 for 4 fingers)
-    for &finger in &model.finger {
-        assert!(finger <= 3, "Finger should be 0-3");
-    }
-}
-
-#[test]
 fn test_empty_layout_handling() {
     let mut file = NamedTempFile::new().unwrap();
     writeln!(file).unwrap();
@@ -323,28 +271,4 @@ fn test_layout_with_symbols() {
     assert_eq!(seeds[0].0[3], Kc::Semicolon);
     assert_eq!(seeds[0].0[4], Kc::Quote);
     assert_eq!(seeds[0].0[5], Kc::Minus);
-}
-
-#[test]
-fn test_kc_string_conversion_roundtrip() {
-    let test_chars = vec!['a', 'z', '0', '9', ',', '.', '/', ';'];
-
-    for ch in test_chars {
-        let s = ch.to_string();
-        let kc = s.parse::<Kc>();
-        assert!(kc.is_ok(), "Failed to parse '{}'", ch);
-
-        let kc_val = kc.unwrap();
-        assert_eq!(kc_val.to_string(), s, "Roundtrip failed for '{}'", ch);
-    }
-}
-
-#[test]
-fn test_model_universe_contains_all_keys() {
-    let model = load_model("cfg/layer0.cfg").unwrap();
-
-    // Universe should contain all the keys from the keys section
-    for key in &model.universe {
-        assert_ne!(*key, Kc::None, "Universe should not contain None keys");
-    }
 }

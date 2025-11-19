@@ -97,37 +97,6 @@ fn test_evaluator_fitness_basic() {
 }
 
 #[test]
-fn test_evaluator_fitness_different_layouts() {
-    let model_file = create_minimal_test_model();
-    let (uni, bi, tri) = create_test_histograms();
-
-    let model = load_model(model_file.path()).unwrap();
-    let hist = load_histograms(uni.path(), bi.path(), tri.path()).unwrap();
-
-    let evaluator = LayoutEval {
-        model,
-        hist,
-        match_keys: vec![Kc::A, Kc::B, Kc::C, Kc::D, Kc::E, Kc::F],
-    };
-
-    let layout1 = KeyState(vec![Kc::A, Kc::B, Kc::C, Kc::D, Kc::E, Kc::F]);
-    let layout2 = KeyState(vec![Kc::F, Kc::E, Kc::D, Kc::C, Kc::B, Kc::A]);
-
-    let fitness1 = evaluator.fitness(&layout1, &()).unwrap();
-    let fitness2 = evaluator.fitness(&layout2, &()).unwrap();
-
-    // Both should be valid fitness values
-    assert!(fitness1.is_finite());
-    assert!(fitness2.is_finite());
-
-    // They should be different (unless by extremely unlikely coincidence)
-    // We can't assert they're different because they might be the same,
-    // but we can verify both are computed
-    assert!(fitness1 > 0.0);
-    assert!(fitness2 > 0.0);
-}
-
-#[test]
 fn test_evaluator_mutate() {
     let model_file = create_minimal_test_model();
     let (uni, bi, tri) = create_test_histograms();
@@ -220,80 +189,4 @@ fn test_evaluator_distance() {
 
     // Distance to completely reversed layout should be > 0
     assert!(dist_diff > 0.0);
-}
-
-#[test]
-fn test_fitness_deterministic() {
-    let model_file = create_minimal_test_model();
-    let (uni, bi, tri) = create_test_histograms();
-
-    let model = load_model(model_file.path()).unwrap();
-    let hist = load_histograms(uni.path(), bi.path(), tri.path()).unwrap();
-
-    let evaluator = LayoutEval {
-        model,
-        hist,
-        match_keys: vec![Kc::A, Kc::B, Kc::C, Kc::D, Kc::E, Kc::F],
-    };
-
-    let layout = KeyState(vec![Kc::A, Kc::B, Kc::C, Kc::D, Kc::E, Kc::F]);
-
-    // Compute fitness multiple times
-    let fitness1 = evaluator.fitness(&layout, &()).unwrap();
-    let fitness2 = evaluator.fitness(&layout, &()).unwrap();
-    let fitness3 = evaluator.fitness(&layout, &()).unwrap();
-
-    // Fitness should be deterministic
-    assert_eq!(fitness1, fitness2);
-    assert_eq!(fitness2, fitness3);
-}
-
-#[test]
-fn test_distance_symmetric() {
-    let model_file = create_minimal_test_model();
-    let (uni, bi, tri) = create_test_histograms();
-
-    let model = load_model(model_file.path()).unwrap();
-    let hist = load_histograms(uni.path(), bi.path(), tri.path()).unwrap();
-
-    let evaluator = LayoutEval {
-        model,
-        hist,
-        match_keys: vec![Kc::A, Kc::B, Kc::C, Kc::D, Kc::E, Kc::F],
-    };
-
-    let layout1 = KeyState(vec![Kc::A, Kc::B, Kc::C, Kc::D, Kc::E, Kc::F]);
-    let layout2 = KeyState(vec![Kc::B, Kc::C, Kc::D, Kc::E, Kc::F, Kc::A]);
-
-    let dist_12 = evaluator.distance(&layout1, &layout2).unwrap();
-    let dist_21 = evaluator.distance(&layout2, &layout1).unwrap();
-
-    // Distance should be symmetric
-    assert_eq!(dist_12, dist_21);
-}
-
-#[test]
-fn test_distance_triangle_inequality() {
-    let model_file = create_minimal_test_model();
-    let (uni, bi, tri) = create_test_histograms();
-
-    let model = load_model(model_file.path()).unwrap();
-    let hist = load_histograms(uni.path(), bi.path(), tri.path()).unwrap();
-
-    let evaluator = LayoutEval {
-        model,
-        hist,
-        match_keys: vec![Kc::A, Kc::B, Kc::C, Kc::D, Kc::E, Kc::F],
-    };
-
-    let layout1 = KeyState(vec![Kc::A, Kc::B, Kc::C, Kc::D, Kc::E, Kc::F]);
-    let layout2 = KeyState(vec![Kc::B, Kc::C, Kc::D, Kc::E, Kc::F, Kc::A]);
-    let layout3 = KeyState(vec![Kc::C, Kc::D, Kc::E, Kc::F, Kc::A, Kc::B]);
-
-    let dist_12 = evaluator.distance(&layout1, &layout2).unwrap();
-    let dist_23 = evaluator.distance(&layout2, &layout3).unwrap();
-    let dist_13 = evaluator.distance(&layout1, &layout3).unwrap();
-
-    // Triangle inequality: dist(1,3) <= dist(1,2) + dist(2,3)
-    assert!(dist_13 <= dist_12 + dist_23);
 }

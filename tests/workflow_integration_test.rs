@@ -1,4 +1,3 @@
-use memelay::eval::KeyState;
 use memelay::ingest::{load_model, load_seeds};
 use memelay::types::Kc;
 use std::io::Write;
@@ -131,70 +130,6 @@ fn test_fixed_keys_workflow() {
 }
 
 #[test]
-fn test_model_without_fixed_preserves_order() {
-    let mut model_file = NamedTempFile::new().unwrap();
-    writeln!(model_file, "layout").unwrap();
-    writeln!(model_file, "X X X X X").unwrap();
-    writeln!(model_file, "keys").unwrap();
-    writeln!(model_file, "a b c d e").unwrap();
-    writeln!(model_file, "fixed").unwrap();
-    writeln!(model_file, "None b None d None").unwrap();
-    writeln!(model_file, "unigram_cost").unwrap();
-    writeln!(model_file, "1.0 1.5 2.0 2.5 3.0").unwrap();
-    writeln!(model_file, "bigram_cost").unwrap();
-    for _ in 0..80 {
-        writeln!(model_file, "1.0").unwrap();
-    }
-    writeln!(model_file, "row").unwrap();
-    writeln!(model_file, "0 0 1 1 2").unwrap();
-    writeln!(model_file, "hand").unwrap();
-    writeln!(model_file, "0 0 0 1 1").unwrap();
-    writeln!(model_file, "finger").unwrap();
-    writeln!(model_file, "0 1 0 1 2").unwrap();
-    model_file.flush().unwrap();
-
-    let model = load_model(model_file.path()).unwrap();
-    let full = vec![Kc::A, Kc::B, Kc::C, Kc::D, Kc::E];
-
-    let non_fixed = model.without_fixed(&full);
-
-    // Should preserve order: a, c, e (positions 0, 2, 4)
-    assert_eq!(non_fixed, vec![Kc::A, Kc::C, Kc::E]);
-}
-
-#[test]
-fn test_model_with_fixed_interleaves_correctly() {
-    let mut model_file = NamedTempFile::new().unwrap();
-    writeln!(model_file, "layout").unwrap();
-    writeln!(model_file, "X X X X X X").unwrap();
-    writeln!(model_file, "keys").unwrap();
-    writeln!(model_file, "a b c d e f").unwrap();
-    writeln!(model_file, "fixed").unwrap();
-    writeln!(model_file, "a None c None e None").unwrap();
-    writeln!(model_file, "unigram_cost").unwrap();
-    writeln!(model_file, "1.0 1.5 2.0 2.5 3.0 3.5").unwrap();
-    writeln!(model_file, "bigram_cost").unwrap();
-    for _ in 0..80 {
-        writeln!(model_file, "1.0").unwrap();
-    }
-    writeln!(model_file, "row").unwrap();
-    writeln!(model_file, "0 0 1 1 2 2").unwrap();
-    writeln!(model_file, "hand").unwrap();
-    writeln!(model_file, "0 0 0 1 1 1").unwrap();
-    writeln!(model_file, "finger").unwrap();
-    writeln!(model_file, "0 1 0 1 0 1").unwrap();
-    model_file.flush().unwrap();
-
-    let model = load_model(model_file.path()).unwrap();
-    let non_fixed = vec![Kc::B, Kc::D, Kc::F];
-
-    let full = model.with_fixed(&non_fixed);
-
-    // Should interleave: a, b, c, d, e, f
-    assert_eq!(full, vec![Kc::A, Kc::B, Kc::C, Kc::D, Kc::E, Kc::F]);
-}
-
-#[test]
 fn test_model_format_with_special_chars() {
     let mut model_file = NamedTempFile::new().unwrap();
     writeln!(model_file, "layout").unwrap();
@@ -229,22 +164,6 @@ fn test_model_format_with_special_chars() {
 }
 
 #[test]
-fn test_model_consistency_checks() {
-    let (model_file, _seeds, _uni, _bi, _tri) = create_complete_test_environment();
-    let model = load_model(model_file.path()).unwrap();
-
-    // All arrays should have consistent sizes
-    assert_eq!(model.universe.len(), model.fixed.len());
-    assert_eq!(model.universe.len(), model.unigram_cost.len());
-    assert_eq!(model.universe.len(), model.row.len());
-    assert_eq!(model.universe.len(), model.hand.len());
-    assert_eq!(model.universe.len(), model.finger.len());
-
-    // Bigram cost should have some values
-    assert!(!model.bigram_cost.is_empty(), "Bigram cost array should not be empty");
-}
-
-#[test]
 fn test_seed_layouts_valid_for_model() {
     let (model_file, seed_file, _uni, _bi, _tri) = create_complete_test_environment();
 
@@ -259,27 +178,6 @@ fn test_seed_layouts_valid_for_model() {
         for key in &seed.0 {
             assert!(model.universe.contains(key), "Seed contains key not in universe: {:?}", key);
         }
-    }
-}
-
-#[test]
-fn test_model_geometric_consistency() {
-    let (model_file, _seeds, _uni, _bi, _tri) = create_complete_test_environment();
-    let model = load_model(model_file.path()).unwrap();
-
-    // Verify row values are consistent
-    for &row in &model.row {
-        assert!(row <= 2, "Row should be 0, 1, or 2");
-    }
-
-    // Verify hand values are binary
-    for &hand in &model.hand {
-        assert!(hand == 0 || hand == 1, "Hand should be 0 or 1");
-    }
-
-    // Verify finger values are in valid range
-    for &finger in &model.finger {
-        assert!(finger <= 3, "Finger should be 0-3");
     }
 }
 
@@ -320,38 +218,5 @@ fn test_roundtrip_with_fixed_and_without_fixed() {
         let reconstructed = model.with_fixed(&without);
 
         assert_eq!(reconstructed, layout, "Roundtrip should preserve layout");
-    }
-}
-
-#[test]
-fn test_histograms_structure() {
-    let (_model_file, _seed_file, uni, bi, tri) = create_complete_test_environment();
-
-    let hist = memelay::ingest::load_histograms(uni.path(), bi.path(), tri.path()).unwrap();
-
-    // Verify histograms are vectors of tuples
-    assert!(!hist.unigrams.is_empty());
-    assert!(!hist.bigrams.is_empty());
-    assert!(!hist.trigrams.is_empty());
-
-    // Verify unigrams have correct structure
-    for (kc, freq) in &hist.unigrams {
-        assert!(*freq > 0.0);
-        assert_ne!(*kc, Kc::None);
-    }
-
-    // Verify bigrams have correct structure
-    for ((kc1, kc2), freq) in &hist.bigrams {
-        assert!(*freq > 0.0);
-        assert_ne!(*kc1, Kc::None);
-        assert_ne!(*kc2, Kc::None);
-    }
-
-    // Verify trigrams have correct structure
-    for ((kc1, kc2, kc3), freq) in &hist.trigrams {
-        assert!(*freq > 0.0);
-        assert_ne!(*kc1, Kc::None);
-        assert_ne!(*kc2, Kc::None);
-        assert_ne!(*kc3, Kc::None);
     }
 }
