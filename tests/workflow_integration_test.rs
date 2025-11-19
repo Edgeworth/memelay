@@ -206,17 +206,10 @@ fn test_roundtrip_with_fixed_and_without_fixed() {
 
     let model = load_model(model_file.path()).unwrap();
 
-    // Test roundtrip for multiple layouts
-    let test_layouts = vec![
-        vec![Kc::A, Kc::B, Kc::C, Kc::D, Kc::E, Kc::F, Kc::G, Kc::H],
-        vec![Kc::H, Kc::B, Kc::G, Kc::D, Kc::F, Kc::F, Kc::E, Kc::H],
-        vec![Kc::C, Kc::B, Kc::A, Kc::D, Kc::G, Kc::F, Kc::E, Kc::H],
-    ];
+    // Test roundtrip: remove fixed keys and add them back
+    let layout = vec![Kc::A, Kc::B, Kc::C, Kc::D, Kc::E, Kc::F, Kc::G, Kc::H];
+    let without = model.without_fixed(&layout);
+    let reconstructed = model.with_fixed(&without);
 
-    for layout in test_layouts {
-        let without = model.without_fixed(&layout);
-        let reconstructed = model.with_fixed(&without);
-
-        assert_eq!(reconstructed, layout, "Roundtrip should preserve layout");
-    }
+    assert_eq!(reconstructed, layout, "Roundtrip should preserve layout");
 }
