@@ -1,6 +1,7 @@
 use derive_more::{Deref, DerefMut, Display};
-use eyre::Result;
+use eyre::Result as EyreResult;
 use memega::eval::Evaluator;
+use memega::Result;
 use memega::ops::crossover::{crossover_cycle, crossover_order, crossover_pmx};
 use memega::ops::distance::count_different;
 use memega::ops::mutation::{mutate_insert, mutate_inversion, mutate_scramble, mutate_swap};
@@ -28,7 +29,7 @@ pub struct LayoutEval {
 }
 
 impl LayoutEval {
-    pub fn from_args(args: &Args) -> Result<Self> {
+    pub fn from_args(args: &Args) -> EyreResult<Self> {
         let model = load_model(&args.model_path)?;
         let hist = load_histograms(&args.unigrams_path, &args.bigrams_path, &args.trigrams_path)?;
         Ok(Self { model, hist, match_keys: COLEMAK_DHM.to_vec() })

@@ -151,7 +151,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_key_relation() {
+    fn key_relation() {
         let model = Model {
             row: vec![2, 2, 2, 2, 1, 1, 1, 1, 0, 0, 0, 0],
             hand: vec![0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1],
@@ -173,7 +173,7 @@ mod tests {
     }
 
     #[test]
-    fn test_unigrams() {
+    fn unigrams() {
         let model = Model { unigram_cost: vec![1.0, 10.0], ..Default::default() };
         let l = &[Kc::A, Kc::B];
         assert_relative_eq!(13.0, model.unigram_cost(l, &[(Kc::A, 3.0), (Kc::B, 1.0)]));
@@ -181,7 +181,7 @@ mod tests {
     }
 
     #[test]
-    fn test_bigrams() {
+    fn bigrams() {
         let model = Model {
             bigram_cost: [
                 [

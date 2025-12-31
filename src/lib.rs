@@ -35,6 +35,7 @@
     clippy::unreadable_literal
 )]
 
+use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
 
 use clap::Parser;
@@ -147,9 +148,9 @@ pub fn evolve(cfg: EvolveCfg) -> Result<()> {
 
     let mut trainer = Trainer::new(
         TrainerCfg::new("memelay")
-            .set_termination(Termination::FixedGenerations(20000))
-            .set_print_gen(50)
-            .set_print_summary(50),
+            .set_termination(Termination::FixedGenerations(NonZeroUsize::new(20000).unwrap()))
+            .set_print_gen(NonZeroUsize::new(50).unwrap())
+            .set_print_summary(NonZeroUsize::new(50).unwrap()),
     );
     let _ = trainer.train(evolver, &EmptyDataSampler {})?;
 
@@ -163,9 +164,9 @@ pub fn run() -> Result<()> {
         .set_mutation(Mutation::Adaptive)
         .set_crossover(Crossover::Adaptive)
         .set_survival(Survival::SpeciesTopProportion(0.1))
-        .set_species(Species::TargetNumber(100))
+        .set_species(Species::TargetNumber(NonZeroUsize::new(100).unwrap()))
         .set_niching(Niching::None)
-        .set_stagnation(Stagnation::ContinuousAfter(200))
+        .set_stagnation(Stagnation::ContinuousAfter(NonZeroUsize::new(200).unwrap()))
         .set_replacement(Replacement::ReplaceChildren(0.5))
         .set_duplicates(Duplicates::DisallowDuplicates)
         .set_par_fitness(true)

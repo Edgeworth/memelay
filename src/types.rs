@@ -1,12 +1,6 @@
 use num_enum::IntoPrimitive;
 use strum::{Display as StrumDisplay, EnumString};
 
-impl Default for Kc {
-    fn default() -> Self {
-        Self::None
-    }
-}
-
 // Based on QMK keycodes.
 #[must_use]
 #[derive(
@@ -23,7 +17,9 @@ impl Default for Kc {
     IntoPrimitive,
 )]
 #[repr(i8)]
+#[derive(Default)]
 pub enum Kc {
+    #[default]
     None,
 
     // Numbers:
